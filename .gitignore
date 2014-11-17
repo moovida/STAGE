@@ -15,4 +15,4 @@ hs_err_pid*
 *.swp~
 eu.hydrologis.jconsole/bin
 eu.hydrologis.jgrass.jconsole/bin
-
+eu.hydrologis.stage/bin
