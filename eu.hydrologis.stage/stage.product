@@ -23,6 +23,7 @@
    <windowImages i16="icons/icon16x16.png" i32="icons/icon32x32.png" i48="icons/icon48x48.png" i64="icons/icon64x64.png" i128="icons/icon128x128.png"/>
 
    <splash
+      location="eu.hydrologis.stage"
       startupProgressRect="5,275,445,15" />
    <launcher name="stage">
       <solaris/>
