@@ -8,12 +8,12 @@ import org.eclipse.rap.rwt.application.ApplicationConfiguration;
 import org.eclipse.rap.rwt.client.WebClient;
 
 
-public class BasicApplication implements ApplicationConfiguration {
+public class StageApplication implements ApplicationConfiguration {
 
     public void configure(Application application) {
         Map<String, String> properties = new HashMap<String, String>();
         properties.put(WebClient.PAGE_TITLE, "STAGE");
-        application.addEntryPoint("/stage", BasicEntryPoint.class, properties);
+        application.addEntryPoint("/stage", StageEntryPoint.class, properties);
     }
 
 }

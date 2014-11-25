@@ -1,3 +1,4 @@
+package eu.hydrologis.rap.stage.utilsrap;
 //package eu.hydrologis.rap.stage.utils;
 //
 //import org.eclipse.rap.rwt.RWT;

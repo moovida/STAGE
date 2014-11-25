@@ -5,8 +5,12 @@ Bundle-SymbolicName: eu.hydrologis.stagerap
 Bundle-Version: 1.0.0
 Bundle-Vendor: HydroloGIS S.r.l.
 Require-Bundle: org.eclipse.rap.rwt,
+ org.eclipse.rap.jface,
  org.eclipse.rap.addons.fileupload,
  org.eclipse.rap.addons.filedialog
 Service-Component: OSGI-INF/contribution.xml
 Import-Package: javax.servlet;version="2.6.0",
  javax.servlet.http;version="2.6.0"
+Bundle-ClassPath: libs/jgt-oms3-0.7.9-SNAPSHOT.jar,
+ libs/miglayout-3.7.jar,
+ .

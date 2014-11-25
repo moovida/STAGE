@@ -22,15 +22,17 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
-import eu.hydrologis.rap.stage.utils.DownloadUtils;
-import eu.hydrologis.rap.stage.utils.ExampleUtil;
+import eu.hydrologis.rap.stage.ui.StageView;
+import eu.hydrologis.rap.stage.utilsrap.DownloadUtils;
+import eu.hydrologis.rap.stage.utilsrap.ExampleUtil;
 
-public class BasicEntryPoint extends AbstractEntryPoint {
+public class StageEntryPoint extends AbstractEntryPoint {
 
 	private static final String INITIAL_TEXT = "no files uploaded.";
 	private FileUpload fileUpload;
@@ -41,13 +43,17 @@ public class BasicEntryPoint extends AbstractEntryPoint {
 
 	@Override
 	protected void createContents(final Composite parent) {
-		parent.setLayout(ExampleUtil.createMainLayout(3));
-		Control controlsColumn = createControlsColumn(parent);
-		controlsColumn.setLayoutData(ExampleUtil.createFillData());
-		Control serverColumn = createLogColumn(parent);
-		serverColumn.setLayoutData(ExampleUtil.createFillData());
-		Control infoColumn = createInfoColumn(parent);
-		infoColumn.setLayoutData(ExampleUtil.createFillData());
+		StageView view = new StageView();
+		view.createPartControl(Display.getCurrent(), parent);
+		
+		
+//		parent.setLayout(ExampleUtil.createMainLayout(3));
+//		Control controlsColumn = createControlsColumn(parent);
+//		controlsColumn.setLayoutData(ExampleUtil.createFillData());
+//		Control serverColumn = createLogColumn(parent);
+//		serverColumn.setLayoutData(ExampleUtil.createFillData());
+//		Control infoColumn = createInfoColumn(parent);
+//		infoColumn.setLayoutData(ExampleUtil.createFillData());
 	}
 
 	private Control createControlsColumn(Composite parent) {

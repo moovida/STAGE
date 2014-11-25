@@ -8,7 +8,7 @@
  * Contributors:
  *    EclipseSource - initial API and implementation
  ******************************************************************************/
-package eu.hydrologis.rap.stage.utils;
+package eu.hydrologis.rap.stage.utilsrap;
 
 import org.eclipse.rap.rwt.RWT;
 import org.eclipse.swt.SWT;
