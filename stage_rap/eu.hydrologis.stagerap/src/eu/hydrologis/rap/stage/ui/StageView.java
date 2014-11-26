@@ -9,6 +9,7 @@
  */
 package eu.hydrologis.rap.stage.ui;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -85,7 +86,8 @@ public class StageView {
 
 	}
 
-	public void createPartControl(Display display, Composite parent) {
+	public void createPartControl(Display display, Composite parent)
+			throws IOException {
 		this.display = display;
 		module2GuiMap.clear();
 
@@ -308,7 +310,8 @@ public class StageView {
 		});
 	}
 
-	private void addQuickSettings(Composite modulesListComposite) {
+	private void addQuickSettings(Composite modulesListComposite)
+			throws IOException {
 		Group quickSettingsGroup = new Group(modulesListComposite, SWT.NONE);
 		quickSettingsGroup.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true,
 				false));
@@ -335,8 +338,12 @@ public class StageView {
 		heapCombo.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
 				String item = heapCombo.getText();
-				StageSessionPluginSingleton.getInstance().saveHeap(
-						Integer.parseInt(item));
+				try {
+					StageSessionPluginSingleton.getInstance().saveHeap(
+							Integer.parseInt(item));
+				} catch (NumberFormatException | IOException e1) {
+					e1.printStackTrace();
+				}
 			}
 		});
 		heapCombo.addModifyListener(new ModifyListener() {
@@ -348,8 +355,13 @@ public class StageView {
 					return;
 				}
 				if (item.length() > 0) {
-					StageSessionPluginSingleton.getInstance().saveHeap(
-							Integer.parseInt(item));
+					try {
+						StageSessionPluginSingleton.getInstance().saveHeap(
+								Integer.parseInt(item));
+					} catch (NumberFormatException | IOException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
 				}
 			}
 		});
@@ -373,7 +385,12 @@ public class StageView {
 		logCombo.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
 				String item = logCombo.getText();
-				StageSessionPluginSingleton.getInstance().saveLogLevel(item);
+				try {
+					StageSessionPluginSingleton.getInstance()
+							.saveLogLevel(item);
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
 			}
 		});
 
@@ -405,7 +422,12 @@ public class StageView {
 		encodingCombo.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
 				String item = encodingCombo.getText();
-				StageSessionPluginSingleton.getInstance().saveEncoding(item);
+				try {
+					StageSessionPluginSingleton.getInstance()
+							.saveEncoding(item);
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
 			}
 		});
 
@@ -484,7 +506,8 @@ public class StageView {
 		if (currentSelectedModuleGui == null) {
 			return;
 		}
-		String script = handler.genereateScript(currentSelectedModuleGui, display.getActiveShell());
+		String script = handler.genereateScript(currentSelectedModuleGui,
+				display.getActiveShell());
 		if (script == null) {
 			return;
 		}
@@ -508,7 +531,8 @@ public class StageView {
 		if (currentSelectedModuleGui == null) {
 			return null;
 		}
-		String script = handler.genereateScript(currentSelectedModuleGui, display.getActiveShell());
+		String script = handler.genereateScript(currentSelectedModuleGui,
+				display.getActiveShell());
 		return script;
 	}
 }

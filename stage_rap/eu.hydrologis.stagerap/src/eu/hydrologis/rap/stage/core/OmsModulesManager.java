@@ -20,7 +20,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -28,6 +30,7 @@ import oms3.Access;
 import oms3.ComponentAccess;
 import oms3.annotations.Description;
 import oms3.annotations.Label;
+import oms3.annotations.Name;
 import oms3.annotations.Range;
 import oms3.annotations.Status;
 import oms3.annotations.UI;
@@ -35,6 +38,7 @@ import oms3.annotations.Unit;
 import oms3.util.Components;
 import eu.hydrologis.rap.stage.StageSessionPluginSingleton;
 import eu.hydrologis.rap.stage.utils.AnnotationUtilities;
+import eu.hydrologis.rap.stage.utils.ResourceFinder;
 import eu.hydrologis.rap.stage.utils.StageConstants;
 import eu.hydrologis.rap.stage.utils.StageUtils;
 
@@ -269,13 +273,65 @@ public class OmsModulesManager {
 				.getClassLoader());
 
 		List<Class<?>> classesList = new ArrayList<Class<?>>();
-		List<Class<?>> allComponents = new ArrayList<Class<?>>();
-		try {
-			allComponents = Components
-					.getComponentClasses(jarClassloader, urls);
-			classesList.addAll(allComponents);
-		} catch (Throwable e) {
-			e.printStackTrace();
+
+		jarClassloader = new URLClassLoader(urls, this.getClass()
+				.getClassLoader());
+
+		for (URL url : urlList) {
+			ResourceFinder finder = new ResourceFinder("META-INF/", url);
+			Map<String, Properties> servicesList = finder
+					.mapAllProperties("services");
+			Set<Entry<String, Properties>> servicesEntrySets = servicesList
+					.entrySet();
+			for (Entry<String, Properties> serviceEntry : servicesEntrySets) {
+				Properties properties = serviceEntry.getValue();
+				Set<Entry<Object, Object>> entrySet = properties.entrySet();
+				for (Entry<Object, Object> entry : entrySet) {
+					String className = entry.getKey().toString();
+					// Avoid loading of oms modules, load only the file based
+					// modules
+					String simpleName = className;
+					int lastDot = simpleName.lastIndexOf(".");
+					if (lastDot != -1) {
+						simpleName = simpleName.substring(lastDot + 1);
+					}
+					if (simpleName.startsWith("Oms")) {
+						continue;
+					}
+
+					Class<?> possibleModulesClass = null;
+					try {
+						possibleModulesClass = Class.forName(className, true,
+								jarClassloader);
+					} catch (Exception e) {
+						// ignore and try to gather as much as possible
+					}
+					if (possibleModulesClass != null) {
+						// extract only the ones properly annotated
+						Name name = possibleModulesClass
+								.getAnnotation(Name.class);
+						if (name != null) {
+							classesList.add(possibleModulesClass);
+						}
+					}
+				}
+			}
+		}
+
+		if (classesList.size() == 0) {
+			// try the old and slow way
+			try {
+				System.out.println("URLS TO LOAD:");
+				for (URL url : urls) {
+					System.out.println(url.toExternalForm());
+				}
+				List<Class<?>> allComponents = new ArrayList<Class<?>>();
+				allComponents = Components.getComponentClasses(jarClassloader,
+						urls);
+				classesList.addAll(allComponents);
+			} catch (Throwable e) {
+				e.printStackTrace();
+			}
 		}
 
 		// clean up html docs in config area, it will be redone

@@ -44,7 +44,11 @@ public class StageEntryPoint extends AbstractEntryPoint {
 	@Override
 	protected void createContents(final Composite parent) {
 		StageView view = new StageView();
-		view.createPartControl(Display.getCurrent(), parent);
+		try {
+			view.createPartControl(Display.getCurrent(), parent);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 
 		// File file = new File(".");
 		// System.out.println(file.getAbsolutePath());
