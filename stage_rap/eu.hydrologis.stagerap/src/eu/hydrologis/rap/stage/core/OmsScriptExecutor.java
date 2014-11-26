@@ -26,9 +26,9 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import oms3.CLI;
-import eu.hydrologis.rap.stage.StagePluginSingleton;
+import eu.hydrologis.rap.stage.StageSessionPluginSingleton;
 import eu.hydrologis.rap.stage.utils.FileUtilities;
-import eu.hydrologis.rap.stage.utils.OmsBoxConstants;
+import eu.hydrologis.rap.stage.utils.StageConstants;
 
 /**
  * Executor of OMS scripts.
@@ -50,14 +50,14 @@ public class OmsScriptExecutor {
         /*
          * get java exec
          */
-        javaFile = StagePluginSingleton.getInstance().getApplicationJava();
+        javaFile = StageSessionPluginSingleton.getInstance().getApplicationJava();
         if (!javaFile.equals("java")) {
             javaFile = "\"" + javaFile + "\"";
         }
         /*
          * get libraries
          */
-        String classpathJars = StagePluginSingleton.getInstance().getClasspathJars();
+        String classpathJars = StageSessionPluginSingleton.getInstance().getClasspathJars();
         classPath = classpathJars;
     }
 
@@ -68,7 +68,7 @@ public class OmsScriptExecutor {
      * @param internalStream
      * @param errorStream
      * @param loggerLevelGui the log level as presented in the GUI, can be OFF|ON. This is not the OMS logger level, which 
-     *                              in stead has to be picked from the {@link OmsBoxConstants#LOGLEVELS_MAP}.
+     *                              in stead has to be picked from the {@link StageConstants#LOGLEVELS_MAP}.
      * @param ramLevel the heap size to use in megabytes.
      * @param encoding 
      * @return the process.
@@ -77,7 +77,7 @@ public class OmsScriptExecutor {
     public Process exec( String script, final PrintStream internalStream, final PrintStream errorStream, String loggerLevelGui,
             String ramLevel, String encoding ) throws Exception {
         if (loggerLevelGui == null)
-            loggerLevelGui = OmsBoxConstants.LOGLEVEL_GUI_OFF;
+            loggerLevelGui = StageConstants.LOGLEVEL_GUI_OFF;
 
         File scriptFile = new File(script);
         if (!scriptFile.exists()) {
@@ -174,11 +174,11 @@ public class OmsScriptExecutor {
         // environment.put("CLASSPATH", classPath);
 
         final Process process = processBuilder.start();
-        internalStream.println("Process started: " + OmsBoxConstants.dateTimeFormatterYYYYMMDDHHMMSS.format(new Date()));
+        internalStream.println("Process started: " + StageConstants.dateTimeFormatterYYYYMMDDHHMMSS.format(new Date()));
         internalStream.println("");
 
         // command launched
-        if (loggerLevelGui.equals(OmsBoxConstants.LOGLEVEL_GUI_ON)) {
+        if (loggerLevelGui.equals(StageConstants.LOGLEVEL_GUI_ON)) {
             internalStream.println("------------------------------>8----------------------------");
             internalStream.println("Launching command: ");
             internalStream.println("------------------");
@@ -240,7 +240,7 @@ public class OmsScriptExecutor {
                 }
                 internalStream.println("");
                 internalStream.println("");
-                internalStream.println("Process finished: " + OmsBoxConstants.dateTimeFormatterYYYYMMDDHHMMSS.format(new Date()));
+                internalStream.println("Process finished: " + StageConstants.dateTimeFormatterYYYYMMDDHHMMSS.format(new Date()));
             };
         }.start();
 

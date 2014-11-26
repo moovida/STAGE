@@ -49,9 +49,9 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 
-import eu.hydrologis.rap.stage.StagePluginSingleton;
+import eu.hydrologis.rap.stage.StageSessionPluginSingleton;
 import eu.hydrologis.rap.stage.core.FieldData;
-import eu.hydrologis.rap.stage.utils.OmsBoxConstants;
+import eu.hydrologis.rap.stage.utils.StageConstants;
 
 /**
  * Class representing an swt files input list.
@@ -84,7 +84,7 @@ public class GuiFilespathListInputField extends ModuleGuiElement implements Modi
 
         Table table = tableViewer.getTable();
         GridData controlGD = new GridData(SWT.FILL, SWT.FILL, true, true);
-        controlGD.verticalSpan = OmsBoxConstants.LISTHEIGHT;
+        controlGD.verticalSpan = StageConstants.LISTHEIGHT;
         table.setLayoutData(controlGD);
 
         tableViewer.setContentProvider(new ArrayContentProvider());
@@ -93,7 +93,7 @@ public class GuiFilespathListInputField extends ModuleGuiElement implements Modi
         table.setLinesVisible(true);
         tableViewer.setInput(Arrays.asList("")); //$NON-NLS-1$
 
-        for( int i = 0; i < OmsBoxConstants.LISTHEIGHT; i++ ) {
+        for( int i = 0; i < StageConstants.LISTHEIGHT; i++ ) {
             Label dummyLabel = new Label(parent, SWT.NONE);
             dummyLabel.setLayoutData(new GridData(SWT.END, SWT.CENTER, false, true));
         }
@@ -193,7 +193,7 @@ public class GuiFilespathListInputField extends ModuleGuiElement implements Modi
                         File file = new File(files[0]);
                         if (file.exists()) {
                             addFileToViewer(file);
-                            StagePluginSingleton.getInstance().setLastFolderChosen(file.getParentFile().getAbsolutePath());
+                            StageSessionPluginSingleton.getInstance().setLastFolderChosen(file.getParentFile().getAbsolutePath());
                         }
                     }
                 }

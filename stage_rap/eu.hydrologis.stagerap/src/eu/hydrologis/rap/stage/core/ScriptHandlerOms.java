@@ -18,9 +18,9 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.rap.rwt.widgets.DialogCallback;
 import org.eclipse.swt.widgets.Shell;
 
-import eu.hydrologis.rap.stage.StagePluginSingleton;
-import eu.hydrologis.rap.stage.utils.OmsBoxConstants;
-import eu.hydrologis.rap.stage.utils.OmsBoxUtils;
+import eu.hydrologis.rap.stage.StageSessionPluginSingleton;
+import eu.hydrologis.rap.stage.utils.StageConstants;
+import eu.hydrologis.rap.stage.utils.StageUtils;
 import eu.hydrologis.rap.stage.utilsrap.MessageDialogUtil;
 import eu.hydrologis.rap.stage.widgets.ModuleGui;
 import eu.hydrologis.rap.stage.widgets.ModuleGuiElement;
@@ -92,9 +92,9 @@ public class ScriptHandlerOms {
 			return null;
 		}
 
-		String loggerLevelGui = StagePluginSingleton.getInstance()
+		String loggerLevelGui = StageSessionPluginSingleton.getInstance()
 				.retrieveSavedLogLevel();
-		String loggerLevelOms = OmsBoxConstants.LOGLEVELS_MAP
+		String loggerLevelOms = StageConstants.LOGLEVELS_MAP
 				.get(loggerLevelGui);
 		StringBuilder scriptSb = new StringBuilder();
 		scriptSb.append("def simulation = new oms3.SimBuilder(logging:'"
@@ -499,12 +499,12 @@ public class ScriptHandlerOms {
 		if (field.otherModule == null && field.fieldValue != null
 				&& field.fieldValue.length() > 0) {
 			String TMPQUOTE = QUOTE;
-			if (OmsBoxUtils.isFieldExceptional(field)) {
+			if (StageUtils.isFieldExceptional(field)) {
 				TMPQUOTE = "";
 			}
 			if (field.guiHints != null
 					&& field.guiHints
-							.contains(OmsBoxConstants.MULTILINE_UI_HINT)) {
+							.contains(StageConstants.MULTILINE_UI_HINT)) {
 				TMPQUOTE = "\"\"\"";
 			}
 			sb.append("\t");
@@ -525,7 +525,7 @@ public class ScriptHandlerOms {
 			for (FieldData fieldData : inputsList) {
 				if (fieldData.isSimpleType()) {
 					field2ParameterDescription(fieldData, otherModule, sb);
-				} else if (OmsBoxUtils.isFieldExceptional(fieldData)) {
+				} else if (StageUtils.isFieldExceptional(fieldData)) {
 					field2ParameterDescription(fieldData, otherModule, sb);
 				}
 			}

@@ -28,7 +28,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 
 import eu.hydrologis.rap.stage.core.FieldData;
-import eu.hydrologis.rap.stage.utils.OmsBoxConstants;
+import eu.hydrologis.rap.stage.utils.StageConstants;
 
 /**
  * Class representing a gui for combobox choice.
@@ -60,8 +60,8 @@ public class GuiComboField extends ModuleGuiElement {
         String[] guiHintsSplit = data.guiHints.split(";");
         String[] imtemsSplit = new String[]{" - "};
         for( String guiHint : guiHintsSplit ) {
-            if (guiHint.startsWith(OmsBoxConstants.COMBO_UI_HINT)) {
-                String items = guiHint.replaceFirst(OmsBoxConstants.COMBO_UI_HINT, "").replaceFirst(":", "").trim();
+            if (guiHint.startsWith(StageConstants.COMBO_UI_HINT)) {
+                String items = guiHint.replaceFirst(StageConstants.COMBO_UI_HINT, "").replaceFirst(":", "").trim();
                 imtemsSplit = items.split(",");
                 break;
             }

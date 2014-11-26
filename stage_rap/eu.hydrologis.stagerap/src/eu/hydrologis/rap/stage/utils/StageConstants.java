@@ -22,7 +22,11 @@ import java.text.SimpleDateFormat;
 import java.util.HashMap;
 
 
-public class OmsBoxConstants {
+public class StageConstants {
+	public static String LIBS_MAIN_FOLDER_NAME = "spatialtoolbox";
+	public static String LIBS_SUBFOLDER_NAME = "libs";
+	public static String MODULES_SUBFOLDER_NAME = "modules";
+	
     public static final String CATEGORY_OTHERS = "Others";
     public static final String RASTERPROCESSING = "Raster Processing";
     public static final String VECTORPROCESSING = "Vector Processing";

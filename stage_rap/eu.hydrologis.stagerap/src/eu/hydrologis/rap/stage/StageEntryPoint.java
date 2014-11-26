@@ -45,15 +45,17 @@ public class StageEntryPoint extends AbstractEntryPoint {
 	protected void createContents(final Composite parent) {
 		StageView view = new StageView();
 		view.createPartControl(Display.getCurrent(), parent);
-		
-		
-//		parent.setLayout(ExampleUtil.createMainLayout(3));
-//		Control controlsColumn = createControlsColumn(parent);
-//		controlsColumn.setLayoutData(ExampleUtil.createFillData());
-//		Control serverColumn = createLogColumn(parent);
-//		serverColumn.setLayoutData(ExampleUtil.createFillData());
-//		Control infoColumn = createInfoColumn(parent);
-//		infoColumn.setLayoutData(ExampleUtil.createFillData());
+
+		// File file = new File(".");
+		// System.out.println(file.getAbsolutePath());
+
+		// parent.setLayout(ExampleUtil.createMainLayout(3));
+		// Control controlsColumn = createControlsColumn(parent);
+		// controlsColumn.setLayoutData(ExampleUtil.createFillData());
+		// Control serverColumn = createLogColumn(parent);
+		// serverColumn.setLayoutData(ExampleUtil.createFillData());
+		// Control infoColumn = createInfoColumn(parent);
+		// infoColumn.setLayoutData(ExampleUtil.createFillData());
 	}
 
 	private Control createControlsColumn(Composite parent) {
@@ -76,7 +78,7 @@ public class StageEntryPoint extends AbstractEntryPoint {
 				| SWT.BORDER);
 		logText.setText(INITIAL_TEXT);
 		logText.setLayoutData(ExampleUtil.createFillData());
-		
+
 		File f = new File(".");
 		File[] listFiles = f.listFiles();
 		StringBuilder sb = new StringBuilder();
@@ -84,7 +86,7 @@ public class StageEntryPoint extends AbstractEntryPoint {
 			sb.append(file.getName()).append("\n");
 		}
 		logText.setText(sb.toString());
-		
+
 		createClearButton(column);
 		return column;
 	}
@@ -189,7 +191,7 @@ public class StageEntryPoint extends AbstractEntryPoint {
 
 	private void createDownloadButton(Composite parent) {
 		final File f = new File("/home/hydrologis/src.zip");
-		
+
 		Button button = new Button(parent, SWT.PUSH);
 		button.setLayoutData(ExampleUtil.createHorzFillData());
 		button.setText("Download " + f.getName());
@@ -199,11 +201,11 @@ public class StageEntryPoint extends AbstractEntryPoint {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				try {
-					new DownloadUtils().sendDownload(parentShell,f);
+					new DownloadUtils().sendDownload(parentShell, f);
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}
-				
+
 			}
 		});
 	}

@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import eu.hydrologis.rap.stage.core.FieldData;
-import eu.hydrologis.rap.stage.utils.OmsBoxConstants;
+import eu.hydrologis.rap.stage.utils.StageConstants;
 
 /**
  * A factory for guis.
@@ -37,9 +37,9 @@ public class ModuleGuiFactory {
         List<ModuleGuiElement> guiElements = new ArrayList<ModuleGuiElement>();
         if (inputData != null)
             if (isAtLeastOneAssignable(inputData.fieldType, String.class)) {
-                if (inputData.guiHints != null && inputData.guiHints.startsWith(OmsBoxConstants.MULTILINE_UI_HINT)) {
+                if (inputData.guiHints != null && inputData.guiHints.startsWith(StageConstants.MULTILINE_UI_HINT)) {
                     handleTextArea(inputData, row, guiElements);
-                } else if (inputData.guiHints != null && inputData.guiHints.startsWith(OmsBoxConstants.COMBO_UI_HINT)) {
+                } else if (inputData.guiHints != null && inputData.guiHints.startsWith(StageConstants.COMBO_UI_HINT)) {
                     handleComboField(inputData, row, guiElements);
                 } else {
                     handleTextField(inputData, row, guiElements);
@@ -157,7 +157,7 @@ public class ModuleGuiFactory {
         boolean isBold = false;
         String guiHints = data.guiHints;
         if (guiHints != null) {
-            if (guiHints.contains(OmsBoxConstants.FILEOUT_UI_HINT) || guiHints.contains(OmsBoxConstants.FOLDEROUT_UI_HINT)) {
+            if (guiHints.contains(StageConstants.FILEOUT_UI_HINT) || guiHints.contains(StageConstants.FOLDEROUT_UI_HINT)) {
                 isBold = true;
             }
         }
@@ -197,8 +197,8 @@ public class ModuleGuiFactory {
         GuiLabel label = new GuiLabel(data, labelConstraint, false);
         guiElements.add(label);
 
-        String hint = extractSingleGuiHint(OmsBoxConstants.MULTILINE_UI_HINT, data.guiHints);
-        String rowsStr = hint.replaceFirst(OmsBoxConstants.MULTILINE_UI_HINT, "");
+        String hint = extractSingleGuiHint(StageConstants.MULTILINE_UI_HINT, data.guiHints);
+        String rowsStr = hint.replaceFirst(StageConstants.MULTILINE_UI_HINT, "");
         row[0] = row[0] + 1;
         sb = new StringBuilder();
         sb.append("cell ");
@@ -502,8 +502,8 @@ public class ModuleGuiFactory {
         sb.append(" ");
         sb.append(COLUMNS);
         sb.append(" ");
-        sb.append(OmsBoxConstants.LISTHEIGHT);
-        row[0] = row[0] + OmsBoxConstants.LISTHEIGHT;
+        sb.append(StageConstants.LISTHEIGHT);
+        row[0] = row[0] + StageConstants.LISTHEIGHT;
         sb.append(", growx, growy");
         String textConstraint = sb.toString();
 

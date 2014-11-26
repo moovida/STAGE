@@ -9,7 +9,7 @@
  */
 package eu.hydrologis.rap.stage.core;
 
-import eu.hydrologis.rap.stage.utils.OmsBoxConstants;
+import eu.hydrologis.rap.stage.utils.StageConstants;
 
 /**
  * The data that represent a field.
@@ -63,14 +63,14 @@ public class FieldData {
      */
     public boolean isProcessingRegionRelated() {
         if (guiHints != null) {
-            if (guiHints.contains(OmsBoxConstants.PROCESS_NORTH_UI_HINT) || //
-                    guiHints.contains(OmsBoxConstants.PROCESS_SOUTH_UI_HINT) || //
-                    guiHints.contains(OmsBoxConstants.PROCESS_WEST_UI_HINT) || //
-                    guiHints.contains(OmsBoxConstants.PROCESS_EAST_UI_HINT) || //
-                    guiHints.contains(OmsBoxConstants.PROCESS_COLS_UI_HINT) || //
-                    guiHints.contains(OmsBoxConstants.PROCESS_ROWS_UI_HINT) || //
-                    guiHints.contains(OmsBoxConstants.PROCESS_XRES_UI_HINT) || //
-                    guiHints.contains(OmsBoxConstants.PROCESS_YRES_UI_HINT)) {
+            if (guiHints.contains(StageConstants.PROCESS_NORTH_UI_HINT) || //
+                    guiHints.contains(StageConstants.PROCESS_SOUTH_UI_HINT) || //
+                    guiHints.contains(StageConstants.PROCESS_WEST_UI_HINT) || //
+                    guiHints.contains(StageConstants.PROCESS_EAST_UI_HINT) || //
+                    guiHints.contains(StageConstants.PROCESS_COLS_UI_HINT) || //
+                    guiHints.contains(StageConstants.PROCESS_ROWS_UI_HINT) || //
+                    guiHints.contains(StageConstants.PROCESS_XRES_UI_HINT) || //
+                    guiHints.contains(StageConstants.PROCESS_YRES_UI_HINT)) {
                 return true;
             }
         }

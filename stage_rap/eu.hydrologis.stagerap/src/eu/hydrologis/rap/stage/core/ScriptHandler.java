@@ -17,9 +17,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.eclipse.rap.rwt.widgets.DialogCallback;
 import org.eclipse.swt.widgets.Shell;
 
-import eu.hydrologis.rap.stage.StagePluginSingleton;
-import eu.hydrologis.rap.stage.utils.OmsBoxConstants;
-import eu.hydrologis.rap.stage.utils.OmsBoxUtils;
+import eu.hydrologis.rap.stage.StageSessionPluginSingleton;
+import eu.hydrologis.rap.stage.utils.StageConstants;
+import eu.hydrologis.rap.stage.utils.StageUtils;
 import eu.hydrologis.rap.stage.utilsrap.MessageDialogUtil;
 import eu.hydrologis.rap.stage.widgets.ModuleGui;
 import eu.hydrologis.rap.stage.widgets.ModuleGuiElement;
@@ -92,9 +92,9 @@ public class ScriptHandler {
 			return null;
 		}
 
-		String loggerLevelGui = StagePluginSingleton.getInstance()
+		String loggerLevelGui = StageSessionPluginSingleton.getInstance()
 				.retrieveSavedLogLevel();
-		String loggerLevelOms = OmsBoxConstants.LOGLEVELS_MAP
+		String loggerLevelOms = StageConstants.LOGLEVELS_MAP
 				.get(loggerLevelGui);
 		StringBuilder scriptSb = new StringBuilder();
 		scriptSb.append("import " + ORG_JGRASSTOOLS_MODULES + ".*\n\n");
@@ -186,21 +186,21 @@ public class ScriptHandler {
 			OmsScriptExecutor executor = new OmsScriptExecutor();
 			executor.addProcessListener(new IProcessListener() {
 				public void onProcessStopped() {
-					StagePluginSingleton.getInstance().cleanProcess(scriptId);
+					StageSessionPluginSingleton.getInstance().cleanProcess(scriptId);
 					// loadOutputMaps();
 				}
 
 			});
-			String loggerLevelGui = StagePluginSingleton.getInstance()
+			String loggerLevelGui = StageSessionPluginSingleton.getInstance()
 					.retrieveSavedLogLevel();
-			String ramLevel = String.valueOf(StagePluginSingleton.getInstance()
+			String ramLevel = String.valueOf(StageSessionPluginSingleton.getInstance()
 					.retrieveSavedHeap());
-			String encoding = StagePluginSingleton.getInstance()
+			String encoding = StageSessionPluginSingleton.getInstance()
 					.retrieveSavedEncoding();
 			Process process = executor.exec(script, internalStream,
 					errorStream, loggerLevelGui, ramLevel, encoding);
 
-			StagePluginSingleton.getInstance().addProcess(process, scriptId);
+			StageSessionPluginSingleton.getInstance().addProcess(process, scriptId);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -492,12 +492,12 @@ public class ScriptHandler {
 				&& field.fieldValue.length() > 0) {
 			boolean isString = field.fieldType.endsWith("String");
 			String TMPQUOTE = QUOTE;
-			if (OmsBoxUtils.isFieldExceptional(field)) {
+			if (StageUtils.isFieldExceptional(field)) {
 				TMPQUOTE = "";
 			}
 			if (field.guiHints != null
 					&& field.guiHints
-							.contains(OmsBoxConstants.MULTILINE_UI_HINT)) {
+							.contains(StageConstants.MULTILINE_UI_HINT)) {
 				TMPQUOTE = "\"\"\"";
 			}
 			sb.append(variableNamesMap.get(mainModuleDescription));
@@ -517,7 +517,7 @@ public class ScriptHandler {
 			for (FieldData fieldData : inputsList) {
 				if (fieldData.isSimpleType()) {
 					field2ParameterDescription(fieldData, otherModule, sb);
-				} else if (OmsBoxUtils.isFieldExceptional(fieldData)) {
+				} else if (StageUtils.isFieldExceptional(fieldData)) {
 					field2ParameterDescription(fieldData, otherModule, sb);
 				}
 			}

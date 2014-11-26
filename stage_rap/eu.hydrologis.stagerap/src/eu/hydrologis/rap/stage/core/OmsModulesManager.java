@@ -33,10 +33,10 @@ import oms3.annotations.Status;
 import oms3.annotations.UI;
 import oms3.annotations.Unit;
 import oms3.util.Components;
-import eu.hydrologis.rap.stage.StagePluginSingleton;
+import eu.hydrologis.rap.stage.StageSessionPluginSingleton;
 import eu.hydrologis.rap.stage.utils.AnnotationUtilities;
-import eu.hydrologis.rap.stage.utils.OmsBoxConstants;
-import eu.hydrologis.rap.stage.utils.OmsBoxUtils;
+import eu.hydrologis.rap.stage.utils.StageConstants;
+import eu.hydrologis.rap.stage.utils.StageUtils;
 
 /**
  * Singleton in which the modules discovery and load/unload occurrs.
@@ -69,7 +69,7 @@ public class OmsModulesManager {
 	public List<String> getModulesJars(boolean onlyModules) {
 		List<String> jarsPathList = new ArrayList<String>();
 		// add jars from preferences
-		String[] retrieveSavedJars = StagePluginSingleton.getInstance()
+		String[] retrieveSavedJars = StageSessionPluginSingleton.getInstance()
 				.retrieveSavedJars();
 		for (String jar : retrieveSavedJars) {
 			addJar(jar);
@@ -79,10 +79,10 @@ public class OmsModulesManager {
 		/*
 		 * load modules
 		 */
-		File modulesFolder = StagePluginSingleton.getInstance()
+		File modulesFolder = StageSessionPluginSingleton.getInstance()
 				.getModulesFolders();
 		if (modulesFolder != null) {
-			StagePluginSingleton.getInstance().log(
+			StageSessionPluginSingleton.getInstance().log(
 					"Searching module libraries in: "
 							+ modulesFolder.getAbsolutePath());
 			File[] extraJars = modulesFolder.listFiles(new FilenameFilter() {
@@ -99,10 +99,10 @@ public class OmsModulesManager {
 		 * load libs
 		 */
 		if (!onlyModules) {
-			File libsFolder = StagePluginSingleton.getInstance()
+			File libsFolder = StageSessionPluginSingleton.getInstance()
 					.getLibsFolders();
 			if (libsFolder != null) {
-				StagePluginSingleton.getInstance().log(
+				StageSessionPluginSingleton.getInstance().log(
 						"Searching libs in: " + libsFolder.getAbsolutePath());
 				File[] extraJars = libsFolder.listFiles(new FilenameFilter() {
 					public boolean accept(File dir, String name) {
@@ -279,7 +279,7 @@ public class OmsModulesManager {
 		}
 
 		// clean up html docs in config area, it will be redone
-		OmsBoxUtils.cleanModuleDocumentation();
+		StageUtils.cleanModuleDocumentation();
 
 		for (Class<?> moduleClass : classesList) {
 			try {
@@ -288,13 +288,13 @@ public class OmsModulesManager {
 				UI uiHints = moduleClass.getAnnotation(UI.class);
 				if (uiHints != null) {
 					String uiHintStr = uiHints.value();
-					if (uiHintStr.contains(OmsBoxConstants.HIDE_UI_HINT)) {
+					if (uiHintStr.contains(StageConstants.HIDE_UI_HINT)) {
 						continue;
 					}
 				}
 
 				Label category = moduleClass.getAnnotation(Label.class);
-				String categoryStr = OmsBoxConstants.CATEGORY_OTHERS;
+				String categoryStr = StageConstants.CATEGORY_OTHERS;
 				if (category != null && categoryStr.trim().length() > 1) {
 					categoryStr = category.value();
 				}
@@ -320,7 +320,7 @@ public class OmsModulesManager {
 				try {
 					// generate the html docs
 					String className = module.getClassName();
-					OmsBoxUtils.generateModuleDocumentation(className);
+					StageUtils.generateModuleDocumentation(className);
 				} catch (Exception e) {
 					// ignore doc if it breaks
 				}
@@ -337,27 +337,27 @@ public class OmsModulesManager {
 					addOutput(access, module);
 				}
 
-				if (categoryStr.equals(OmsBoxConstants.GRIDGEOMETRYREADER)) {
+				if (categoryStr.equals(StageConstants.GRIDGEOMETRYREADER)) {
 					gridReaders.add(module);
-				} else if (categoryStr.equals(OmsBoxConstants.RASTERREADER)) {
+				} else if (categoryStr.equals(StageConstants.RASTERREADER)) {
 					rasterReaders.add(module);
-				} else if (categoryStr.equals(OmsBoxConstants.RASTERWRITER)) {
+				} else if (categoryStr.equals(StageConstants.RASTERWRITER)) {
 					rasterWriters.add(module);
-				} else if (categoryStr.equals(OmsBoxConstants.VECTORREADER)) {
+				} else if (categoryStr.equals(StageConstants.VECTORREADER)) {
 					featureReaders.add(module);
-				} else if (categoryStr.equals(OmsBoxConstants.VECTORWRITER)) {
+				} else if (categoryStr.equals(StageConstants.VECTORWRITER)) {
 					featureWriters.add(module);
-				} else if (categoryStr.equals(OmsBoxConstants.GENERICREADER)) {
+				} else if (categoryStr.equals(StageConstants.GENERICREADER)) {
 					// ignore for now
-				} else if (categoryStr.equals(OmsBoxConstants.GENERICWRITER)) {
+				} else if (categoryStr.equals(StageConstants.GENERICWRITER)) {
 					// ignore for now
-				} else if (categoryStr.equals(OmsBoxConstants.HASHMAP_READER)) {
+				} else if (categoryStr.equals(StageConstants.HASHMAP_READER)) {
 					hashMapReaders.add(module);
-				} else if (categoryStr.equals(OmsBoxConstants.HASHMAP_WRITER)) {
+				} else if (categoryStr.equals(StageConstants.HASHMAP_WRITER)) {
 					hashMapWriters.add(module);
-				} else if (categoryStr.equals(OmsBoxConstants.LIST_READER)) {
+				} else if (categoryStr.equals(StageConstants.LIST_READER)) {
 					listReaders.add(module);
-				} else if (categoryStr.equals(OmsBoxConstants.LIST_WRITER)) {
+				} else if (categoryStr.equals(StageConstants.LIST_WRITER)) {
 					listWriters.add(module);
 				} else {
 					List<ModuleDescription> modulesList4Category = modulesMap

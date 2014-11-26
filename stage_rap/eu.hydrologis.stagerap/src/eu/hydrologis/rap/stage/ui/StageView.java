@@ -46,13 +46,13 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 
-import eu.hydrologis.rap.stage.StagePluginSingleton;
+import eu.hydrologis.rap.stage.StageSessionPluginSingleton;
 import eu.hydrologis.rap.stage.core.ModuleDescription;
 import eu.hydrologis.rap.stage.core.ModuleDescription.Status;
 import eu.hydrologis.rap.stage.core.OmsModulesManager;
 import eu.hydrologis.rap.stage.core.ScriptHandler;
 import eu.hydrologis.rap.stage.utils.ImageCache;
-import eu.hydrologis.rap.stage.utils.OmsBoxConstants;
+import eu.hydrologis.rap.stage.utils.StageConstants;
 import eu.hydrologis.rap.stage.utils.ViewerFolder;
 import eu.hydrologis.rap.stage.utils.ViewerModule;
 import eu.hydrologis.rap.stage.widgets.ModuleGui;
@@ -322,11 +322,11 @@ public class StageView {
 		final Combo heapCombo = new Combo(quickSettingsGroup, SWT.DROP_DOWN);
 		heapCombo
 				.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-		heapCombo.setItems(OmsBoxConstants.HEAPLEVELS);
-		int savedHeapLevel = StagePluginSingleton.getInstance()
+		heapCombo.setItems(StageConstants.HEAPLEVELS);
+		int savedHeapLevel = StageSessionPluginSingleton.getInstance()
 				.retrieveSavedHeap();
-		for (int i = 0; i < OmsBoxConstants.HEAPLEVELS.length; i++) {
-			if (OmsBoxConstants.HEAPLEVELS[i].equals(String
+		for (int i = 0; i < StageConstants.HEAPLEVELS.length; i++) {
+			if (StageConstants.HEAPLEVELS[i].equals(String
 					.valueOf(savedHeapLevel))) {
 				heapCombo.select(i);
 				break;
@@ -335,7 +335,7 @@ public class StageView {
 		heapCombo.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
 				String item = heapCombo.getText();
-				StagePluginSingleton.getInstance().saveHeap(
+				StageSessionPluginSingleton.getInstance().saveHeap(
 						Integer.parseInt(item));
 			}
 		});
@@ -348,7 +348,7 @@ public class StageView {
 					return;
 				}
 				if (item.length() > 0) {
-					StagePluginSingleton.getInstance().saveHeap(
+					StageSessionPluginSingleton.getInstance().saveHeap(
 							Integer.parseInt(item));
 				}
 			}
@@ -361,11 +361,11 @@ public class StageView {
 		final Combo logCombo = new Combo(quickSettingsGroup, SWT.DROP_DOWN
 				| SWT.READ_ONLY);
 		logCombo.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-		logCombo.setItems(OmsBoxConstants.LOGLEVELS_GUI);
-		String savedLogLevel = StagePluginSingleton.getInstance()
+		logCombo.setItems(StageConstants.LOGLEVELS_GUI);
+		String savedLogLevel = StageSessionPluginSingleton.getInstance()
 				.retrieveSavedLogLevel();
-		for (int i = 0; i < OmsBoxConstants.LOGLEVELS_GUI.length; i++) {
-			if (OmsBoxConstants.LOGLEVELS_GUI[i].equals(savedLogLevel)) {
+		for (int i = 0; i < StageConstants.LOGLEVELS_GUI.length; i++) {
+			if (StageConstants.LOGLEVELS_GUI[i].equals(savedLogLevel)) {
 				logCombo.select(i);
 				break;
 			}
@@ -373,7 +373,7 @@ public class StageView {
 		logCombo.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
 				String item = logCombo.getText();
-				StagePluginSingleton.getInstance().saveLogLevel(item);
+				StageSessionPluginSingleton.getInstance().saveLogLevel(item);
 			}
 		});
 
@@ -394,7 +394,7 @@ public class StageView {
 		encodingCombo.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true,
 				false));
 		encodingCombo.setItems(charsetArray);
-		String savedEncoding = StagePluginSingleton.getInstance()
+		String savedEncoding = StageSessionPluginSingleton.getInstance()
 				.retrieveSavedEncoding();
 		for (int i = 0; i < charsetArray.length; i++) {
 			if (charsetArray[i].equals(savedEncoding)) {
@@ -405,7 +405,7 @@ public class StageView {
 		encodingCombo.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
 				String item = encodingCombo.getText();
-				StagePluginSingleton.getInstance().saveEncoding(item);
+				StageSessionPluginSingleton.getInstance().saveEncoding(item);
 			}
 		});
 
@@ -492,7 +492,7 @@ public class StageView {
 		String scriptID = currentSelectedModuleGui.getModuleDescription()
 				.getName()
 				+ " "
-				+ OmsBoxConstants.dateTimeFormatterYYYYMMDDHHMMSS
+				+ StageConstants.dateTimeFormatterYYYYMMDDHHMMSS
 						.format(new Date());
 		handler.runModule(scriptID, script);
 	}

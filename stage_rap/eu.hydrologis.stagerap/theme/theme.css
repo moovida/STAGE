@@ -1,0 +1,158 @@
+/*******************************************************************************
+ * Copyright (c) 2011, 2012 EclipseSource and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *    EclipseSource - initial API and implementation
+ ******************************************************************************/
+
+/* Theme contribution to RAP default theme for Examples demo */
+
+.mainshell {
+  background-color: #fff;
+}
+
+.header {
+  background-color: #31619C;
+}
+
+.footer {
+  background-color : #e5e5e5;
+  border: 1px solid #bdbdbd;
+}
+
+Composite.mainContentArea {
+  background-color: #fff;
+}
+
+Composite.centerArea {
+  background-color: #fff;
+}
+
+Composite.nav-bar {
+  background-color: #34332F;
+}
+
+Composite.infobox {
+  background-color: #34332F;
+  border-radius: 0 50px 0 50px;
+}
+
+Composite.navigation {
+  background-color: transparent;
+}
+
+ToolBar.navigation {
+  font: 14px Verdana, "Lucida Sans", Arial, Helvetica, sans-serif;
+  background-color: #34332F;
+}
+
+ToolItem.navigation {
+  color: #bdbdbd;
+  background-color: #34332F;
+  background-image: none;
+  border-radius: 2px;
+  border: none;
+  padding: 8px;
+  text-shadow: none;
+}
+
+ToolItem.navigation:hover {
+  cursor: pointer;
+  color: white;
+  background-color: transparent;
+  border-radius: 2px;
+  background-image: none;
+  animation: none;
+}
+
+ToolItem.navigation:pressed {
+  padding: 8px 8px 8px 8px;
+}
+
+ToolItem.selected {
+  color: white;
+  border: none;
+  background-color: transparent;
+  background-image: none;
+}
+
+ToolItem.selected:pressed {
+  padding: 8px 8px 8px 8px;
+}
+
+ToolItem-DropDownIcon:hover,
+ToolItem-DropDownIcon.selected {
+  border: none;
+  background-image: url( /theme/images/down.png );
+}
+
+Menu.navigation {
+  background-color: #34332F;
+  color: white;
+  font: 14px Helvetica, Verdana, sans-serif;
+  background-image: none;
+  box-shadow: none;
+  border: none;
+  padding: 0;
+}
+
+MenuItem.navigation {
+  color: #e5e5e5;
+  padding: 10px 0 10px 0px;
+  background-color: #34332F;
+}
+
+MenuItem.navigation:hover {
+  color: #e5e5e5;
+  background-image: none;
+  background-color: #31619C;
+}
+
+Label.heading {
+  font: 16px Helvetica, Verdana, sans-serif;
+  color: #31619C; 
+}
+
+Label.pageHeadline {
+  font: 20px Helvetica, Verdana, sans-serif;
+  color: #31619C; 
+}
+
+Label.title {
+  font: 24px Helvetica, Verdana, sans-serif; 
+  color: #fff;
+}
+
+Label.footerLabel {
+  font: 14px Helvetica, Verdana, sans-serif; 
+}
+
+Label.infobox {
+  color: #e5e5e5;
+}
+
+Label.infobox-heading {
+  font: 16px Helvetica, Verdana, sans-serif;
+  color: #357cd4;
+}
+
+Label.markup {
+  font: 22px Helvetica, Verdana, sans-serif; 
+}
+
+Label.error {
+  color: red;
+}
+
+Text[MULTI].error {
+  border: 1px solid red;
+}
+
+Text[MULTI].error:focused {
+  border: 1px solid red;
+  box-shadow: 0 0 5px red;
+}

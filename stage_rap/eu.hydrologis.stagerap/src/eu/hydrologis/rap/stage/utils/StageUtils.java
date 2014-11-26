@@ -26,7 +26,7 @@ import oms3.annotations.License;
 import oms3.annotations.Name;
 import oms3.annotations.Status;
 import oms3.annotations.Unit;
-import eu.hydrologis.rap.stage.StagePluginSingleton;
+import eu.hydrologis.rap.stage.StageSessionPluginSingleton;
 import eu.hydrologis.rap.stage.core.FieldData;
 import eu.hydrologis.rap.stage.core.OmsModulesManager;
 
@@ -35,8 +35,8 @@ import eu.hydrologis.rap.stage.core.OmsModulesManager;
  * 
  * @author Andrea Antonello (www.hydrologis.com)
  */
-public class OmsBoxUtils {
-    private static final String OMSBOXHTMLDOCS = "omsboxhtmldocs";
+public class StageUtils {
+    private static final String STAGEHTMLDOCS = "stagehtmldocs";
     private static final String NEWLINE = "\n";
     private static final String HTMLNEWLINE = "<br>";
     private static final String DOCSSUFFIX = ".html";
@@ -79,7 +79,7 @@ public class OmsBoxUtils {
     // }
 
     public static boolean isFieldExceptional( FieldData inputData ) {
-        if (inputData.guiHints != null && inputData.guiHints.equals(OmsBoxConstants.FILESPATHLIST_UI_HINT)) {
+        if (inputData.guiHints != null && inputData.guiHints.equals(StageConstants.FILESPATHLIST_UI_HINT)) {
             return true;
         }
         return false;
@@ -93,8 +93,8 @@ public class OmsBoxUtils {
      * @throws Exception
      */
     public static String getModuleDocumentationPath( String moduleClassName ) throws Exception {
-        File configurationsFolder = StagePluginSingleton.getInstance().getConfigurationsFolder();
-        File htmlDocsFolder = new File(configurationsFolder, OMSBOXHTMLDOCS);
+        File configurationsFolder = StageSessionPluginSingleton.getInstance().getConfigurationsFolder();
+        File htmlDocsFolder = new File(configurationsFolder, STAGEHTMLDOCS);
         File htmlDocs = new File(htmlDocsFolder, moduleClassName + ".html");
         if (!htmlDocs.exists()) {
             htmlDocs = new File(htmlDocsFolder, "Oms" + moduleClassName + ".html");
@@ -110,8 +110,8 @@ public class OmsBoxUtils {
      * @throws Exception
      */
     public static void cleanModuleDocumentation() throws Exception {
-        File configurationsFolder = StagePluginSingleton.getInstance().getConfigurationsFolder();
-        File htmlDocsFolder = new File(configurationsFolder, OMSBOXHTMLDOCS);
+        File configurationsFolder = StageSessionPluginSingleton.getInstance().getConfigurationsFolder();
+        File htmlDocsFolder = new File(configurationsFolder, STAGEHTMLDOCS);
         if (htmlDocsFolder.exists()) {
             FileUtilities.deleteFileOrDir(htmlDocsFolder);
         }
@@ -287,8 +287,8 @@ public class OmsBoxUtils {
 
         sb.append("</body></html>");
 
-        File configurationsFolder = StagePluginSingleton.getInstance().getConfigurationsFolder();
-        File htmlDocsFolder = new File(configurationsFolder, OMSBOXHTMLDOCS);
+        File configurationsFolder = StageSessionPluginSingleton.getInstance().getConfigurationsFolder();
+        File htmlDocsFolder = new File(configurationsFolder, STAGEHTMLDOCS);
         if (!htmlDocsFolder.exists()) {
             if (!htmlDocsFolder.mkdir()) {
                 throw new RuntimeException();

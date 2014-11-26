@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Stage RAP
-Bundle-SymbolicName: eu.hydrologis.stagerap
+Bundle-SymbolicName: eu.hydrologis.stagerap;singleton:=true
 Bundle-Version: 1.0.0
 Bundle-Vendor: HydroloGIS S.r.l.
 Require-Bundle: org.eclipse.rap.rwt,

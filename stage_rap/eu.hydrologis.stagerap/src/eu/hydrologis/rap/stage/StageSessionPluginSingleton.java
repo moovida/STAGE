@@ -4,12 +4,29 @@ import java.io.File;
 
 import org.eclipse.rap.rwt.SingletonUtil;
 
-public class StagePluginSingleton {
-	private StagePluginSingleton() {
+import eu.hydrologis.rap.stage.utils.StageConstants;
+import static eu.hydrologis.rap.stage.utils.StageConstants.*;
+
+public class StageSessionPluginSingleton {
+	private File modulesFolder;
+	private File libsFolder;
+
+	private StageSessionPluginSingleton() {
+		File installationFolder = new File(".");
+		modulesFolder = new File(installationFolder, LIBS_MAIN_FOLDER_NAME + "/" + MODULES_SUBFOLDER_NAME);
+		libsFolder = new File(installationFolder, LIBS_MAIN_FOLDER_NAME + "/" + LIBS_SUBFOLDER_NAME);
 	}
 
-	public static StagePluginSingleton getInstance() {
-		return SingletonUtil.getSessionInstance(StagePluginSingleton.class);
+	public static StageSessionPluginSingleton getInstance() {
+		return SingletonUtil.getSessionInstance(StageSessionPluginSingleton.class);
+	}
+
+	public File getModulesFolders() {
+		return modulesFolder;
+	}
+
+	public File getLibsFolders() {
+		return libsFolder;
 	}
 
 	public String[] retrieveSavedJars() {
@@ -17,20 +34,12 @@ public class StagePluginSingleton {
 		return null;
 	}
 
-	public File getModulesFolders() {
-		// TODO Auto-generated method stub
-		return null;
-	}
 
 	public void log(String string) {
 		// TODO Auto-generated method stub
 		
 	}
 
-	public File getLibsFolders() {
-		// TODO Auto-generated method stub
-		return null;
-	}
 
 	public File getConfigurationsFolder() {
 		// TODO Auto-generated method stub

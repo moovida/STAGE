@@ -44,11 +44,11 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
 
-import eu.hydrologis.rap.stage.StagePluginSingleton;
+import eu.hydrologis.rap.stage.StageSessionPluginSingleton;
 import eu.hydrologis.rap.stage.core.FieldData;
 import eu.hydrologis.rap.stage.core.ModuleDescription;
-import eu.hydrologis.rap.stage.utils.OmsBoxConstants;
-import eu.hydrologis.rap.stage.utils.OmsBoxUtils;
+import eu.hydrologis.rap.stage.utils.StageConstants;
+import eu.hydrologis.rap.stage.utils.StageUtils;
 
 /**
  * A class representing the main tabbed component gui.
@@ -105,7 +105,7 @@ public class ModuleGui {
             browser.setLayoutData(layoutData);
 
             String className = mainModuleDescription.getClassName();
-            String moduleDocumentationPath = OmsBoxUtils.getModuleDocumentationPath(className);
+            String moduleDocumentationPath = StageUtils.getModuleDocumentationPath(className);
             browser.setUrl("file:" + moduleDocumentationPath);
             tab.setControl(browser);
         } catch (SWTError e) {
@@ -165,12 +165,12 @@ public class ModuleGui {
         int[] row = new int[]{0};
         for( int j = 0; j < inputsList.size(); j++ ) {
             FieldData inputData = inputsList.get(j);
-            if (hideComplex && !inputData.isSimpleType() && !OmsBoxUtils.isFieldExceptional(inputData)) {
+            if (hideComplex && !inputData.isSimpleType() && !StageUtils.isFieldExceptional(inputData)) {
                 continue;
             }
 
             // remove region related widgets, if the user chose to not have them.
-            if (inputData.isProcessingRegionRelated() && StagePluginSingleton.getInstance().doIgnoreProcessingRegion()) {
+            if (inputData.isProcessingRegionRelated() && StageSessionPluginSingleton.getInstance().doIgnoreProcessingRegion()) {
                 continue;
             }
 
@@ -201,8 +201,8 @@ public class ModuleGui {
             String guiHints = fieldData.guiHints;
 
             if (guiHints != null
-                    && (guiHints.contains(OmsBoxConstants.FILEOUT_UI_HINT) || guiHints
-                            .contains(OmsBoxConstants.FOLDEROUT_UI_HINT))) {
+                    && (guiHints.contains(StageConstants.FILEOUT_UI_HINT) || guiHints
+                            .contains(StageConstants.FOLDEROUT_UI_HINT))) {
                 tmpOutputsList.add(fieldData);
             } else {
                 tmpInputsList.add(fieldData);
@@ -278,7 +278,7 @@ public class ModuleGui {
             }
 
             // remove region related widgets, if the user chose to not have them.
-            if (outputData.isProcessingRegionRelated() && StagePluginSingleton.getInstance().doIgnoreProcessingRegion()) {
+            if (outputData.isProcessingRegionRelated() && StageSessionPluginSingleton.getInstance().doIgnoreProcessingRegion()) {
                 continue;
             }
 
