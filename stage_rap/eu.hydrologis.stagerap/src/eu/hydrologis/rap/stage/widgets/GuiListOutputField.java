@@ -31,7 +31,7 @@ import org.eclipse.swt.widgets.Control;
 
 import eu.hydrologis.rap.stage.core.FieldData;
 import eu.hydrologis.rap.stage.core.ModuleDescription;
-import eu.hydrologis.rap.stage.core.OmsModulesManager;
+import eu.hydrologis.rap.stage.core.StageModulesManager;
 
 /**
  * Class representing a list output selector gui.
@@ -66,7 +66,7 @@ public class GuiListOutputField extends ModuleGuiElement {
         browseButton.addSelectionListener(new SelectionAdapter(){
 
             public void widgetSelected( SelectionEvent e ) {
-                List<ModuleDescription> hashmapWriter = OmsModulesManager.getInstance().getListWriters();
+                List<ModuleDescription> hashmapWriter = StageModulesManager.getInstance().getListWriters();
                 MultipleModuleDescriptionDialog dialog = new MultipleModuleDescriptionDialog("Choose Output List Writer",
                         hashmapWriter);
                 if (selectedListWriter != null) {

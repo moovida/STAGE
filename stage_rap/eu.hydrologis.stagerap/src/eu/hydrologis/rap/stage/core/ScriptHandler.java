@@ -183,7 +183,7 @@ public class ScriptHandler {
 		// manager.showConsoleView(outputConsole);
 
 		try {
-			OmsScriptExecutor executor = new OmsScriptExecutor();
+			StageScriptExecutor executor = new StageScriptExecutor();
 			executor.addProcessListener(new IProcessListener() {
 				public void onProcessStopped() {
 					StageSessionPluginSingleton.getInstance().cleanProcess(scriptId);

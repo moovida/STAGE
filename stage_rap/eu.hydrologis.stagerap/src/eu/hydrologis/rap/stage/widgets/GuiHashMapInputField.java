@@ -32,7 +32,7 @@ import org.eclipse.swt.widgets.Control;
 
 import eu.hydrologis.rap.stage.core.FieldData;
 import eu.hydrologis.rap.stage.core.ModuleDescription;
-import eu.hydrologis.rap.stage.core.OmsModulesManager;
+import eu.hydrologis.rap.stage.core.StageModulesManager;
 
 /**
  * Class representing an hasmap double array input selector gui.
@@ -67,7 +67,7 @@ public class GuiHashMapInputField extends ModuleGuiElement {
         browseButton.addSelectionListener(new SelectionAdapter(){
 
             public void widgetSelected( SelectionEvent e ) {
-                List<ModuleDescription> hashmapReaders = OmsModulesManager.getInstance().getHashMapReaders();
+                List<ModuleDescription> hashmapReaders = StageModulesManager.getInstance().getHashMapReaders();
                 MultipleModuleDescriptionDialog dialog = new MultipleModuleDescriptionDialog("Choose Input Hashmap Reader",
                         hashmapReaders);
                 if (selectedHashmapReader != null) {

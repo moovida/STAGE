@@ -31,7 +31,7 @@ import org.eclipse.swt.widgets.Control;
 
 import eu.hydrologis.rap.stage.core.FieldData;
 import eu.hydrologis.rap.stage.core.ModuleDescription;
-import eu.hydrologis.rap.stage.core.OmsModulesManager;
+import eu.hydrologis.rap.stage.core.StageModulesManager;
 
 /**
  * Class representing a list input selector gui.
@@ -66,7 +66,7 @@ public class GuiListInputField extends ModuleGuiElement {
         browseButton.addSelectionListener(new SelectionAdapter(){
 
             public void widgetSelected( SelectionEvent e ) {
-                List<ModuleDescription> listReaders = OmsModulesManager.getInstance().getListReaders();
+                List<ModuleDescription> listReaders = StageModulesManager.getInstance().getListReaders();
                 MultipleModuleDescriptionDialog dialog = new MultipleModuleDescriptionDialog("Choose Input List Data Reader",
                         listReaders);
                 if (selectedListReader != null) {

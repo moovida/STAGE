@@ -48,9 +48,9 @@ import eu.hydrologis.rap.stage.utils.StageUtils;
  * @author Andrea Antonello (www.hydrologis.com)
  */
 @SuppressWarnings("nls")
-public class OmsModulesManager {
+public class StageModulesManager {
 
-	private static OmsModulesManager modulesManager;
+	private static StageModulesManager modulesManager;
 
 	private List<String> loadedJarsList = new ArrayList<String>();
 	private TreeMap<String, List<ModuleDescription>> modulesMap;
@@ -66,7 +66,7 @@ public class OmsModulesManager {
 
 	private URLClassLoader jarClassloader;
 
-	private OmsModulesManager() {
+	private StageModulesManager() {
 		getModulesJars(false);
 	}
 
@@ -122,9 +122,9 @@ public class OmsModulesManager {
 		return jarsPathList;
 	}
 
-	public synchronized static OmsModulesManager getInstance() {
+	public synchronized static StageModulesManager getInstance() {
 		if (modulesManager == null) {
-			modulesManager = new OmsModulesManager();
+			modulesManager = new StageModulesManager();
 		}
 		return modulesManager;
 	}

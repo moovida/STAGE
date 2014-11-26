@@ -50,7 +50,7 @@ import org.eclipse.swt.widgets.Label;
 import eu.hydrologis.rap.stage.StageSessionPluginSingleton;
 import eu.hydrologis.rap.stage.core.ModuleDescription;
 import eu.hydrologis.rap.stage.core.ModuleDescription.Status;
-import eu.hydrologis.rap.stage.core.OmsModulesManager;
+import eu.hydrologis.rap.stage.core.StageModulesManager;
 import eu.hydrologis.rap.stage.core.ScriptHandler;
 import eu.hydrologis.rap.stage.utils.ImageCache;
 import eu.hydrologis.rap.stage.utils.StageConstants;
@@ -467,7 +467,7 @@ public class StageView {
 		// throws InvocationTargetException, InterruptedException {
 		// pm.beginTask(LOADING_MODULES_FROM_LIBRARIES,
 		// IProgressMonitor.UNKNOWN);
-		TreeMap<String, List<ModuleDescription>> availableModules = OmsModulesManager
+		TreeMap<String, List<ModuleDescription>> availableModules = StageModulesManager
 				.getInstance().browseModules(false);
 		final List<ViewerFolder> viewerFolders = ViewerFolder
 				.hashmap2ViewerFolders(availableModules);

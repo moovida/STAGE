@@ -28,7 +28,7 @@ import oms3.annotations.Status;
 import oms3.annotations.Unit;
 import eu.hydrologis.rap.stage.StageSessionPluginSingleton;
 import eu.hydrologis.rap.stage.core.FieldData;
-import eu.hydrologis.rap.stage.core.OmsModulesManager;
+import eu.hydrologis.rap.stage.core.StageModulesManager;
 
 /**
  * Utilities for the omsbox plugin.
@@ -126,7 +126,7 @@ public class StageUtils {
     @SuppressWarnings("nls")
     public static void generateModuleDocumentation( String moduleClassName ) throws Exception {
 
-        Class< ? > moduleClass = OmsModulesManager.getInstance().getModulesClass(moduleClassName);
+        Class< ? > moduleClass = StageModulesManager.getInstance().getModulesClass(moduleClassName);
 
         StringBuilder sb = new StringBuilder();
         sb.append("<html><body>\n");
@@ -147,7 +147,7 @@ public class StageUtils {
                 // have to get the file
                 String modulePackage = moduleClassName.substring(0, moduleClassName.lastIndexOf('.'));
                 String path = modulePackage.replaceAll("\\.", "/") + "/" + documentationStr;
-                InputStream inStream = OmsModulesManager.getInstance().getResourceAsStream(path);
+                InputStream inStream = StageModulesManager.getInstance().getResourceAsStream(path);
                 // InputStream inStream = moduleClass.getResourceAsStream(documentationStr);
                 if (inStream != null) {
                     BufferedReader br = null;

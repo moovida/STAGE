@@ -26,14 +26,14 @@ import eu.hydrologis.rap.stage.utilsrap.ImageUtil;
 @SuppressWarnings("nls")
 public class ImageCache {
 
-	// FIXME put real icons
-	public static final String CATEGORY = "empty.png";
-	public static final String MODULE = "failed.png";
-	public static final String MODULEEXP = "finished.png";
-	public static final String RUN = "uploading.png";
-	public static final String STOP = "waiting.png";
-	public static final String GRID = "empty.png";
-
+    public static final String CATEGORY = "category.gif";
+    public static final String MODULE = "module.gif";
+    public static final String MODULEEXP = "module_exp.gif";
+    public static final String RUN = "run_module.gif";
+    public static final String STOP = "stop_module.gif";
+    public static final String GRID = "grid_obj.gif";
+	
+	
 	private static ImageCache imageCache;
 
 	private HashMap<String, Image> imageMap = new HashMap<String, Image>();

@@ -32,7 +32,7 @@ import org.eclipse.swt.widgets.Control;
 
 import eu.hydrologis.rap.stage.core.FieldData;
 import eu.hydrologis.rap.stage.core.ModuleDescription;
-import eu.hydrologis.rap.stage.core.OmsModulesManager;
+import eu.hydrologis.rap.stage.core.StageModulesManager;
 
 /**
  * Class representing an hasmap double array output selector gui.
@@ -67,7 +67,7 @@ public class GuiHashMapOutputField extends ModuleGuiElement {
         browseButton.addSelectionListener(new SelectionAdapter(){
 
             public void widgetSelected( SelectionEvent e ) {
-                List<ModuleDescription> hashmapWriter = OmsModulesManager.getInstance().getHashMapWriters();
+                List<ModuleDescription> hashmapWriter = StageModulesManager.getInstance().getHashMapWriters();
                 MultipleModuleDescriptionDialog dialog = new MultipleModuleDescriptionDialog("Choose Output Hashmap Writer",
                         hashmapWriter);
                 if (selectedHashmapWriter != null) {

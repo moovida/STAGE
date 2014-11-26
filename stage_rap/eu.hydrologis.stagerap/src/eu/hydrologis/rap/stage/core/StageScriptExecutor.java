@@ -36,7 +36,7 @@ import eu.hydrologis.rap.stage.utils.StageConstants;
  * @author Andrea Antonello (www.hydrologis.com)
  */
 @SuppressWarnings("nls")
-public class OmsScriptExecutor {
+public class StageScriptExecutor {
 
     private String classPath;
 
@@ -46,7 +46,7 @@ public class OmsScriptExecutor {
 
     private String javaFile;
 
-    public OmsScriptExecutor() throws Exception {
+    public StageScriptExecutor() throws Exception {
         /*
          * get java exec
          */
@@ -126,7 +126,7 @@ public class OmsScriptExecutor {
         }
 
         // modules jars
-        List<String> modulesJars = OmsModulesManager.getInstance().getModulesJars(true);
+        List<String> modulesJars = StageModulesManager.getInstance().getModulesJars(true);
         StringBuilder sb = new StringBuilder();
         for( String moduleJar : modulesJars ) {
             sb.append(File.pathSeparator).append(moduleJar);
