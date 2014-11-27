@@ -46,6 +46,7 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Text;
 
 import eu.hydrologis.rap.stage.StageSessionPluginSingleton;
 import eu.hydrologis.rap.stage.core.ModuleDescription;
@@ -65,6 +66,10 @@ import eu.hydrologis.rap.stage.widgets.ModuleGui;
  */
 public class StageView {
 
+	private static final String CHARACTER_ENCODING = "Character Encoding";
+	private static final String DEBUG_INFO = "Debug info";
+	private static final String MEMORY_MB = "Memory [MB]";
+	private static final String PROCESS_SETTINGS = "Process settings";
 	private static final String LOAD_EXPERIMENTAL_MODULES = "Load experimental modules";
 	private static final String NO_MODULE_SELECTED = "No module selected";
 	private static final String MODULES = "Modules";
@@ -78,6 +83,7 @@ public class StageView {
 	private TreeViewer modulesViewer;
 
 	private ModuleGui currentSelectedModuleGui;
+	private String filterTextString;
 
 	private HashMap<String, Control> module2GuiMap = new HashMap<String, Control>();
 	private Display display;
@@ -93,8 +99,8 @@ public class StageView {
 
 		Composite mainComposite = new Composite(parent, SWT.None);
 		GridLayout mainLayout = new GridLayout(1, false);
-		mainLayout.marginWidth = 5;
-		mainLayout.marginHeight = 5;
+		mainLayout.marginWidth = 25;
+		mainLayout.marginHeight = 25;
 		mainComposite.setLayout(mainLayout);
 		mainComposite.setLayoutData(new GridData(GridData.FILL_BOTH
 				| GridData.GRAB_HORIZONTAL | GridData.GRAB_VERTICAL));
@@ -106,46 +112,64 @@ public class StageView {
 		modulesCompositeLayout.marginWidth = 0;
 		modulesComposite.setLayout(modulesCompositeLayout);
 
-		Label modulesLabel = new Label(modulesComposite, SWT.NONE);
-		modulesLabel.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER,
-				false, false));
-		modulesLabel.setText(MODULES);
-		Label dummyLabel = new Label(modulesComposite, SWT.NONE);
-		GridData dummyLabelGD = new GridData(SWT.BEGINNING, SWT.CENTER, false,
-				false);
-		dummyLabelGD.horizontalSpan = 2;
-		dummyLabel.setLayoutData(dummyLabelGD);
+		Group modulesListGroup = new Group(modulesComposite, SWT.NONE);
+		modulesListGroup.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true,
+				true));
+		modulesListGroup.setLayout(new GridLayout(2, false));
+		modulesListGroup.setText(MODULES);
 
-		Composite modulesListComposite = new Composite(modulesComposite,
-				SWT.NONE);
-		modulesListComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL,
-				true, true));
-		modulesListComposite.setLayout(new GridLayout(1, false));
-
-		// HashMap<String, List<ModuleDescription>> availableModules =
-		// OmsModulesManager.getInstance().browseModules(false);
-		modulesViewer = createTreeViewer(modulesListComposite);
+		addTextFilter(modulesComposite);
+		modulesViewer = createTreeViewer(modulesListGroup);
 		List<ViewerFolder> viewerFolders = new ArrayList<ViewerFolder>(); // ViewerFolder.hashmap2ViewerFolders(availableModules);
 		modulesViewer.setInput(viewerFolders);
-		addFilterButtons(modulesListComposite);
-		addQuickSettings(modulesListComposite);
+		addFilterButtons(modulesListGroup);
+		final TextFilter activeFilter = new TextFilter();
+		modulesViewer.addFilter(activeFilter);
 
-		modulesGuiComposite = new Composite(modulesComposite, SWT.BORDER);
-		modulesGuiStackLayout = new StackLayout();
-		modulesGuiComposite.setLayout(modulesGuiStackLayout);
+		Group parametersTabsGroup = new Group(modulesComposite, SWT.NONE);
 		GridData modulesGuiCompositeGD = new GridData(SWT.FILL, SWT.FILL, true,
 				true);
 		modulesGuiCompositeGD.horizontalSpan = 2;
-		modulesGuiComposite.setLayoutData(modulesGuiCompositeGD);
+		modulesGuiCompositeGD.verticalSpan = 2;
+		parametersTabsGroup.setLayoutData(modulesGuiCompositeGD);
+		parametersTabsGroup.setLayout(new GridLayout(1, false));
+		parametersTabsGroup.setText("Parameters");
+
+		modulesGuiComposite = new Composite(parametersTabsGroup, SWT.BORDER);
+		modulesGuiStackLayout = new StackLayout();
+		modulesGuiComposite.setLayout(modulesGuiStackLayout);
+		modulesGuiComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL,
+				true, true));
 		Label l = new Label(modulesGuiComposite, SWT.SHADOW_ETCHED_IN);
 		l.setText(NO_MODULE_SELECTED);
 		modulesGuiStackLayout.topControl = l;
 
+		addQuickSettings(modulesComposite);
 		try {
 			relayout();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+
+	}
+
+	private void addTextFilter(Composite modulesComposite) {
+
+		Label filterLabel = new Label(modulesComposite, SWT.NONE);
+		filterLabel.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER,
+				false, false));
+		filterLabel.setText("Filter");
+
+		final Text filterText = new Text(modulesComposite, SWT.SINGLE
+				| SWT.LEAD | SWT.BORDER);
+		filterText
+				.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+		filterText.addModifyListener(new ModifyListener() {
+
+			public void modifyText(ModifyEvent event) {
+				filterTextString = filterText.getText();
+			}
+		});
 
 	}
 
@@ -160,6 +184,7 @@ public class StageView {
 
 		Control control = modulesViewer.getControl();
 		GridData controlGD = new GridData(SWT.FILL, SWT.FILL, true, true);
+		controlGD.horizontalSpan = 2;
 		control.setLayoutData(controlGD);
 		modulesViewer.setContentProvider(new ITreeContentProvider() {
 			public Object[] getElements(Object inputElement) {
@@ -294,8 +319,9 @@ public class StageView {
 
 	private void addFilterButtons(Composite modulesComposite) {
 		Button filterActive = new Button(modulesComposite, SWT.CHECK);
-		filterActive.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true,
-				false));
+		GridData gd = new GridData(SWT.FILL, SWT.CENTER, true, false);
+		gd.horizontalSpan = 2;
+		filterActive.setLayoutData(gd);
 		filterActive.setText(LOAD_EXPERIMENTAL_MODULES);
 		final ExperimentalFilter activeFilter = new ExperimentalFilter();
 		// modulesViewer.addFilter(activeFilter);
@@ -316,12 +342,12 @@ public class StageView {
 		quickSettingsGroup.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true,
 				false));
 		quickSettingsGroup.setLayout(new GridLayout(2, true));
-		quickSettingsGroup.setText("Process settings");
+		quickSettingsGroup.setText(PROCESS_SETTINGS);
 
 		Label heapLabel = new Label(quickSettingsGroup, SWT.NONE);
 		heapLabel.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false,
 				false));
-		heapLabel.setText("Memory [MB]");
+		heapLabel.setText(MEMORY_MB);
 		final Combo heapCombo = new Combo(quickSettingsGroup, SWT.DROP_DOWN);
 		heapCombo
 				.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
@@ -369,7 +395,7 @@ public class StageView {
 		Label logLabel = new Label(quickSettingsGroup, SWT.NONE);
 		logLabel.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false,
 				false));
-		logLabel.setText("Debug info");
+		logLabel.setText(DEBUG_INFO);
 		final Combo logCombo = new Combo(quickSettingsGroup, SWT.DROP_DOWN
 				| SWT.READ_ONLY);
 		logCombo.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
@@ -397,7 +423,7 @@ public class StageView {
 		Label chartsetLabel = new Label(quickSettingsGroup, SWT.NONE);
 		chartsetLabel.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER,
 				false, false));
-		chartsetLabel.setText("Character Encoding");
+		chartsetLabel.setText(CHARACTER_ENCODING);
 
 		SortedMap<String, Charset> charsetMap = Charset.availableCharsets();
 		ArrayList<String> charsetList = new ArrayList<String>();
@@ -443,6 +469,26 @@ public class StageView {
 						.getModuleDescription();
 				if (md.getStatus() == ModuleDescription.Status.experimental) {
 					return false;
+				}
+				return true;
+			}
+			return false;
+		}
+	}
+
+	private class TextFilter extends ViewerFilter {
+		public boolean select(Viewer arg0, Object arg1, Object arg2) {
+			if (arg2 instanceof ViewerFolder) {
+				return true;
+			}
+			if (arg2 instanceof ViewerModule) {
+				ModuleDescription md = ((ViewerModule) arg2)
+						.getModuleDescription();
+
+				String name = md.getName();
+				if (filterTextString == null || filterTextString.length() == 0
+						|| name.toLowerCase().contains(filterTextString)) {
+					return true;
 				}
 				return true;
 			}
