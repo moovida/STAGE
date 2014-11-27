@@ -20,7 +20,6 @@ import java.util.Map.Entry;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITreeContentProvider;
@@ -30,7 +29,6 @@ import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerFilter;
 import org.eclipse.rap.rwt.RWT;
-import org.eclipse.rap.rwt.apache.batik.css.parser.Messages;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StackLayout;
 import org.eclipse.swt.events.ModifyEvent;
@@ -52,8 +50,8 @@ import org.eclipse.swt.widgets.Text;
 import eu.hydrologis.rap.stage.StageSessionPluginSingleton;
 import eu.hydrologis.rap.stage.core.ModuleDescription;
 import eu.hydrologis.rap.stage.core.ModuleDescription.Status;
-import eu.hydrologis.rap.stage.core.StageModulesManager;
 import eu.hydrologis.rap.stage.core.ScriptHandler;
+import eu.hydrologis.rap.stage.core.StageModulesManager;
 import eu.hydrologis.rap.stage.utils.ImageCache;
 import eu.hydrologis.rap.stage.utils.StageConstants;
 import eu.hydrologis.rap.stage.utils.ViewerFolder;
@@ -67,6 +65,7 @@ import eu.hydrologis.rap.stage.widgets.ModuleGui;
  */
 public class StageView {
 
+    private static final String EXECUTION_TOOLS = "Execution";
     private static final String CHARACTER_ENCODING = "Character Encoding";
     private static final String DEBUG_INFO = "Debug info";
     private static final String MEMORY_MB = "Memory [MB]";
@@ -88,6 +87,7 @@ public class StageView {
 
     private HashMap<String, Control> module2GuiMap = new HashMap<String, Control>();
     private Display display;
+    private Text logText;
 
     public StageView() {
 
@@ -111,14 +111,14 @@ public class StageView {
 
         addTextFilter(modulesListGroup);
         modulesViewer = createTreeViewer(modulesListGroup);
-        List<ViewerFolder> viewerFolders = new ArrayList<ViewerFolder>(); // ViewerFolder.hashmap2ViewerFolders(availableModules);
+        List<ViewerFolder> viewerFolders = new ArrayList<ViewerFolder>();
         modulesViewer.setInput(viewerFolders);
         addFilterButtons(modulesListGroup);
 
         Group parametersTabsGroup = new Group(mainComposite, SWT.NONE);
         GridData modulesGuiCompositeGD = new GridData(SWT.FILL, SWT.FILL, true, true);
         modulesGuiCompositeGD.horizontalSpan = 2;
-        modulesGuiCompositeGD.verticalSpan = 2;
+        modulesGuiCompositeGD.verticalSpan = 1;
         parametersTabsGroup.setLayoutData(modulesGuiCompositeGD);
         parametersTabsGroup.setLayout(new GridLayout(1, false));
         parametersTabsGroup.setText("Parameters");
@@ -134,6 +134,8 @@ public class StageView {
         modulesGuiStackLayout.topControl = noModuleLabel;
 
         addQuickSettings(mainComposite);
+
+        addRunTools(mainComposite);
         try {
             relayout(false, null);
         } catch (Exception e) {
@@ -159,6 +161,7 @@ public class StageView {
         final Text filterText = new Text(modulesComposite, SWT.SINGLE | SWT.LEAD | SWT.BORDER);
         filterText.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
         filterText.addModifyListener(new ModifyListener(){
+            private static final long serialVersionUID = 1L;
 
             public void modifyText( ModifyEvent event ) {
                 filterTextString = filterText.getText();
@@ -190,6 +193,8 @@ public class StageView {
         controlGD.horizontalSpan = 2;
         control.setLayoutData(controlGD);
         modulesViewer.setContentProvider(new ITreeContentProvider(){
+            private static final long serialVersionUID = 1L;
+
             public Object[] getElements( Object inputElement ) {
                 return getChildren(inputElement);
             }
@@ -238,6 +243,8 @@ public class StageView {
         });
 
         modulesViewer.setLabelProvider(new LabelProvider(){
+            private static final long serialVersionUID = 1L;
+
             public Image getImage( Object element ) {
                 if (element instanceof ViewerFolder) {
                     return ImageCache.getInstance().getImage(display, ImageCache.CATEGORY);
@@ -319,6 +326,8 @@ public class StageView {
         // modulesViewer.addFilter(activeFilter);
         filterActive.setSelection(true);
         filterActive.addSelectionListener(new SelectionAdapter(){
+            private static final long serialVersionUID = 1L;
+
             public void widgetSelected( SelectionEvent event ) {
                 if (((Button) event.widget).getSelection())
                     modulesViewer.removeFilter(activeFilter);
@@ -348,6 +357,8 @@ public class StageView {
             }
         }
         heapCombo.addSelectionListener(new SelectionAdapter(){
+            private static final long serialVersionUID = 1L;
+
             public void widgetSelected( SelectionEvent e ) {
                 String item = heapCombo.getText();
                 try {
@@ -358,6 +369,8 @@ public class StageView {
             }
         });
         heapCombo.addModifyListener(new ModifyListener(){
+            private static final long serialVersionUID = 1L;
+
             public void modifyText( ModifyEvent e ) {
                 String item = heapCombo.getText();
                 try {
@@ -390,6 +403,8 @@ public class StageView {
             }
         }
         logCombo.addSelectionListener(new SelectionAdapter(){
+            private static final long serialVersionUID = 1L;
+
             public void widgetSelected( SelectionEvent e ) {
                 String item = logCombo.getText();
                 try {
@@ -422,6 +437,8 @@ public class StageView {
             }
         }
         encodingCombo.addSelectionListener(new SelectionAdapter(){
+            private static final long serialVersionUID = 1L;
+
             public void widgetSelected( SelectionEvent e ) {
                 String item = encodingCombo.getText();
                 try {
@@ -434,7 +451,42 @@ public class StageView {
 
     }
 
+    private void addRunTools( Composite modulesListComposite ) throws IOException {
+        Group runToolsGroup = new Group(modulesListComposite, SWT.NONE);
+        GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, false);
+        gridData.horizontalSpan = 2;
+        runToolsGroup.setLayoutData(gridData);
+        GridLayout gridLayout = new GridLayout(2, false);
+        runToolsGroup.setLayout(gridLayout);
+        runToolsGroup.setText(EXECUTION_TOOLS);
+
+        Button runModuleButton = new Button(runToolsGroup, SWT.PUSH);
+        runModuleButton.setLayoutData(new GridData(SWT.BEGINNING, SWT.TOP, false, false));
+        // runModuleButton.setText("Run module");
+        runModuleButton.setToolTipText("Run module");
+        runModuleButton.setImage(ImageCache.getInstance().getImage(display, ImageCache.RUN));
+        runModuleButton.addSelectionListener(new SelectionAdapter(){
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public void widgetSelected( SelectionEvent e ) {
+                try {
+                    runSelectedModule();
+                } catch (Exception e1) {
+                    e1.printStackTrace();
+                }
+            }
+        });
+
+        logText = new Text(runToolsGroup, SWT.MULTI | SWT.WRAP | SWT.V_SCROLL | SWT.BORDER);
+        logText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+        logText.setText("");
+
+    }
+
     private static class ExperimentalFilter extends ViewerFilter {
+        private static final long serialVersionUID = 1L;
+
         public boolean select( Viewer arg0, Object arg1, Object arg2 ) {
             if (arg2 instanceof ViewerFolder) {
                 return true;
@@ -513,7 +565,8 @@ public class StageView {
 
         String scriptID = currentSelectedModuleGui.getModuleDescription().getName() + " "
                 + StageConstants.dateTimeFormatterYYYYMMDDHHMMSS.format(new Date());
-        handler.runModule(scriptID, script);
+        logText.setText("");
+        handler.runModule(scriptID, script, logText);
     }
 
     /**

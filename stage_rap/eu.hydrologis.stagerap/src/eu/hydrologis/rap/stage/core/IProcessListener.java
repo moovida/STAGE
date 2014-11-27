@@ -20,6 +20,8 @@ package eu.hydrologis.rap.stage.core;
 
 public interface IProcessListener {
 
+    public void onMessage( String message, boolean isError );
+
     public void onProcessStopped();
 
 }

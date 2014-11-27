@@ -17,7 +17,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -74,11 +75,7 @@ public class StageScriptExecutor {
      * @return the process.
      * @throws Exception
      */
-    public Process exec( String script, final PrintStream internalStream, final PrintStream errorStream, String loggerLevelGui,
-            String ramLevel, String encoding ) throws Exception {
-        if (loggerLevelGui == null)
-            loggerLevelGui = StageConstants.LOGLEVEL_GUI_OFF;
-
+    public Process exec( String script, final String loggerLevelGui, String ramLevel, String encoding ) throws Exception {
         File scriptFile = new File(script);
         if (!scriptFile.exists()) {
             // if the file doesn't exist, it is a script, let's put it into a file
@@ -151,15 +148,15 @@ public class StageScriptExecutor {
 
         String[] args;
         // FIXME find OS
-//        if (Platform.getOS().equals(Platform.OS_WIN32)) {
-//            File tmpRunFile = new File(homeFile, "udig_spatialtoolbox.bat");
-//            FileUtilities.writeFile("@echo off\n" + runSb.toString(), tmpRunFile);
-//            args = new String[]{"cmd", "/c", tmpRunFile.getAbsolutePath()};
-//        } else {
-            File tmpRunFile = new File(homeFile, "udig_spatialtoolbox.sh");
-            FileUtilities.writeFile(runSb.toString(), tmpRunFile);
-            args = new String[]{"sh", tmpRunFile.getAbsolutePath()};
-//        }
+        // if (Platform.getOS().equals(Platform.OS_WIN32)) {
+        // File tmpRunFile = new File(homeFile, "udig_spatialtoolbox.bat");
+        // FileUtilities.writeFile("@echo off\n" + runSb.toString(), tmpRunFile);
+        // args = new String[]{"cmd", "/c", tmpRunFile.getAbsolutePath()};
+        // } else {
+        File tmpRunFile = new File(homeFile, "udig_spatialtoolbox.sh");
+        FileUtilities.writeFile(runSb.toString(), tmpRunFile);
+        args = new String[]{"sh", tmpRunFile.getAbsolutePath()};
+        // }
 
         // {javaFile, ramExpr, resourcesFlag, "-cp", classPath,
         // CLI.class.getCanonicalName(), "-r",
@@ -174,44 +171,46 @@ public class StageScriptExecutor {
         // environment.put("CLASSPATH", classPath);
 
         final Process process = processBuilder.start();
-        internalStream.println("Process started: " + StageConstants.dateTimeFormatterYYYYMMDDHHMMSS.format(new Date()));
-        internalStream.println("");
+        printMessage("Process started: " + StageConstants.dateTimeFormatterYYYYMMDDHHMMSS.format(new Date()));
+        printMessage("");
 
         // command launched
         if (loggerLevelGui.equals(StageConstants.LOGLEVEL_GUI_ON)) {
-            internalStream.println("------------------------------>8----------------------------");
-            internalStream.println("Launching command: ");
-            internalStream.println("------------------");
+            StringBuilder tmpBuilder = new StringBuilder();
+            tmpBuilder.append("------------------------------>8----------------------------\n");
+            tmpBuilder.append("Launching command: \n");
+            tmpBuilder.append("------------------\n");
             List<String> command = processBuilder.command();
             for( String arg : command ) {
-                internalStream.print(arg);
-                internalStream.print(" ");
+                tmpBuilder.append(arg);
+                tmpBuilder.append(" ");
             }
-            internalStream.println("\n");
-            internalStream.println("(you can run the above from command line, customizing the content)");
-            internalStream.println("----------------------------------->8---------------------------------");
-            internalStream.println("");
+            tmpBuilder.append("\n");
+            tmpBuilder.append("(you can run the above from command line, customizing the content)\n");
+            tmpBuilder.append("----------------------------------->8---------------------------------\n");
+            tmpBuilder.append("\n");
             // script run
-            internalStream.println("Script run: ");
-            internalStream.println("-----------");
-            internalStream.println(script);
-            internalStream.println("");
-            internalStream.println("------------------------------>8----------------------------");
-            internalStream.println("");
+            tmpBuilder.append("Script run: \n");
+            tmpBuilder.append("-----------\n");
+            tmpBuilder.append(script);
+            tmpBuilder.append("\n");
+            tmpBuilder.append("------------------------------>8----------------------------\n");
+            tmpBuilder.append("\n");
             // environment used
-            internalStream.println("Environment used: ");
-            internalStream.println("-----------------");
+            tmpBuilder.append("Environment used: \n");
+            tmpBuilder.append("-----------------\n");
 
             Set<Entry<String, String>> entrySet = environment.entrySet();
             for( Entry<String, String> entry : entrySet ) {
-                internalStream.print(entry.getKey());
-                internalStream.print(" =\t");
-                internalStream.println(entry.getValue());
+                tmpBuilder.append(entry.getKey());
+                tmpBuilder.append(" =\t");
+                tmpBuilder.append(entry.getValue()).append("\n");
             }
-            internalStream.println("------------------------------>8----------------------------");
-            internalStream.println("");
+            tmpBuilder.append("------------------------------>8----------------------------\n");
+            tmpBuilder.append("");
+            printMessage(tmpBuilder.toString());
         }
-        internalStream.println("");
+        printMessage("");
         isRunning = true;
 
         new Thread(){
@@ -223,11 +222,11 @@ public class StageScriptExecutor {
                     br = new BufferedReader(isr);
                     String line;
                     while( (line = br.readLine()) != null ) {
-                        internalStream.println(line);
+                        printMessage(line);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
-                    errorStream.println(e.getLocalizedMessage());
+                    printException(loggerLevelGui, e);
                 } finally {
                     if (br != null)
                         try {
@@ -236,12 +235,11 @@ public class StageScriptExecutor {
                             e.printStackTrace();
                         }
                     isRunning = false;
-                    updateListeners();
+                    updateListenersForModuleStop();
                 }
-                internalStream.println("");
-                internalStream.println("");
-                internalStream.println("Process finished: " + StageConstants.dateTimeFormatterYYYYMMDDHHMMSS.format(new Date()));
-            };
+                printMessage("\nProcess finished: " + StageConstants.dateTimeFormatterYYYYMMDDHHMMSS.format(new Date()));
+            }
+
         }.start();
 
         new Thread(){
@@ -260,11 +258,11 @@ public class StageScriptExecutor {
                         if (ConsoleMessageFilter.doRemove(line)) {
                             continue;
                         }
-                        errorStream.println(line);
+                        printError(line);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
-                    errorStream.println(e.getLocalizedMessage());
+                    printException(loggerLevelGui, e);
                 } finally {
                     if (br != null)
                         try {
@@ -294,9 +292,32 @@ public class StageScriptExecutor {
         }
     }
 
-    private void updateListeners() {
+    private void printMessage( String message ) {
+        for( IProcessListener listener : listeners ) {
+            listener.onMessage(message, false);
+        }
+    }
+
+    private void printError( String error ) {
+        for( IProcessListener listener : listeners ) {
+            listener.onMessage(error, true);
+        }
+    }
+
+    private void updateListenersForModuleStop() {
         for( IProcessListener listener : listeners ) {
             listener.onProcessStopped();
         }
     }
+
+    private void printException( final String loggerLevelGui, Exception e ) {
+        if (loggerLevelGui.equals(StageConstants.LOGLEVEL_GUI_ON)) {
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
+            printError(sw.toString());
+        } else {
+            printError(e.getLocalizedMessage());
+        }
+    };
 }
