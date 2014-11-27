@@ -47,6 +47,10 @@ public class StageScriptExecutor {
 
     private String javaFile;
 
+    private static String nl = "\n";
+
+    private StringBuilder logBuilder = new StringBuilder();
+
     public StageScriptExecutor() throws Exception {
         /*
          * get java exec
@@ -96,7 +100,7 @@ public class StageScriptExecutor {
                 br = new BufferedReader(new FileReader(scriptFile));
                 String line = null;
                 while( (line = br.readLine()) != null ) {
-                    sb.append(line).append("\n");
+                    sb.append(line).append(nl);
                 }
             } finally {
                 br.close();
@@ -150,7 +154,7 @@ public class StageScriptExecutor {
         // FIXME find OS
         // if (Platform.getOS().equals(Platform.OS_WIN32)) {
         // File tmpRunFile = new File(homeFile, "udig_spatialtoolbox.bat");
-        // FileUtilities.writeFile("@echo off\n" + runSb.toString(), tmpRunFile);
+        // FileUtilities.writeFile("@echo off"+nl + runSb.toString(), tmpRunFile);
         // args = new String[]{"cmd", "/c", tmpRunFile.getAbsolutePath()};
         // } else {
         File tmpRunFile = new File(homeFile, "udig_spatialtoolbox.sh");
@@ -171,46 +175,48 @@ public class StageScriptExecutor {
         // environment.put("CLASSPATH", classPath);
 
         final Process process = processBuilder.start();
-        printMessage("Process started: " + StageConstants.dateTimeFormatterYYYYMMDDHHMMSS.format(new Date()));
-        printMessage("");
+        logBuilder.setLength(0);
+
+        StringBuilder preCommentsBuilder = new StringBuilder();
+        preCommentsBuilder.append("Process started: " + StageConstants.dateTimeFormatterYYYYMMDDHHMMSS.format(new Date()));
+        preCommentsBuilder.append(nl);
 
         // command launched
         if (loggerLevelGui.equals(StageConstants.LOGLEVEL_GUI_ON)) {
-            StringBuilder tmpBuilder = new StringBuilder();
-            tmpBuilder.append("------------------------------>8----------------------------\n");
-            tmpBuilder.append("Launching command: \n");
-            tmpBuilder.append("------------------\n");
+
+            preCommentsBuilder.append("------------------------------>8----------------------------" + nl);
+            preCommentsBuilder.append("Launching command: " + nl);
+            preCommentsBuilder.append("------------------" + nl);
             List<String> command = processBuilder.command();
             for( String arg : command ) {
-                tmpBuilder.append(arg);
-                tmpBuilder.append(" ");
+                preCommentsBuilder.append(arg);
+                preCommentsBuilder.append(" ");
             }
-            tmpBuilder.append("\n");
-            tmpBuilder.append("(you can run the above from command line, customizing the content)\n");
-            tmpBuilder.append("----------------------------------->8---------------------------------\n");
-            tmpBuilder.append("\n");
+            preCommentsBuilder.append("" + nl);
+            preCommentsBuilder.append("(you can run the above from command line, customizing the content)" + nl);
+            preCommentsBuilder.append("----------------------------------->8---------------------------------" + nl);
+            preCommentsBuilder.append("" + nl);
             // script run
-            tmpBuilder.append("Script run: \n");
-            tmpBuilder.append("-----------\n");
-            tmpBuilder.append(script);
-            tmpBuilder.append("\n");
-            tmpBuilder.append("------------------------------>8----------------------------\n");
-            tmpBuilder.append("\n");
+            preCommentsBuilder.append("Script run: " + nl);
+            preCommentsBuilder.append("-----------" + nl);
+            preCommentsBuilder.append(script);
+            preCommentsBuilder.append("" + nl);
+            preCommentsBuilder.append("------------------------------>8----------------------------" + nl);
+            preCommentsBuilder.append("" + nl);
             // environment used
-            tmpBuilder.append("Environment used: \n");
-            tmpBuilder.append("-----------------\n");
+            preCommentsBuilder.append("Environment used: " + nl);
+            preCommentsBuilder.append("-----------------" + nl);
 
             Set<Entry<String, String>> entrySet = environment.entrySet();
             for( Entry<String, String> entry : entrySet ) {
-                tmpBuilder.append(entry.getKey());
-                tmpBuilder.append(" =\t");
-                tmpBuilder.append(entry.getValue()).append("\n");
+                preCommentsBuilder.append(entry.getKey());
+                preCommentsBuilder.append(" =\t");
+                preCommentsBuilder.append(entry.getValue()).append("" + nl);
             }
-            tmpBuilder.append("------------------------------>8----------------------------\n");
-            tmpBuilder.append("");
-            printMessage(tmpBuilder.toString());
+            preCommentsBuilder.append("------------------------------>8----------------------------" + nl);
+            preCommentsBuilder.append("");
         }
-        printMessage("");
+        printMessage(preCommentsBuilder.toString(), LogStyle.COMMENT);
         isRunning = true;
 
         new Thread(){
@@ -222,7 +228,7 @@ public class StageScriptExecutor {
                     br = new BufferedReader(isr);
                     String line;
                     while( (line = br.readLine()) != null ) {
-                        printMessage(line);
+                        printMessage(line, LogStyle.NORMAL);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -237,7 +243,8 @@ public class StageScriptExecutor {
                     isRunning = false;
                     updateListenersForModuleStop();
                 }
-                printMessage("\nProcess finished: " + StageConstants.dateTimeFormatterYYYYMMDDHHMMSS.format(new Date()));
+                printMessage("Process finished: " + StageConstants.dateTimeFormatterYYYYMMDDHHMMSS.format(new Date()),
+                        LogStyle.COMMENT);
             }
 
         }.start();
@@ -258,7 +265,7 @@ public class StageScriptExecutor {
                         if (ConsoleMessageFilter.doRemove(line)) {
                             continue;
                         }
-                        printError(line);
+                        printMessage(line, LogStyle.ERROR);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -292,15 +299,25 @@ public class StageScriptExecutor {
         }
     }
 
-    private void printMessage( String message ) {
-        for( IProcessListener listener : listeners ) {
-            listener.onMessage(message, false);
-        }
-    }
-
-    private void printError( String error ) {
-        for( IProcessListener listener : listeners ) {
-            listener.onMessage(error, true);
+    private synchronized void printMessage( String message, LogStyle style ) {
+        String messageString = message;
+        switch( style ) {
+        case COMMENT:
+        case ERROR:
+            String[] split = message.split(nl);
+            for( String string : split ) {
+                messageString = style.getPre() + string + style.getPost();
+                for( IProcessListener listener : listeners ) {
+                    listener.onMessage(messageString, false);
+                }
+            }
+            break;
+        case NORMAL:
+        default:
+            for( IProcessListener listener : listeners ) {
+                listener.onMessage(messageString, false);
+            }
+            break;
         }
     }
 
@@ -315,9 +332,9 @@ public class StageScriptExecutor {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
             e.printStackTrace(pw);
-            printError(sw.toString());
+            printMessage(sw.toString(), LogStyle.ERROR);
         } else {
-            printError(e.getLocalizedMessage());
+            printMessage(e.getLocalizedMessage(), LogStyle.ERROR);
         }
     };
 }

@@ -19,7 +19,10 @@ import org.eclipse.rap.rwt.client.Client;
 import org.eclipse.rap.rwt.service.ServerPushSession;
 import org.eclipse.rap.rwt.service.UISession;
 import org.eclipse.rap.rwt.widgets.DialogCallback;
+import org.eclipse.swt.browser.Browser;
+import org.eclipse.swt.custom.CLabel;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
@@ -165,7 +168,7 @@ public class ScriptHandler {
      * @param script
      *            the script.
      */
-    public void runModule( final String scriptId, String script, final Text logText ) {
+    public void runModule( final String scriptId, String script, final org.eclipse.swt.widgets.List logBrowser ) {
         // FIXME
         // JConsoleOutputConsole outputConsole = new
         // JConsoleOutputConsole(scriptId);
@@ -192,18 +195,18 @@ public class ScriptHandler {
                             StageSessionPluginSingleton.getInstance().cleanProcess(scriptId);
                             // loadOutputMaps();
                             logPushSession.stop();
+
                         }
                     });
                 }
 
                 @Override
                 public void onMessage( final String message, boolean isError ) {
-                    display.asyncExec(new Runnable(){
+                    display.syncExec(new Runnable(){
                         public void run() {
-                            logText.append(message);
-                            logText.append("\n");
-
-                            logText.setSelection(logText.getCharCount());
+                            logBrowser.add(message);
+                            int itemCount = logBrowser.getItemCount();
+                            logBrowser.setTopIndex(itemCount - 1);
                         }
                     });
                 }
@@ -216,7 +219,7 @@ public class ScriptHandler {
             String encoding = StageSessionPluginSingleton.getInstance().retrieveSavedEncoding();
             Process process = executor.exec(script, loggerLevelGui, ramLevel, encoding);
             logPushSession.start();
-            
+
             StageSessionPluginSingleton.getInstance().addProcess(process, scriptId);
         } catch (Exception e) {
             e.printStackTrace();

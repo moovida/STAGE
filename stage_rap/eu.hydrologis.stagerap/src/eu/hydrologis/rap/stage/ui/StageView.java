@@ -9,6 +9,7 @@
  */
 package eu.hydrologis.rap.stage.ui;
 
+import java.awt.event.TextListener;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.Charset;
@@ -30,6 +31,10 @@ import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerFilter;
 import org.eclipse.rap.rwt.RWT;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.browser.Browser;
+import org.eclipse.swt.browser.LocationAdapter;
+import org.eclipse.swt.browser.LocationEvent;
+import org.eclipse.swt.custom.CLabel;
 import org.eclipse.swt.custom.StackLayout;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
@@ -87,7 +92,7 @@ public class StageView {
 
     private HashMap<String, Control> module2GuiMap = new HashMap<String, Control>();
     private Display display;
-    private Text logText;
+    private org.eclipse.swt.widgets.List logBrowser;
 
     public StageView() {
 
@@ -478,9 +483,30 @@ public class StageView {
             }
         });
 
-        logText = new Text(runToolsGroup, SWT.MULTI | SWT.WRAP | SWT.V_SCROLL | SWT.BORDER);
-        logText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
-        logText.setText("");
+        // logBrowser = new Browser(runToolsGroup, runToolsGroup.getStyle());
+        logBrowser = new org.eclipse.swt.widgets.List(runToolsGroup, SWT.MULTI | SWT.BORDER | SWT.V_SCROLL);
+        // SWT.MULTI
+        // |
+        // SWT.WRAP
+        // |
+        // SWT.V_SCROLL
+        // |
+        // SWT.BORDER);
+        logBrowser.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+        logBrowser.setData(RWT.MARKUP_ENABLED, Boolean.TRUE);
+        // logBrowser.setText("");
+        // logBrowser.addLocationListener(new LocationAdapter(){
+        // private static final long serialVersionUID = 1L;
+        //
+        // public void changed( LocationEvent event ) {
+        // try {
+        // logBrowser.evaluate("window.scrollTo(0, document.body.scrollHeight)");
+        // } catch (Exception e) {
+        // e.printStackTrace();
+        // }
+        // }
+        //
+        // });
 
     }
 
@@ -565,8 +591,8 @@ public class StageView {
 
         String scriptID = currentSelectedModuleGui.getModuleDescription().getName() + " "
                 + StageConstants.dateTimeFormatterYYYYMMDDHHMMSS.format(new Date());
-        logText.setText("");
-        handler.runModule(scriptID, script, logText);
+        logBrowser.setItems(new String[]{""});
+        handler.runModule(scriptID, script, logBrowser);
     }
 
     /**
