@@ -130,11 +130,7 @@ public class StageView {
         modulesGuiComposite.setLayout(modulesGuiStackLayout);
         modulesGuiComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
-        Label noModuleLabel = new Label(modulesGuiComposite, SWT.NONE);
-        noModuleLabel.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, true));
-        noModuleLabel.setData(RWT.MARKUP_ENABLED, Boolean.TRUE);
-        noModuleLabel.setText("<span style='font:bold 26px Arial;'>" + NO_MODULE_SELECTED + "</span>");
-
+        Label noModuleLabel = getNoModuleLabel();
         modulesGuiStackLayout.topControl = noModuleLabel;
 
         addQuickSettings(mainComposite);
@@ -144,6 +140,14 @@ public class StageView {
             e.printStackTrace();
         }
 
+    }
+
+    private Label getNoModuleLabel() {
+        Label noModuleLabel = new Label(modulesGuiComposite, SWT.NONE);
+        noModuleLabel.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, true));
+        noModuleLabel.setData(RWT.MARKUP_ENABLED, Boolean.TRUE);
+        noModuleLabel.setText("<span style='font:bold 26px Arial;'>" + NO_MODULE_SELECTED + "</span>");
+        return noModuleLabel;
     }
 
     private void addTextFilter( Composite modulesComposite ) {
@@ -453,7 +457,8 @@ public class StageView {
      * @throws InterruptedException
      * @throws InvocationTargetException
      */
-    public void relayout( final boolean expandAll, final String filterText  ) throws InvocationTargetException, InterruptedException {
+    public void relayout( final boolean expandAll, final String filterText ) throws InvocationTargetException,
+            InterruptedException {
 
         // IRunnableWithProgress operation1 = new IRunnableWithProgress(){
         //
@@ -486,9 +491,8 @@ public class StageView {
      * Put the properties view to an label that defines no selection.
      */
     public void putUnselected() {
-        Label l = new Label(modulesGuiComposite, SWT.SHADOW_ETCHED_IN);
-        l.setText(NO_MODULE_SELECTED);
-        modulesGuiStackLayout.topControl = l;
+        Label noModuleLabel = getNoModuleLabel();
+        modulesGuiStackLayout.topControl = noModuleLabel;
         modulesGuiComposite.layout(true);
     }
 
