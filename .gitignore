@@ -16,3 +16,5 @@ hs_err_pid*
 eu.hydrologis.jconsole/bin
 eu.hydrologis.jgrass.jconsole/bin
 eu.hydrologis.stage/bin
+eu.udig.jconsole/bin/.gitignore
+stage_rap/eu.hydrologis.stagerap/bin

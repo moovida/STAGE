@@ -20,6 +20,7 @@ package eu.hydrologis.rap.stage.utils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -78,7 +79,8 @@ public class ViewerFolder {
         return modules;
     }
 
-    public static List<ViewerFolder> hashmap2ViewerFolders( TreeMap<String, List<ModuleDescription>> availableModules ) {
+    public static List<ViewerFolder> hashmap2ViewerFolders( TreeMap<String, List<ModuleDescription>> availableModules,
+            String filterText ) {
         List<ViewerFolder> folders = new ArrayList<ViewerFolder>();
 
         HashMap<String, ViewerFolder> tmpFoldersMap = new HashMap<String, ViewerFolder>();
@@ -125,10 +127,37 @@ public class ViewerFolder {
                 mainFolder = tmpFolder;
             }
 
-            // add the module to the last available
+            // add the module to the last available if the filter allows it
             for( ModuleDescription moduleDescription : md ) {
+                String moduleNameLC = moduleDescription.getName().toLowerCase();
+                if (filterText != null && filterText.length() > 0 && !moduleNameLC.contains(filterText.toLowerCase())) {
+                    continue;
+                }
                 mainFolder.addModule(new ViewerModule(moduleDescription));
             }
+        }
+
+        // remove empty folders 
+        Iterator<ViewerFolder> folderIterator = folders.iterator();
+        while( folderIterator.hasNext() ) {
+            ViewerFolder folder = folderIterator.next();
+            List<ViewerFolder> subFoldersList = folder.getSubFolders();
+            // first check the subfolders
+            Iterator<ViewerFolder> subFoldersIterator = subFoldersList.iterator();
+            while( subFoldersIterator.hasNext() ) {
+                ViewerFolder subFolder = subFoldersIterator.next();
+                List<ViewerFolder> subSubFoldersList = subFolder.getSubFolders();
+                if (subFolder.getModules().isEmpty() && subSubFoldersList.isEmpty()) {
+                    subFoldersIterator.remove();
+                    continue;
+                }
+            }
+            // then check the main folders
+            if (folder.getModules().isEmpty() && subFoldersList.isEmpty()) {
+                folderIterator.remove();
+                continue;
+            }
+
         }
 
         return folders;
