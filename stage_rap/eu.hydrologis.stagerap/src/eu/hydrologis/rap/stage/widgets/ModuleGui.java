@@ -154,7 +154,7 @@ public class ModuleGui {
         folder.setSelection(tab);
 
         // we want the content to scroll
-        final ScrolledComposite scroller = new ScrolledComposite(folder, SWT.V_SCROLL);
+        final ScrolledComposite scroller = new ScrolledComposite(folder, SWT.V_SCROLL | SWT.H_SCROLL);
         scroller.setLayout(new FillLayout());
 
         // the actual content of the tab
