@@ -87,7 +87,8 @@ public class StageScriptExecutor {
      * @return the process.
      * @throws Exception
      */
-    public Process exec(String sessionId, String script, final String loggerLevelGui, String ramLevel, String encoding ) throws Exception {
+    public Process exec( String sessionId, String script, final String loggerLevelGui, String ramLevel, String encoding )
+            throws Exception {
         File scriptFile = new File(script);
         if (!scriptFile.exists()) {
             // if the file doesn't exist, it is a script, let's put it into a
@@ -248,11 +249,11 @@ public class StageScriptExecutor {
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
+                    printMessage("Process finished: " + StageConstants.dateTimeFormatterYYYYMMDDHHMMSS.format(new Date()),
+                            LogStyle.COMMENT);
                     isRunning = false;
                     updateListenersForModuleStop();
                 }
-                printMessage("Process finished: " + StageConstants.dateTimeFormatterYYYYMMDDHHMMSS.format(new Date()),
-                        LogStyle.COMMENT);
             }
 
         }.start();

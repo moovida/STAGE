@@ -168,7 +168,7 @@ public class ScriptHandler {
      * @param script
      *            the script.
      */
-    public void runModule( final String scriptId, String script, final org.eclipse.swt.widgets.List logBrowser ) {
+    public void runModule( final String scriptId, String script, final org.eclipse.swt.widgets.List logList ) {
         // FIXME
         // JConsoleOutputConsole outputConsole = new
         // JConsoleOutputConsole(scriptId);
@@ -203,11 +203,13 @@ public class ScriptHandler {
 
                 @Override
                 public void onMessage( final String message, boolean isError ) {
-                    display.syncExec(new Runnable(){
+                    display.asyncExec(new Runnable(){
                         public void run() {
-                            logBrowser.add(message);
-                            int itemCount = logBrowser.getItemCount();
-                            logBrowser.setTopIndex(itemCount - 1);
+                            logList.add(message);
+                            logList.select(logList.getItemCount() - 1);
+                            logList.showSelection();
+//                            int itemCount = logList.getItemCount();
+//                            logList.setTopIndex(itemCount - 1);
                         }
                     });
                 }

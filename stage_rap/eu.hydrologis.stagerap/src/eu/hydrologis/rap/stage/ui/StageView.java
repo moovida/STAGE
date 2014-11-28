@@ -36,6 +36,9 @@ import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.layout.FormAttachment;
+import org.eclipse.swt.layout.FormData;
+import org.eclipse.swt.layout.FormLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -88,7 +91,7 @@ public class StageView {
 
     private HashMap<String, Control> module2GuiMap = new HashMap<String, Control>();
     private Display display;
-    private org.eclipse.swt.widgets.List logBrowser;
+    private org.eclipse.swt.widgets.List logList;
 
     public void createPartControl( Display display, Composite parent ) throws IOException {
         this.display = display;
@@ -99,7 +102,7 @@ public class StageView {
         mainLayout.marginWidth = 25;
         mainLayout.marginHeight = 25;
         mainComposite.setLayout(mainLayout);
-        mainComposite.setLayoutData(new GridData(GridData.FILL_BOTH | GridData.GRAB_HORIZONTAL | GridData.GRAB_VERTICAL));
+        mainComposite.setLayoutData(new GridData(GridData.FILL_BOTH));
 
         Group modulesListGroup = new Group(mainComposite, SWT.NONE);
         modulesListGroup.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
@@ -130,9 +133,8 @@ public class StageView {
         Label noModuleLabel = getNoModuleLabel();
         modulesGuiStackLayout.topControl = noModuleLabel;
 
-
         addRunTools(mainComposite);
-        
+
         addQuickSettings(mainComposite);
 
         try {
@@ -452,7 +454,7 @@ public class StageView {
 
     private void addRunTools( Composite modulesListComposite ) throws IOException {
         Group runToolsGroup = new Group(modulesListComposite, SWT.NONE);
-        GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, false);
+        GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
         gridData.horizontalSpan = 2;
         gridData.verticalSpan = 2;
         runToolsGroup.setLayoutData(gridData);
@@ -478,9 +480,9 @@ public class StageView {
             }
         });
 
-        logBrowser = new org.eclipse.swt.widgets.List(runToolsGroup, SWT.MULTI | SWT.BORDER | SWT.V_SCROLL | SWT.H_SCROLL);
-        logBrowser.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
-        logBrowser.setData(RWT.MARKUP_ENABLED, Boolean.TRUE);
+        logList = new org.eclipse.swt.widgets.List(runToolsGroup, SWT.BORDER | SWT.V_SCROLL | SWT.H_SCROLL);
+        logList.setLayoutData(new GridData(GridData.FILL_BOTH));
+        logList.setData(RWT.MARKUP_ENABLED, Boolean.TRUE);
     }
 
     private static class ExperimentalFilter extends ViewerFilter {
@@ -538,19 +540,19 @@ public class StageView {
      * @throws Exception
      */
     public void runSelectedModule() throws Exception {
-        ScriptHandler handler = new ScriptHandler();
+        ScriptHandler scriptHandler = new ScriptHandler();
         if (currentSelectedModuleGui == null) {
             return;
         }
-        String script = handler.genereateScript(currentSelectedModuleGui, display.getActiveShell());
+        String script = scriptHandler.genereateScript(currentSelectedModuleGui, display.getActiveShell());
         if (script == null) {
             return;
         }
 
         String scriptID = currentSelectedModuleGui.getModuleDescription().getName() + " "
                 + StageConstants.dateTimeFormatterYYYYMMDDHHMMSS.format(new Date());
-        logBrowser.setItems(new String[]{""});
-        handler.runModule(scriptID, script, logBrowser);
+        logList.removeAll();
+        scriptHandler.runModule(scriptID, script, logList);
     }
 
     /**
