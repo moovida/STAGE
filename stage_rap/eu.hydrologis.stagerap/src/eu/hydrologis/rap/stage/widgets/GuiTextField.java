@@ -21,6 +21,8 @@ package eu.hydrologis.rap.stage.widgets;
 import java.io.File;
 import java.text.MessageFormat;
 
+import org.eclipse.rap.rwt.client.ClientFile;
+import org.eclipse.rap.rwt.dnd.ClientFileTransfer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.dnd.DND;
 import org.eclipse.swt.dnd.DropTarget;
@@ -41,7 +43,6 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
 
@@ -55,6 +56,7 @@ import eu.hydrologis.rap.stage.utils.StageUtils;
  * 
  * @author Andrea Antonello (www.hydrologis.com)
  */
+@SuppressWarnings("serial")
 public class GuiTextField extends ModuleGuiElement implements ModifyListener, FocusListener {
 
     private Text text;
@@ -184,8 +186,8 @@ public class GuiTextField extends ModuleGuiElement implements ModifyListener, Fo
             text.setLayoutData(textGD);
             // text.setLineAlignment(0, 1, SWT.RIGHT);
             // FIXME
-//        } else if (isMapcalc) {
-//            text = MapcalculatorUtils.createMapcalcPanel(parent, rows);
+            // } else if (isMapcalc) {
+            // text = MapcalculatorUtils.createMapcalcPanel(parent, rows);
         } else {
             text = new Text(parent, SWT.MULTI | SWT.WRAP | SWT.LEAD | SWT.BORDER | SWT.V_SCROLL);
             GridData textGD = new GridData(SWT.FILL, SWT.CENTER, true, true);
@@ -229,23 +231,25 @@ public class GuiTextField extends ModuleGuiElement implements ModifyListener, Fo
             browseButton.setText("...");
             browseButton.addSelectionListener(new SelectionAdapter(){
                 public void widgetSelected( SelectionEvent e ) {
-                	
-                	// FIXME create a local file picker
-                	
-//                    FileDialog fileDialog = new FileDialog(text.getShell(), isInFile ? SWT.OPEN : SWT.SAVE);
-//                    String lastFolderChosen = StagePluginSingleton.getInstance().getLastFolderChosen();
-//                    fileDialog.setFilterPath(lastFolderChosen);
-//                    String path = fileDialog.open();
-//
-//                    if (path == null || path.length() < 1) {
-//                        text.setText("");
-//                    } else {
-//                        path = checkBackSlash(path, isFileOrFolder);
-//                        text.setText(path);
-//                        text.setSelection(text.getCharCount());
-//                        setDataValue();
-//                    }
-//                    StagePluginSingleton.getInstance().setLastFolderChosen(fileDialog.getFilterPath());
+
+                    // FIXME create a local file picker
+
+                    // FileDialog fileDialog = new FileDialog(text.getShell(), isInFile ? SWT.OPEN :
+                    // SWT.SAVE);
+                    // String lastFolderChosen =
+                    // StagePluginSingleton.getInstance().getLastFolderChosen();
+                    // fileDialog.setFilterPath(lastFolderChosen);
+                    // String path = fileDialog.open();
+                    //
+                    // if (path == null || path.length() < 1) {
+                    // text.setText("");
+                    // } else {
+                    // path = checkBackSlash(path, isFileOrFolder);
+                    // text.setText(path);
+                    // text.setSelection(text.getCharCount());
+                    // setDataValue();
+                    // }
+                    // StagePluginSingleton.getInstance().setLastFolderChosen(fileDialog.getFilterPath());
                 }
             });
         }
@@ -256,22 +260,23 @@ public class GuiTextField extends ModuleGuiElement implements ModifyListener, Fo
             browseButton.setText("...");
             browseButton.addSelectionListener(new SelectionAdapter(){
                 public void widgetSelected( SelectionEvent e ) {
-                	// FIXME create a local folder picker
-                	
-//                    DirectoryDialog directoryDialog = new DirectoryDialog(text.getShell(), isInFolder ? SWT.OPEN : SWT.SAVE);
-//                    String lastFolderChosen = OmsBoxPlugin.getDefault().getLastFolderChosen();
-//                    directoryDialog.setFilterPath(lastFolderChosen);
-//                    String path = directoryDialog.open();
-//
-//                    if (path == null || path.length() < 1) {
-//                        text.setText("");
-//                    } else {
-//                        path = checkBackSlash(path, isFileOrFolder);
-//                        text.setText(path);
-//                        // text.setSelection(text.getCharCount());
-//                        setDataValue();
-//                    }
-//                    OmsBoxPlugin.getDefault().setLastFolderChosen(directoryDialog.getFilterPath());
+                    // FIXME create a local folder picker
+
+                    // DirectoryDialog directoryDialog = new DirectoryDialog(text.getShell(),
+                    // isInFolder ? SWT.OPEN : SWT.SAVE);
+                    // String lastFolderChosen = OmsBoxPlugin.getDefault().getLastFolderChosen();
+                    // directoryDialog.setFilterPath(lastFolderChosen);
+                    // String path = directoryDialog.open();
+                    //
+                    // if (path == null || path.length() < 1) {
+                    // text.setText("");
+                    // } else {
+                    // path = checkBackSlash(path, isFileOrFolder);
+                    // text.setText(path);
+                    // // text.setSelection(text.getCharCount());
+                    // setDataValue();
+                    // }
+                    // OmsBoxPlugin.getDefault().setLastFolderChosen(directoryDialog.getFilterPath());
                 }
             });
         }
@@ -386,18 +391,24 @@ public class GuiTextField extends ModuleGuiElement implements ModifyListener, Fo
     }
 
     public FieldData getFieldData() {
-    	// FIXME
-//        if (isMapcalc) {
-//            MapcalculatorUtils.saveMapcalcHistory(text.getText());
-//        }
+        // FIXME
+        // if (isMapcalc) {
+        // MapcalculatorUtils.saveMapcalcHistory(text.getText());
+        // }
         return data;
     }
 
     private void setDataValue() {
         String textStr = text.getText();
-        textStr = checkBackSlash(textStr, isFileOrFolder);
-
-        data.fieldValue = textStr;
+        String tmpTextStr = checkBackSlash(textStr, isFileOrFolder);
+        // if (!tmpTextStr.equals(textStr)) {
+        // // changed
+        // text.removeModifyListener(this);
+        // textStr = tmpTextStr;
+        // text.setText(textStr);
+        // text.addModifyListener(this);
+        // }
+        data.fieldValue = tmpTextStr;
     }
 
     public boolean hasData() {
@@ -525,22 +536,37 @@ public class GuiTextField extends ModuleGuiElement implements ModifyListener, Fo
                 || isProcessingRows || isProcessingXres || isProcessingYres;
     }
 
+    
     private void addDrop() {
-        int operations = DND.DROP_MOVE | DND.DROP_COPY | DND.DROP_DEFAULT;
-        DropTarget target = new DropTarget(text, operations);
+        int operations = DND.DROP_MOVE | DND.DROP_COPY | DND.DROP_DEFAULT | DND.DROP_LINK;
+        DropTarget dropTarget = new DropTarget(text, operations);
 
         final TextTransfer textTransfer = TextTransfer.getInstance();
         final FileTransfer fileTransfer = FileTransfer.getInstance();
         final URLTransfer urlTransfer = URLTransfer.getInstance();
-        // final UDigByteAndLocalTransfer omsboxTransfer = UDigByteAndLocalTransfer.getInstance();
-        Transfer[] types = new Transfer[]{fileTransfer, textTransfer, urlTransfer};// ,
-                                                                                   // omsboxTransfer};
-        target.setTransfer(types);
-        target.addDropListener(new DropTargetListener(){
+        final ClientFileTransfer clientFileTransfer = ClientFileTransfer.getInstance();
+        Transfer[] types = new Transfer[]{fileTransfer, textTransfer, urlTransfer, clientFileTransfer};
+        dropTarget.setTransfer(types);
+        dropTarget.addDropListener(new DropTargetListener(){
             public void drop( DropTargetEvent event ) {
                 if (textTransfer.isSupportedType(event.currentDataType)) {
                     String text = (String) event.data;
                     System.out.println(text);
+                }
+                if (clientFileTransfer.isSupportedType(event.currentDataType)) {
+                    Object dataObj = event.data;
+                    if (dataObj instanceof ClientFile[]) {
+                        ClientFile[] clientFileImpl = (ClientFile[]) dataObj;
+                        if (clientFileImpl.length > 0) {
+                            String name = clientFileImpl[0].getName();
+                            String tmpText = text.getText();
+                            File possibleFolder = new File(tmpText);
+                            if (possibleFolder.exists() && possibleFolder.isDirectory()) {
+                                File newFile = new File(possibleFolder, name);
+                                setTextContent(newFile);
+                            }
+                        }
+                    }
                 }
                 if (fileTransfer.isSupportedType(event.currentDataType)) {
                     String[] files = (String[]) event.data;
@@ -630,32 +656,32 @@ public class GuiTextField extends ModuleGuiElement implements ModifyListener, Fo
     }
 
     private void setTextContent( File file ) {
-    	// FIXME
-//        if (isMapcalc) {
-//            String map = file.getName();
-//            insertTextAtCaretPosition(text, map);
-//        } else {
-            String absolutePath = file.getAbsolutePath();
-            absolutePath = checkBackSlash(absolutePath, isFileOrFolder);
-            text.setText(absolutePath);
-            text.setSelection(text.getCharCount());
-//        }
+        // FIXME
+        // if (isMapcalc) {
+        // String map = file.getName();
+        // insertTextAtCaretPosition(text, map);
+        // } else {
+        String absolutePath = file.getAbsolutePath();
+        absolutePath = checkBackSlash(absolutePath, isFileOrFolder);
+        text.setText(absolutePath);
+        text.setSelection(text.getCharCount());
+        // }
     }
 
-//    private static void insertTextAtCaretPosition( StyledText text, String string ) {
-//        int caretPosition = text.getCaretOffset();
-//
-//        String textStr = text.getText();
-//        String sub1 = textStr.substring(0, caretPosition);
-//        String sub2 = textStr.substring(caretPosition);
-//
-//        StringBuilder sb = new StringBuilder();
-//        sb.append(sub1);
-//        sb.append(string);
-//        sb.append(sub2);
-//
-//        text.setText(sb.toString());
-//    }
+    // private static void insertTextAtCaretPosition( StyledText text, String string ) {
+    // int caretPosition = text.getCaretOffset();
+    //
+    // String textStr = text.getText();
+    // String sub1 = textStr.substring(0, caretPosition);
+    // String sub2 = textStr.substring(caretPosition);
+    //
+    // StringBuilder sb = new StringBuilder();
+    // sb.append(sub1);
+    // sb.append(string);
+    // sb.append(sub2);
+    //
+    // text.setText(sb.toString());
+    // }
 
     @Override
     public String validateContent() {
