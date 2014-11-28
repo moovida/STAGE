@@ -185,6 +185,7 @@ public class ScriptHandler {
 
         try {
             final Display display = Display.getCurrent();
+            String sessionId = RWT.getUISession().getId();
             final ServerPushSession logPushSession = new ServerPushSession();
             StageScriptExecutor executor = new StageScriptExecutor();
             executor.addProcessListener(new IProcessListener(){
@@ -217,7 +218,7 @@ public class ScriptHandler {
                 loggerLevelGui = StageConstants.LOGLEVEL_GUI_OFF;
             String ramLevel = String.valueOf(StageSessionPluginSingleton.getInstance().retrieveSavedHeap());
             String encoding = StageSessionPluginSingleton.getInstance().retrieveSavedEncoding();
-            Process process = executor.exec(script, loggerLevelGui, ramLevel, encoding);
+            Process process = executor.exec(sessionId, script, loggerLevelGui, ramLevel, encoding);
             logPushSession.start();
 
             StageSessionPluginSingleton.getInstance().addProcess(process, scriptId);
