@@ -30,6 +30,7 @@ import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerFilter;
 import org.eclipse.rap.rwt.RWT;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.custom.StackLayout;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
@@ -97,14 +98,27 @@ public class StageView {
         this.display = display;
         module2GuiMap.clear();
 
-        Composite mainComposite = new Composite(parent, SWT.None);
-        GridLayout mainLayout = new GridLayout(5, true);
-        mainLayout.marginWidth = 25;
-        mainLayout.marginHeight = 25;
-        mainComposite.setLayout(mainLayout);
-        mainComposite.setLayoutData(new GridData(GridData.FILL_BOTH));
+//        Composite mainComposite = new Composite(parent, SWT.None);
+//        GridLayout mainLayout = new GridLayout(5, true);
+//        mainLayout.marginWidth = 25;
+//        mainLayout.marginHeight = 25;
+//        mainComposite.setLayout(mainLayout);
+//        mainComposite.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
 
-        Group modulesListGroup = new Group(mainComposite, SWT.NONE);
+        SashForm mainComposite = new SashForm(parent, SWT.HORIZONTAL);
+        mainComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+      
+        
+        
+        Composite leftComposite = new Composite(mainComposite, SWT.None);
+        GridLayout leftLayout = new GridLayout(1, true);
+        leftLayout.marginWidth = 0;
+        leftLayout.marginHeight = 0;
+        leftComposite.setLayout(leftLayout);
+        GridData leftGD = new GridData(GridData.FILL, GridData.FILL, true, true);
+        leftComposite.setLayoutData(leftGD);
+
+        Group modulesListGroup = new Group(leftComposite, SWT.NONE);
         modulesListGroup.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
         modulesListGroup.setLayout(new GridLayout(2, false));
         modulesListGroup.setText(MODULES);
@@ -114,6 +128,8 @@ public class StageView {
         List<ViewerFolder> viewerFolders = new ArrayList<ViewerFolder>();
         modulesViewer.setInput(viewerFolders);
         addFilterButtons(modulesListGroup);
+
+        addQuickSettings(leftComposite);
 
         Group parametersTabsGroup = new Group(mainComposite, SWT.NONE);
         GridData modulesGuiCompositeGD = new GridData(SWT.FILL, SWT.FILL, true, true);
@@ -135,8 +151,7 @@ public class StageView {
 
         addRunTools(mainComposite);
 
-        addQuickSettings(mainComposite);
-
+        mainComposite.setWeights(new int[]{1, 2, 2});
         try {
             relayout(false, null);
         } catch (Exception e) {
