@@ -60,6 +60,7 @@ import eu.hydrologis.rap.stage.utils.ImageCache;
 import eu.hydrologis.rap.stage.utils.StageConstants;
 import eu.hydrologis.rap.stage.utils.ViewerFolder;
 import eu.hydrologis.rap.stage.utils.ViewerModule;
+import eu.hydrologis.rap.stage.utilsrap.MessageDialogUtil;
 import eu.hydrologis.rap.stage.widgets.ModuleGui;
 
 /**
@@ -98,18 +99,16 @@ public class StageView {
         this.display = display;
         module2GuiMap.clear();
 
-//        Composite mainComposite = new Composite(parent, SWT.None);
-//        GridLayout mainLayout = new GridLayout(5, true);
-//        mainLayout.marginWidth = 25;
-//        mainLayout.marginHeight = 25;
-//        mainComposite.setLayout(mainLayout);
-//        mainComposite.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
+        // Composite mainComposite = new Composite(parent, SWT.None);
+        // GridLayout mainLayout = new GridLayout(5, true);
+        // mainLayout.marginWidth = 25;
+        // mainLayout.marginHeight = 25;
+        // mainComposite.setLayout(mainLayout);
+        // mainComposite.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
 
         SashForm mainComposite = new SashForm(parent, SWT.HORIZONTAL);
         mainComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
-      
-        
-        
+
         Composite leftComposite = new Composite(mainComposite, SWT.None);
         GridLayout leftLayout = new GridLayout(1, true);
         leftLayout.marginWidth = 0;
@@ -323,6 +322,7 @@ public class StageView {
                     modulesGuiStackLayout.topControl = control;
                     modulesGuiComposite.layout(true);
                 } else {
+                    currentSelectedModuleGui = null;
                     putUnselected();
                 }
             }
@@ -557,6 +557,7 @@ public class StageView {
     public void runSelectedModule() throws Exception {
         ScriptHandler scriptHandler = new ScriptHandler();
         if (currentSelectedModuleGui == null) {
+            MessageDialogUtil.openWarning(modulesGuiComposite.getShell(), "WARNING", NO_MODULE_SELECTED, null);
             return;
         }
         String script = scriptHandler.genereateScript(currentSelectedModuleGui, display.getActiveShell());
