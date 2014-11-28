@@ -70,543 +70,572 @@ import eu.hydrologis.rap.stage.widgets.ModuleGui;
  */
 public class StageView {
 
-    private static final String EXECUTION_TOOLS = "Execution";
-    private static final String CHARACTER_ENCODING = "Character Encoding";
-    private static final String DEBUG_INFO = "Debug info";
-    private static final String MEMORY_MB = "Memory [MB]";
-    private static final String PROCESS_SETTINGS = "Process settings";
-    private static final String LOAD_EXPERIMENTAL_MODULES = "Load experimental modules";
-    private static final String NO_MODULE_SELECTED = "No module selected";
-    private static final String MODULES = "Modules";
-    public static final String SPATIAL_TOOLBOX = "Spatial Toolbox...";
-    public static final String LOADING_MODULES_FROM_LIBRARIES = "Loading modules from libraries...";
-
-    public static final String ID = "eu.udig.omsbox.view.OmsBoxView"; //$NON-NLS-1$
-
-    private Composite modulesGuiComposite;
-    private StackLayout modulesGuiStackLayout;
-    private TreeViewer modulesViewer;
-
-    private ModuleGui currentSelectedModuleGui;
-    private String filterTextString;
-
-    private HashMap<String, Control> module2GuiMap = new HashMap<String, Control>();
-    private Display display;
-    private org.eclipse.swt.widgets.List logBrowser;
-
-    public StageView() {
-
-    }
-
-    public void createPartControl( Display display, Composite parent ) throws IOException {
-        this.display = display;
-        module2GuiMap.clear();
-
-        Composite mainComposite = new Composite(parent, SWT.None);
-        GridLayout mainLayout = new GridLayout(3, true);
-        mainLayout.marginWidth = 25;
-        mainLayout.marginHeight = 25;
-        mainComposite.setLayout(mainLayout);
-        mainComposite.setLayoutData(new GridData(GridData.FILL_BOTH | GridData.GRAB_HORIZONTAL | GridData.GRAB_VERTICAL));
-
-        Group modulesListGroup = new Group(mainComposite, SWT.NONE);
-        modulesListGroup.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
-        modulesListGroup.setLayout(new GridLayout(2, false));
-        modulesListGroup.setText(MODULES);
-
-        addTextFilter(modulesListGroup);
-        modulesViewer = createTreeViewer(modulesListGroup);
-        List<ViewerFolder> viewerFolders = new ArrayList<ViewerFolder>();
-        modulesViewer.setInput(viewerFolders);
-        addFilterButtons(modulesListGroup);
-
-        Group parametersTabsGroup = new Group(mainComposite, SWT.NONE);
-        GridData modulesGuiCompositeGD = new GridData(SWT.FILL, SWT.FILL, true, true);
-        modulesGuiCompositeGD.horizontalSpan = 2;
-        modulesGuiCompositeGD.verticalSpan = 1;
-        parametersTabsGroup.setLayoutData(modulesGuiCompositeGD);
-        parametersTabsGroup.setLayout(new GridLayout(1, false));
-        parametersTabsGroup.setText("Parameters");
-
-        modulesGuiComposite = new Composite(parametersTabsGroup, SWT.BORDER);
-        modulesGuiStackLayout = new StackLayout();
-        modulesGuiStackLayout.marginWidth = 15;
-        modulesGuiStackLayout.marginHeight = 15;
-        modulesGuiComposite.setLayout(modulesGuiStackLayout);
-        modulesGuiComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
-
-        Label noModuleLabel = getNoModuleLabel();
-        modulesGuiStackLayout.topControl = noModuleLabel;
-
-        addQuickSettings(mainComposite);
-
-        addRunTools(mainComposite);
-        try {
-            relayout(false, null);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-    }
-
-    private Label getNoModuleLabel() {
-        Label noModuleLabel = new Label(modulesGuiComposite, SWT.NONE);
-        noModuleLabel.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, true));
-        noModuleLabel.setData(RWT.MARKUP_ENABLED, Boolean.TRUE);
-        noModuleLabel.setText("<span style='font:bold 26px Arial;'>" + NO_MODULE_SELECTED + "</span>");
-        return noModuleLabel;
-    }
-
-    private void addTextFilter( Composite modulesComposite ) {
-
-        Label filterLabel = new Label(modulesComposite, SWT.NONE);
-        filterLabel.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
-        filterLabel.setText("Filter");
-
-        final Text filterText = new Text(modulesComposite, SWT.SINGLE | SWT.LEAD | SWT.BORDER);
-        filterText.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-        filterText.addModifyListener(new ModifyListener(){
-            private static final long serialVersionUID = 1L;
-
-            public void modifyText( ModifyEvent event ) {
-                filterTextString = filterText.getText();
-                try {
-                    if (filterTextString == null || filterTextString.length() == 0) {
-                        relayout(false, null);
-                    } else {
-                        relayout(true, filterTextString);
-                    }
-                } catch (InvocationTargetException | InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-
-    }
-
-    private TreeViewer createTreeViewer( Composite modulesComposite ) {
-
-        // FIXME
-        // PatternFilter patternFilter = new PatternFilter();
-        // final FilteredTree filter = new FilteredTree(modulesComposite,
-        // SWT.SINGLE | SWT.BORDER, patternFilter, true);
-        // final TreeViewer modulesViewer = filter.getViewer();
-        final TreeViewer modulesViewer = new TreeViewer(modulesComposite);
-
-        Control control = modulesViewer.getControl();
-        GridData controlGD = new GridData(SWT.FILL, SWT.FILL, true, true);
-        controlGD.horizontalSpan = 2;
-        control.setLayoutData(controlGD);
-        modulesViewer.setContentProvider(new ITreeContentProvider(){
-            private static final long serialVersionUID = 1L;
-
-            public Object[] getElements( Object inputElement ) {
-                return getChildren(inputElement);
-            }
-
-            public Object[] getChildren( Object parentElement ) {
-                if (parentElement instanceof List< ? >) {
-                    List< ? > list = (List< ? >) parentElement;
-                    Object[] array = list.toArray();
-                    return array;
-                }
-                if (parentElement instanceof ViewerFolder) {
-                    ViewerFolder folder = (ViewerFolder) parentElement;
-                    List<ViewerFolder> subFolders = folder.getSubFolders();
-                    List<ViewerModule> modules = folder.getModules();
-                    List<Object> allObjs = new ArrayList<Object>();
-                    allObjs.addAll(subFolders);
-                    allObjs.addAll(modules);
-
-                    return allObjs.toArray();
-                }
-                return new Object[0];
-            }
-
-            public Object getParent( Object element ) {
-                if (element instanceof ViewerFolder) {
-                    ViewerFolder folder = (ViewerFolder) element;
-                    return folder.getParentFolder();
-                }
-                if (element instanceof ViewerModule) {
-                    ViewerModule module = (ViewerModule) element;
-                    return module.getParentFolder();
-                }
-                return null;
-            }
-
-            public boolean hasChildren( Object element ) {
-                return getChildren(element).length > 0;
-            }
-
-            public void dispose() {
-            }
-
-            public void inputChanged( Viewer viewer, Object oldInput, Object newInput ) {
-            }
-
-        });
-
-        modulesViewer.setLabelProvider(new LabelProvider(){
-            private static final long serialVersionUID = 1L;
-
-            public Image getImage( Object element ) {
-                if (element instanceof ViewerFolder) {
-                    return ImageCache.getInstance().getImage(display, ImageCache.CATEGORY);
-                }
-                if (element instanceof ViewerModule) {
-                    ModuleDescription md = ((ViewerModule) element).getModuleDescription();
-                    Status status = md.getStatus();
-                    if (status == Status.experimental) {
-                        return ImageCache.getInstance().getImage(display, ImageCache.MODULEEXP);
-                    } else {
-                        return ImageCache.getInstance().getImage(display, ImageCache.MODULE);
-                    }
-                }
-                return null;
-            }
-
-            public String getText( Object element ) {
-                if (element instanceof ViewerFolder) {
-                    ViewerFolder categoryFolder = (ViewerFolder) element;
-                    String name = categoryFolder.getName();
-                    name = name.replaceFirst("/", "");
-                    return name;
-                }
-                if (element instanceof ViewerModule) {
-                    ModuleDescription module = ((ViewerModule) element).getModuleDescription();
-                    return module.getName().replaceAll("\\_\\_", ".");
-                }
-                return ""; //$NON-NLS-1$
-            }
-        });
-
-        modulesViewer.addSelectionChangedListener(new ISelectionChangedListener(){
-
-            public void selectionChanged( SelectionChangedEvent event ) {
-                if (!(event.getSelection() instanceof IStructuredSelection)) {
-                    return;
-                }
-                IStructuredSelection sel = (IStructuredSelection) event.getSelection();
-
-                Object selectedItem = sel.getFirstElement();
-                if (selectedItem == null) {
-                    // unselected, show empty panel
-                    putUnselected();
-                    return;
-                }
-
-                if (selectedItem instanceof ViewerModule) {
-                    ModuleDescription currentSelectedModule = ((ViewerModule) selectedItem).getModuleDescription();
-                    currentSelectedModuleGui = new ModuleGui(currentSelectedModule);
-
-                    Control control = currentSelectedModuleGui.makeGui(modulesGuiComposite, false);
-
-                    // Label dummyLabel = new Label(modulesGuiComposite,
-                    // SWT.NONE);
-                    // dummyLabel.setLayoutData(new
-                    // GridData(SWT.BEGINNING, SWT.CENTER, false,
-                    // false));
-                    // dummyLabel.setText(currentSelectedModule.toString());
-
-                    modulesGuiStackLayout.topControl = control;
-                    modulesGuiComposite.layout(true);
-                } else {
-                    putUnselected();
-                }
-            }
-
-        });
-
-        return modulesViewer;
-    }
-
-    private void addFilterButtons( Composite modulesComposite ) {
-        Button filterActive = new Button(modulesComposite, SWT.CHECK);
-        GridData gd = new GridData(SWT.FILL, SWT.CENTER, true, false);
-        gd.horizontalSpan = 2;
-        filterActive.setLayoutData(gd);
-        filterActive.setText(LOAD_EXPERIMENTAL_MODULES);
-        final ExperimentalFilter activeFilter = new ExperimentalFilter();
-        // modulesViewer.addFilter(activeFilter);
-        filterActive.setSelection(true);
-        filterActive.addSelectionListener(new SelectionAdapter(){
-            private static final long serialVersionUID = 1L;
-
-            public void widgetSelected( SelectionEvent event ) {
-                if (((Button) event.widget).getSelection())
-                    modulesViewer.removeFilter(activeFilter);
-                else
-                    modulesViewer.addFilter(activeFilter);
-            }
-        });
-    }
-
-    private void addQuickSettings( Composite modulesListComposite ) throws IOException {
-        Group quickSettingsGroup = new Group(modulesListComposite, SWT.NONE);
-        quickSettingsGroup.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
-        quickSettingsGroup.setLayout(new GridLayout(2, true));
-        quickSettingsGroup.setText(PROCESS_SETTINGS);
-
-        Label heapLabel = new Label(quickSettingsGroup, SWT.NONE);
-        heapLabel.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
-        heapLabel.setText(MEMORY_MB);
-        final Combo heapCombo = new Combo(quickSettingsGroup, SWT.DROP_DOWN);
-        heapCombo.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-        heapCombo.setItems(StageConstants.HEAPLEVELS);
-        int savedHeapLevel = StageSessionPluginSingleton.getInstance().retrieveSavedHeap();
-        for( int i = 0; i < StageConstants.HEAPLEVELS.length; i++ ) {
-            if (StageConstants.HEAPLEVELS[i].equals(String.valueOf(savedHeapLevel))) {
-                heapCombo.select(i);
-                break;
-            }
-        }
-        heapCombo.addSelectionListener(new SelectionAdapter(){
-            private static final long serialVersionUID = 1L;
-
-            public void widgetSelected( SelectionEvent e ) {
-                String item = heapCombo.getText();
-                try {
-                    StageSessionPluginSingleton.getInstance().saveHeap(Integer.parseInt(item));
-                } catch (NumberFormatException | IOException e1) {
-                    e1.printStackTrace();
-                }
-            }
-        });
-        heapCombo.addModifyListener(new ModifyListener(){
-            private static final long serialVersionUID = 1L;
-
-            public void modifyText( ModifyEvent e ) {
-                String item = heapCombo.getText();
-                try {
-                    Integer.parseInt(item);
-                } catch (Exception ex) {
-                    return;
-                }
-                if (item.length() > 0) {
-                    try {
-                        StageSessionPluginSingleton.getInstance().saveHeap(Integer.parseInt(item));
-                    } catch (NumberFormatException | IOException e1) {
-                        // TODO Auto-generated catch block
-                        e1.printStackTrace();
-                    }
-                }
-            }
-        });
-
-        Label logLabel = new Label(quickSettingsGroup, SWT.NONE);
-        logLabel.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
-        logLabel.setText(DEBUG_INFO);
-        final Combo logCombo = new Combo(quickSettingsGroup, SWT.DROP_DOWN | SWT.READ_ONLY);
-        logCombo.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-        logCombo.setItems(StageConstants.LOGLEVELS_GUI);
-        String savedLogLevel = StageSessionPluginSingleton.getInstance().retrieveSavedLogLevel();
-        for( int i = 0; i < StageConstants.LOGLEVELS_GUI.length; i++ ) {
-            if (StageConstants.LOGLEVELS_GUI[i].equals(savedLogLevel)) {
-                logCombo.select(i);
-                break;
-            }
-        }
-        logCombo.addSelectionListener(new SelectionAdapter(){
-            private static final long serialVersionUID = 1L;
-
-            public void widgetSelected( SelectionEvent e ) {
-                String item = logCombo.getText();
-                try {
-                    StageSessionPluginSingleton.getInstance().saveLogLevel(item);
-                } catch (IOException e1) {
-                    e1.printStackTrace();
-                }
-            }
-        });
-
-        Label chartsetLabel = new Label(quickSettingsGroup, SWT.NONE);
-        chartsetLabel.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
-        chartsetLabel.setText(CHARACTER_ENCODING);
-
-        SortedMap<String, Charset> charsetMap = Charset.availableCharsets();
-        ArrayList<String> charsetList = new ArrayList<String>();
-        charsetList.add("");
-        for( Entry<String, Charset> charset : charsetMap.entrySet() ) {
-            charsetList.add(charset.getKey());
-        }
-        String[] charsetArray = charsetList.toArray(new String[0]);
-        final Combo encodingCombo = new Combo(quickSettingsGroup, SWT.DROP_DOWN | SWT.READ_ONLY);
-        encodingCombo.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-        encodingCombo.setItems(charsetArray);
-        String savedEncoding = StageSessionPluginSingleton.getInstance().retrieveSavedEncoding();
-        for( int i = 0; i < charsetArray.length; i++ ) {
-            if (charsetArray[i].equals(savedEncoding)) {
-                encodingCombo.select(i);
-                break;
-            }
-        }
-        encodingCombo.addSelectionListener(new SelectionAdapter(){
-            private static final long serialVersionUID = 1L;
-
-            public void widgetSelected( SelectionEvent e ) {
-                String item = encodingCombo.getText();
-                try {
-                    StageSessionPluginSingleton.getInstance().saveEncoding(item);
-                } catch (IOException e1) {
-                    e1.printStackTrace();
-                }
-            }
-        });
-
-    }
-
-    private void addRunTools( Composite modulesListComposite ) throws IOException {
-        Group runToolsGroup = new Group(modulesListComposite, SWT.NONE);
-        GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, false);
-        gridData.horizontalSpan = 2;
-        runToolsGroup.setLayoutData(gridData);
-        GridLayout gridLayout = new GridLayout(2, false);
-        runToolsGroup.setLayout(gridLayout);
-        runToolsGroup.setText(EXECUTION_TOOLS);
-
-        Button runModuleButton = new Button(runToolsGroup, SWT.PUSH);
-        runModuleButton.setLayoutData(new GridData(SWT.BEGINNING, SWT.TOP, false, false));
-        // runModuleButton.setText("Run module");
-        runModuleButton.setToolTipText("Run module");
-        runModuleButton.setImage(ImageCache.getInstance().getImage(display, ImageCache.RUN));
-        runModuleButton.addSelectionListener(new SelectionAdapter(){
-            private static final long serialVersionUID = 1L;
-
-            @Override
-            public void widgetSelected( SelectionEvent e ) {
-                try {
-                    runSelectedModule();
-                } catch (Exception e1) {
-                    e1.printStackTrace();
-                }
-            }
-        });
-
-        // logBrowser = new Browser(runToolsGroup, runToolsGroup.getStyle());
-        logBrowser = new org.eclipse.swt.widgets.List(runToolsGroup, SWT.MULTI | SWT.BORDER | SWT.V_SCROLL);
-        // SWT.MULTI
-        // |
-        // SWT.WRAP
-        // |
-        // SWT.V_SCROLL
-        // |
-        // SWT.BORDER);
-        logBrowser.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
-        logBrowser.setData(RWT.MARKUP_ENABLED, Boolean.TRUE);
-        // logBrowser.setText("");
-        // logBrowser.addLocationListener(new LocationAdapter(){
-        // private static final long serialVersionUID = 1L;
-        //
-        // public void changed( LocationEvent event ) {
-        // try {
-        // logBrowser.evaluate("window.scrollTo(0, document.body.scrollHeight)");
-        // } catch (Exception e) {
-        // e.printStackTrace();
-        // }
-        // }
-        //
-        // });
-
-    }
-
-    private static class ExperimentalFilter extends ViewerFilter {
-        private static final long serialVersionUID = 1L;
-
-        public boolean select( Viewer arg0, Object arg1, Object arg2 ) {
-            if (arg2 instanceof ViewerFolder) {
-                return true;
-            }
-            if (arg2 instanceof ViewerModule) {
-                ModuleDescription md = ((ViewerModule) arg2).getModuleDescription();
-                if (md.getStatus() == ModuleDescription.Status.experimental) {
-                    return false;
-                }
-                return true;
-            }
-            return false;
-        }
-    }
-
-    /**
-     * Resfresh the viewer.
-     * @param filterText 
-     * 
-     * @throws InterruptedException
-     * @throws InvocationTargetException
-     */
-    public void relayout( final boolean expandAll, final String filterText ) throws InvocationTargetException,
-            InterruptedException {
-
-        // IRunnableWithProgress operation1 = new IRunnableWithProgress(){
-        //
-        // }
-        // IRunnableWithProgress operation = new IRunnableWithProgress() {
-        // public void run(IProgressMonitor pm)
-        // throws InvocationTargetException, InterruptedException {
-        // pm.beginTask(LOADING_MODULES_FROM_LIBRARIES,
-        // IProgressMonitor.UNKNOWN);
-        TreeMap<String, List<ModuleDescription>> availableModules = StageModulesManager.getInstance().browseModules(false);
-        final List<ViewerFolder> viewerFolders = ViewerFolder.hashmap2ViewerFolders(availableModules, filterText);
-
-        Display.getDefault().syncExec(new Runnable(){
-            public void run() {
-                modulesViewer.setInput(viewerFolders);
-                if (expandAll)
-                    modulesViewer.expandAll();
-            }
-        });
-        // pm.done();
-        // }
-        // };
-        //
-        // IWorkbench wb = PlatformUI.getWorkbench();
-        // IProgressService ps = wb.getProgressService();
-        // ps.busyCursorWhile(operation);
-    }
-
-    /**
-     * Put the properties view to an label that defines no selection.
-     */
-    public void putUnselected() {
-        Label noModuleLabel = getNoModuleLabel();
-        modulesGuiStackLayout.topControl = noModuleLabel;
-        modulesGuiComposite.layout(true);
-    }
-
-    /**
-     * Runs the module currently selected in the gui.
-     * 
-     * @throws Exception
-     */
-    public void runSelectedModule() throws Exception {
-        ScriptHandler handler = new ScriptHandler();
-        if (currentSelectedModuleGui == null) {
-            return;
-        }
-        String script = handler.genereateScript(currentSelectedModuleGui, display.getActiveShell());
-        if (script == null) {
-            return;
-        }
-
-        String scriptID = currentSelectedModuleGui.getModuleDescription().getName() + " "
-                + StageConstants.dateTimeFormatterYYYYMMDDHHMMSS.format(new Date());
-        logBrowser.setItems(new String[]{""});
-        handler.runModule(scriptID, script, logBrowser);
-    }
-
-    /**
-     * Generates the script for the module currently selected in the gui.
-     * 
-     * @return the generated script.
-     * @throws Exception
-     */
-    public String generateScriptForSelectedModule() throws Exception {
-        ScriptHandler handler = new ScriptHandler();
-        if (currentSelectedModuleGui == null) {
-            return null;
-        }
-        String script = handler.genereateScript(currentSelectedModuleGui, display.getActiveShell());
-        return script;
-    }
+	private static final String EXECUTION_TOOLS = "Execution";
+	private static final String CHARACTER_ENCODING = "Character Encoding";
+	private static final String DEBUG_INFO = "Debug info";
+	private static final String MEMORY_MB = "Memory [MB]";
+	private static final String PROCESS_SETTINGS = "Process settings";
+	private static final String LOAD_EXPERIMENTAL_MODULES = "Load experimental modules";
+	private static final String NO_MODULE_SELECTED = "No module selected";
+	private static final String MODULES = "Modules";
+	public static final String SPATIAL_TOOLBOX = "Spatial Toolbox...";
+	public static final String LOADING_MODULES_FROM_LIBRARIES = "Loading modules from libraries...";
+
+	public static final String ID = "eu.udig.omsbox.view.OmsBoxView"; //$NON-NLS-1$
+
+	private Composite modulesGuiComposite;
+	private StackLayout modulesGuiStackLayout;
+	private TreeViewer modulesViewer;
+
+	private ModuleGui currentSelectedModuleGui;
+	private String filterTextString;
+
+	private HashMap<String, Control> module2GuiMap = new HashMap<String, Control>();
+	private Display display;
+	private org.eclipse.swt.widgets.List logBrowser;
+
+	public StageView() {
+
+	}
+
+	public void createPartControl(Display display, Composite parent)
+			throws IOException {
+		this.display = display;
+		module2GuiMap.clear();
+
+		Composite mainComposite = new Composite(parent, SWT.None);
+		GridLayout mainLayout = new GridLayout(3, true);
+		mainLayout.marginWidth = 25;
+		mainLayout.marginHeight = 25;
+		mainComposite.setLayout(mainLayout);
+		mainComposite.setLayoutData(new GridData(GridData.FILL_BOTH
+				| GridData.GRAB_HORIZONTAL | GridData.GRAB_VERTICAL));
+
+		Group modulesListGroup = new Group(mainComposite, SWT.NONE);
+		modulesListGroup.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true,
+				true));
+		modulesListGroup.setLayout(new GridLayout(2, false));
+		modulesListGroup.setText(MODULES);
+
+		addTextFilter(modulesListGroup);
+		modulesViewer = createTreeViewer(modulesListGroup);
+		List<ViewerFolder> viewerFolders = new ArrayList<ViewerFolder>();
+		modulesViewer.setInput(viewerFolders);
+		addFilterButtons(modulesListGroup);
+
+		Group parametersTabsGroup = new Group(mainComposite, SWT.NONE);
+		GridData modulesGuiCompositeGD = new GridData(SWT.FILL, SWT.FILL, true,
+				true);
+		modulesGuiCompositeGD.horizontalSpan = 2;
+		modulesGuiCompositeGD.verticalSpan = 1;
+		parametersTabsGroup.setLayoutData(modulesGuiCompositeGD);
+		parametersTabsGroup.setLayout(new GridLayout(1, false));
+		parametersTabsGroup.setText("Parameters");
+
+		modulesGuiComposite = new Composite(parametersTabsGroup, SWT.BORDER);
+		modulesGuiStackLayout = new StackLayout();
+		modulesGuiStackLayout.marginWidth = 15;
+		modulesGuiStackLayout.marginHeight = 15;
+		modulesGuiComposite.setLayout(modulesGuiStackLayout);
+		modulesGuiComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL,
+				true, true));
+
+		Label noModuleLabel = getNoModuleLabel();
+		modulesGuiStackLayout.topControl = noModuleLabel;
+
+		addQuickSettings(mainComposite);
+
+		addRunTools(mainComposite);
+		try {
+			relayout(false, null);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+	}
+
+	private Label getNoModuleLabel() {
+		Label noModuleLabel = new Label(modulesGuiComposite, SWT.NONE);
+		noModuleLabel.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true,
+				true));
+		noModuleLabel.setData(RWT.MARKUP_ENABLED, Boolean.TRUE);
+		noModuleLabel.setText("<span style='font:bold 26px Arial;'>"
+				+ NO_MODULE_SELECTED + "</span>");
+		return noModuleLabel;
+	}
+
+	private void addTextFilter(Composite modulesComposite) {
+
+		Label filterLabel = new Label(modulesComposite, SWT.NONE);
+		filterLabel.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER,
+				false, false));
+		filterLabel.setText("Filter");
+
+		final Text filterText = new Text(modulesComposite, SWT.SINGLE
+				| SWT.LEAD | SWT.BORDER);
+		filterText
+				.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+		filterText.addModifyListener(new ModifyListener() {
+			private static final long serialVersionUID = 1L;
+
+			public void modifyText(ModifyEvent event) {
+				filterTextString = filterText.getText();
+				try {
+					if (filterTextString == null
+							|| filterTextString.length() == 0) {
+						relayout(false, null);
+					} else {
+						relayout(true, filterTextString);
+					}
+				} catch (InvocationTargetException | InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		});
+
+	}
+
+	private TreeViewer createTreeViewer(Composite modulesComposite) {
+
+		// FIXME
+		// PatternFilter patternFilter = new PatternFilter();
+		// final FilteredTree filter = new FilteredTree(modulesComposite,
+		// SWT.SINGLE | SWT.BORDER, patternFilter, true);
+		// final TreeViewer modulesViewer = filter.getViewer();
+		final TreeViewer modulesViewer = new TreeViewer(modulesComposite);
+
+		Control control = modulesViewer.getControl();
+		GridData controlGD = new GridData(SWT.FILL, SWT.FILL, true, true);
+		controlGD.horizontalSpan = 2;
+		control.setLayoutData(controlGD);
+		modulesViewer.setContentProvider(new ITreeContentProvider() {
+			private static final long serialVersionUID = 1L;
+
+			public Object[] getElements(Object inputElement) {
+				return getChildren(inputElement);
+			}
+
+			public Object[] getChildren(Object parentElement) {
+				if (parentElement instanceof List<?>) {
+					List<?> list = (List<?>) parentElement;
+					Object[] array = list.toArray();
+					return array;
+				}
+				if (parentElement instanceof ViewerFolder) {
+					ViewerFolder folder = (ViewerFolder) parentElement;
+					List<ViewerFolder> subFolders = folder.getSubFolders();
+					List<ViewerModule> modules = folder.getModules();
+					List<Object> allObjs = new ArrayList<Object>();
+					allObjs.addAll(subFolders);
+					allObjs.addAll(modules);
+
+					return allObjs.toArray();
+				}
+				return new Object[0];
+			}
+
+			public Object getParent(Object element) {
+				if (element instanceof ViewerFolder) {
+					ViewerFolder folder = (ViewerFolder) element;
+					return folder.getParentFolder();
+				}
+				if (element instanceof ViewerModule) {
+					ViewerModule module = (ViewerModule) element;
+					return module.getParentFolder();
+				}
+				return null;
+			}
+
+			public boolean hasChildren(Object element) {
+				return getChildren(element).length > 0;
+			}
+
+			public void dispose() {
+			}
+
+			public void inputChanged(Viewer viewer, Object oldInput,
+					Object newInput) {
+			}
+
+		});
+
+		modulesViewer.setLabelProvider(new LabelProvider() {
+			private static final long serialVersionUID = 1L;
+
+			public Image getImage(Object element) {
+				if (element instanceof ViewerFolder) {
+					return ImageCache.getInstance().getImage(display,
+							ImageCache.CATEGORY);
+				}
+				if (element instanceof ViewerModule) {
+					ModuleDescription md = ((ViewerModule) element)
+							.getModuleDescription();
+					Status status = md.getStatus();
+					if (status == Status.experimental) {
+						return ImageCache.getInstance().getImage(display,
+								ImageCache.MODULEEXP);
+					} else {
+						return ImageCache.getInstance().getImage(display,
+								ImageCache.MODULE);
+					}
+				}
+				return null;
+			}
+
+			public String getText(Object element) {
+				if (element instanceof ViewerFolder) {
+					ViewerFolder categoryFolder = (ViewerFolder) element;
+					String name = categoryFolder.getName();
+					name = name.replaceFirst("/", "");
+					return name;
+				}
+				if (element instanceof ViewerModule) {
+					ModuleDescription module = ((ViewerModule) element)
+							.getModuleDescription();
+					return module.getName().replaceAll("\\_\\_", ".");
+				}
+				return ""; //$NON-NLS-1$
+			}
+		});
+
+		modulesViewer
+				.addSelectionChangedListener(new ISelectionChangedListener() {
+
+					public void selectionChanged(SelectionChangedEvent event) {
+						if (!(event.getSelection() instanceof IStructuredSelection)) {
+							return;
+						}
+						IStructuredSelection sel = (IStructuredSelection) event
+								.getSelection();
+
+						Object selectedItem = sel.getFirstElement();
+						if (selectedItem == null) {
+							// unselected, show empty panel
+							putUnselected();
+							return;
+						}
+
+						if (selectedItem instanceof ViewerModule) {
+							ModuleDescription currentSelectedModule = ((ViewerModule) selectedItem)
+									.getModuleDescription();
+							currentSelectedModuleGui = new ModuleGui(
+									currentSelectedModule);
+
+							Control control = currentSelectedModuleGui.makeGui(
+									modulesGuiComposite, false);
+
+							// Label dummyLabel = new Label(modulesGuiComposite,
+							// SWT.NONE);
+							// dummyLabel.setLayoutData(new
+							// GridData(SWT.BEGINNING, SWT.CENTER, false,
+							// false));
+							// dummyLabel.setText(currentSelectedModule.toString());
+
+							modulesGuiStackLayout.topControl = control;
+							modulesGuiComposite.layout(true);
+						} else {
+							putUnselected();
+						}
+					}
+
+				});
+
+		return modulesViewer;
+	}
+
+	private void addFilterButtons(Composite modulesComposite) {
+		Button filterActive = new Button(modulesComposite, SWT.CHECK);
+		GridData gd = new GridData(SWT.FILL, SWT.CENTER, true, false);
+		gd.horizontalSpan = 2;
+		filterActive.setLayoutData(gd);
+		filterActive.setText(LOAD_EXPERIMENTAL_MODULES);
+		final ExperimentalFilter activeFilter = new ExperimentalFilter();
+		// modulesViewer.addFilter(activeFilter);
+		filterActive.setSelection(true);
+		filterActive.addSelectionListener(new SelectionAdapter() {
+			private static final long serialVersionUID = 1L;
+
+			public void widgetSelected(SelectionEvent event) {
+				if (((Button) event.widget).getSelection())
+					modulesViewer.removeFilter(activeFilter);
+				else
+					modulesViewer.addFilter(activeFilter);
+			}
+		});
+	}
+
+	private void addQuickSettings(Composite modulesListComposite)
+			throws IOException {
+		Group quickSettingsGroup = new Group(modulesListComposite, SWT.NONE);
+		quickSettingsGroup.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true,
+				false));
+		quickSettingsGroup.setLayout(new GridLayout(2, true));
+		quickSettingsGroup.setText(PROCESS_SETTINGS);
+
+		Label heapLabel = new Label(quickSettingsGroup, SWT.NONE);
+		heapLabel.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false,
+				false));
+		heapLabel.setText(MEMORY_MB);
+		final Combo heapCombo = new Combo(quickSettingsGroup, SWT.DROP_DOWN);
+		heapCombo
+				.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+		heapCombo.setItems(StageConstants.HEAPLEVELS);
+		int savedHeapLevel = StageSessionPluginSingleton.getInstance()
+				.retrieveSavedHeap();
+		for (int i = 0; i < StageConstants.HEAPLEVELS.length; i++) {
+			if (StageConstants.HEAPLEVELS[i].equals(String
+					.valueOf(savedHeapLevel))) {
+				heapCombo.select(i);
+				break;
+			}
+		}
+		heapCombo.addSelectionListener(new SelectionAdapter() {
+			private static final long serialVersionUID = 1L;
+
+			public void widgetSelected(SelectionEvent e) {
+				String item = heapCombo.getText();
+				try {
+					StageSessionPluginSingleton.getInstance().saveHeap(
+							Integer.parseInt(item));
+				} catch (NumberFormatException | IOException e1) {
+					e1.printStackTrace();
+				}
+			}
+		});
+		heapCombo.addModifyListener(new ModifyListener() {
+			private static final long serialVersionUID = 1L;
+
+			public void modifyText(ModifyEvent e) {
+				String item = heapCombo.getText();
+				try {
+					Integer.parseInt(item);
+				} catch (Exception ex) {
+					return;
+				}
+				if (item.length() > 0) {
+					try {
+						StageSessionPluginSingleton.getInstance().saveHeap(
+								Integer.parseInt(item));
+					} catch (NumberFormatException | IOException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+				}
+			}
+		});
+
+		Label logLabel = new Label(quickSettingsGroup, SWT.NONE);
+		logLabel.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false,
+				false));
+		logLabel.setText(DEBUG_INFO);
+		final Combo logCombo = new Combo(quickSettingsGroup, SWT.DROP_DOWN
+				| SWT.READ_ONLY);
+		logCombo.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+		logCombo.setItems(StageConstants.LOGLEVELS_GUI);
+		String savedLogLevel = StageSessionPluginSingleton.getInstance()
+				.retrieveSavedLogLevel();
+		for (int i = 0; i < StageConstants.LOGLEVELS_GUI.length; i++) {
+			if (StageConstants.LOGLEVELS_GUI[i].equals(savedLogLevel)) {
+				logCombo.select(i);
+				break;
+			}
+		}
+		logCombo.addSelectionListener(new SelectionAdapter() {
+			private static final long serialVersionUID = 1L;
+
+			public void widgetSelected(SelectionEvent e) {
+				String item = logCombo.getText();
+				try {
+					StageSessionPluginSingleton.getInstance()
+							.saveLogLevel(item);
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+			}
+		});
+
+		Label chartsetLabel = new Label(quickSettingsGroup, SWT.NONE);
+		chartsetLabel.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER,
+				false, false));
+		chartsetLabel.setText(CHARACTER_ENCODING);
+
+		SortedMap<String, Charset> charsetMap = Charset.availableCharsets();
+		ArrayList<String> charsetList = new ArrayList<String>();
+		charsetList.add("");
+		for (Entry<String, Charset> charset : charsetMap.entrySet()) {
+			charsetList.add(charset.getKey());
+		}
+		String[] charsetArray = charsetList.toArray(new String[0]);
+		final Combo encodingCombo = new Combo(quickSettingsGroup, SWT.DROP_DOWN
+				| SWT.READ_ONLY);
+		encodingCombo.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true,
+				false));
+		encodingCombo.setItems(charsetArray);
+		String savedEncoding = StageSessionPluginSingleton.getInstance()
+				.retrieveSavedEncoding();
+		for (int i = 0; i < charsetArray.length; i++) {
+			if (charsetArray[i].equals(savedEncoding)) {
+				encodingCombo.select(i);
+				break;
+			}
+		}
+		encodingCombo.addSelectionListener(new SelectionAdapter() {
+			private static final long serialVersionUID = 1L;
+
+			public void widgetSelected(SelectionEvent e) {
+				String item = encodingCombo.getText();
+				try {
+					StageSessionPluginSingleton.getInstance()
+							.saveEncoding(item);
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+			}
+		});
+
+	}
+
+	private void addRunTools(Composite modulesListComposite) throws IOException {
+		Group runToolsGroup = new Group(modulesListComposite, SWT.NONE);
+		GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, false);
+		gridData.horizontalSpan = 2;
+		runToolsGroup.setLayoutData(gridData);
+		GridLayout gridLayout = new GridLayout(2, false);
+		runToolsGroup.setLayout(gridLayout);
+		runToolsGroup.setText(EXECUTION_TOOLS);
+
+		Button runModuleButton = new Button(runToolsGroup, SWT.PUSH);
+		runModuleButton.setLayoutData(new GridData(SWT.BEGINNING, SWT.TOP,
+				false, false));
+		// runModuleButton.setText("Run module");
+		runModuleButton.setToolTipText("Run module");
+		runModuleButton.setImage(ImageCache.getInstance().getImage(display,
+				ImageCache.RUN));
+		runModuleButton.addSelectionListener(new SelectionAdapter() {
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				try {
+					runSelectedModule();
+				} catch (Exception e1) {
+					e1.printStackTrace();
+				}
+			}
+		});
+
+		logBrowser = new org.eclipse.swt.widgets.List(runToolsGroup, SWT.MULTI
+				| SWT.BORDER | SWT.V_SCROLL | SWT.H_SCROLL);
+		logBrowser.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+		logBrowser.setData(RWT.MARKUP_ENABLED, Boolean.TRUE);
+	}
+
+	private static class ExperimentalFilter extends ViewerFilter {
+		private static final long serialVersionUID = 1L;
+
+		public boolean select(Viewer arg0, Object arg1, Object arg2) {
+			if (arg2 instanceof ViewerFolder) {
+				return true;
+			}
+			if (arg2 instanceof ViewerModule) {
+				ModuleDescription md = ((ViewerModule) arg2)
+						.getModuleDescription();
+				if (md.getStatus() == ModuleDescription.Status.experimental) {
+					return false;
+				}
+				return true;
+			}
+			return false;
+		}
+	}
+
+	/**
+	 * Resfresh the viewer.
+	 * 
+	 * @param filterText
+	 * 
+	 * @throws InterruptedException
+	 * @throws InvocationTargetException
+	 */
+	public void relayout(final boolean expandAll, final String filterText)
+			throws InvocationTargetException, InterruptedException {
+
+		// IRunnableWithProgress operation1 = new IRunnableWithProgress(){
+		//
+		// }
+		// IRunnableWithProgress operation = new IRunnableWithProgress() {
+		// public void run(IProgressMonitor pm)
+		// throws InvocationTargetException, InterruptedException {
+		// pm.beginTask(LOADING_MODULES_FROM_LIBRARIES,
+		// IProgressMonitor.UNKNOWN);
+		TreeMap<String, List<ModuleDescription>> availableModules = StageModulesManager
+				.getInstance().browseModules(false);
+		final List<ViewerFolder> viewerFolders = ViewerFolder
+				.hashmap2ViewerFolders(availableModules, filterText);
+
+		Display.getDefault().syncExec(new Runnable() {
+			public void run() {
+				modulesViewer.setInput(viewerFolders);
+				if (expandAll)
+					modulesViewer.expandAll();
+			}
+		});
+		// pm.done();
+		// }
+		// };
+		//
+		// IWorkbench wb = PlatformUI.getWorkbench();
+		// IProgressService ps = wb.getProgressService();
+		// ps.busyCursorWhile(operation);
+	}
+
+	/**
+	 * Put the properties view to an label that defines no selection.
+	 */
+	public void putUnselected() {
+		Label noModuleLabel = getNoModuleLabel();
+		modulesGuiStackLayout.topControl = noModuleLabel;
+		modulesGuiComposite.layout(true);
+	}
+
+	/**
+	 * Runs the module currently selected in the gui.
+	 * 
+	 * @throws Exception
+	 */
+	public void runSelectedModule() throws Exception {
+		ScriptHandler handler = new ScriptHandler();
+		if (currentSelectedModuleGui == null) {
+			return;
+		}
+		String script = handler.genereateScript(currentSelectedModuleGui,
+				display.getActiveShell());
+		if (script == null) {
+			return;
+		}
+
+		String scriptID = currentSelectedModuleGui.getModuleDescription()
+				.getName()
+				+ " "
+				+ StageConstants.dateTimeFormatterYYYYMMDDHHMMSS
+						.format(new Date());
+		logBrowser.setItems(new String[] { "" });
+		handler.runModule(scriptID, script, logBrowser);
+	}
+
+	/**
+	 * Generates the script for the module currently selected in the gui.
+	 * 
+	 * @return the generated script.
+	 * @throws Exception
+	 */
+	public String generateScriptForSelectedModule() throws Exception {
+		ScriptHandler handler = new ScriptHandler();
+		if (currentSelectedModuleGui == null) {
+			return null;
+		}
+		String script = handler.genereateScript(currentSelectedModuleGui,
+				display.getActiveShell());
+		return script;
+	}
 }
