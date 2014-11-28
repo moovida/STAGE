@@ -108,8 +108,14 @@ public class ModuleGui {
             String className = mainModuleDescription.getClassName();
             String moduleDocumentationPath = StageUtils.getModuleDocumentationPath(className);
 
-            String html = FileUtilities.readFile(moduleDocumentationPath);
-            browser.setText(html);
+            File docFile = new File(moduleDocumentationPath);
+            if (docFile.exists()) {
+                String html = FileUtilities.readFile(moduleDocumentationPath);
+                browser.setText(html);
+            } else {
+                browser.setText(moduleDocumentationPath);
+            }
+
             // browser.setUrl("file:" + moduleDocumentationPath);
             tab.setControl(browser);
         } catch (SWTError e) {

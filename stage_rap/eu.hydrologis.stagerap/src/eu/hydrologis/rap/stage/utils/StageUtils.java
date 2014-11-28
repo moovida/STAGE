@@ -36,6 +36,7 @@ import eu.hydrologis.rap.stage.core.StageModulesManager;
  * @author Andrea Antonello (www.hydrologis.com)
  */
 public class StageUtils {
+    private static final String NO_DOCUMENTATION_AVAILABLE = "<b>NO DOCUMENTATION AVAILABLE</b>";
     private static final String STAGEHTMLDOCS = "stagehtmldocs";
     private static final String NEWLINE = "\n";
     private static final String HTMLNEWLINE = "<br>";
@@ -98,8 +99,9 @@ public class StageUtils {
         File htmlDocs = new File(htmlDocsFolder, moduleClassName + ".html");
         if (!htmlDocs.exists()) {
             htmlDocs = new File(htmlDocsFolder, "Oms" + moduleClassName + ".html");
-            if (!htmlDocs.exists())
-                throw new RuntimeException();
+            if (!htmlDocs.exists()) {
+                return NO_DOCUMENTATION_AVAILABLE;
+            }
         }
         return htmlDocs.getAbsolutePath();
     }
