@@ -47,6 +47,7 @@ import org.eclipse.swt.widgets.Label;
 import eu.hydrologis.rap.stage.StageSessionPluginSingleton;
 import eu.hydrologis.rap.stage.core.FieldData;
 import eu.hydrologis.rap.stage.core.ModuleDescription;
+import eu.hydrologis.rap.stage.utils.FileUtilities;
 import eu.hydrologis.rap.stage.utils.StageConstants;
 import eu.hydrologis.rap.stage.utils.StageUtils;
 
@@ -106,7 +107,10 @@ public class ModuleGui {
 
             String className = mainModuleDescription.getClassName();
             String moduleDocumentationPath = StageUtils.getModuleDocumentationPath(className);
-            browser.setUrl("file:" + moduleDocumentationPath);
+
+            String html = FileUtilities.readFile(moduleDocumentationPath);
+            browser.setText(html);
+            // browser.setUrl("file:" + moduleDocumentationPath);
             tab.setControl(browser);
         } catch (SWTError e) {
             e.printStackTrace();
@@ -201,8 +205,7 @@ public class ModuleGui {
             String guiHints = fieldData.guiHints;
 
             if (guiHints != null
-                    && (guiHints.contains(StageConstants.FILEOUT_UI_HINT) || guiHints
-                            .contains(StageConstants.FOLDEROUT_UI_HINT))) {
+                    && (guiHints.contains(StageConstants.FILEOUT_UI_HINT) || guiHints.contains(StageConstants.FOLDEROUT_UI_HINT))) {
                 tmpOutputsList.add(fieldData);
             } else {
                 tmpInputsList.add(fieldData);
