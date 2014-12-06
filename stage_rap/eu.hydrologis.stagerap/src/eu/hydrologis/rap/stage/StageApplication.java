@@ -14,19 +14,30 @@ import org.eclipse.rap.rwt.application.ApplicationConfiguration;
 import org.eclipse.rap.rwt.client.WebClient;
 import org.eclipse.rap.rwt.service.ResourceLoader;
 
+import eu.hydrologis.rap.geopapbrowser.GeopapBrowserEntryPoint;
+
 public class StageApplication implements ApplicationConfiguration {
 
     public static final String ID = "eu.hydrologis.rap.stage.StageApplication";
 
     public void configure( Application application ) {
 
-        Map<String, String> properties = new HashMap<String, String>();
-        properties.put(WebClient.PAGE_TITLE, "S.T.A.G.E.");
-        properties.put(WebClient.BODY_HTML, readTextFromResource("resources/body.html", "UTF-8"));
-        properties.put(WebClient.HEAD_HTML, readTextFromResource("resources/head.html", "UTF-8"));
-        properties.put(WebClient.FAVICON, "resources/favicon.png");
+        Map<String, String> stageProperties = new HashMap<String, String>();
+        stageProperties.put(WebClient.PAGE_TITLE, "S.T.A.G.E.");
+        stageProperties.put(WebClient.BODY_HTML, readTextFromResource("resources/body.html", "UTF-8"));
+        stageProperties.put(WebClient.HEAD_HTML, readTextFromResource("resources/head.html", "UTF-8"));
+        stageProperties.put(WebClient.FAVICON, "resources/favicon.png");
 
-        application.addEntryPoint("/stage", StageEntryPoint.class, properties);
+        application.addEntryPoint("/stage", StageEntryPoint.class, stageProperties);
+ 
+        
+        Map<String, String> geopapBrowserProperties = new HashMap<String, String>();
+        geopapBrowserProperties.put(WebClient.PAGE_TITLE, "Geopaparazzi Browser");
+        geopapBrowserProperties.put(WebClient.BODY_HTML, readTextFromResource("resources/body.html", "UTF-8"));
+        geopapBrowserProperties.put(WebClient.HEAD_HTML, readTextFromResource("resources/head.html", "UTF-8"));
+        geopapBrowserProperties.put(WebClient.FAVICON, "resources/favicon.png");
+
+        application.addEntryPoint("/geopapbrowser", GeopapBrowserEntryPoint.class, geopapBrowserProperties);
 
         application.setOperationMode(OperationMode.SWT_COMPATIBILITY);
         application.addStyleSheet(RWT.DEFAULT_THEME_ID, "theme/theme.css");
