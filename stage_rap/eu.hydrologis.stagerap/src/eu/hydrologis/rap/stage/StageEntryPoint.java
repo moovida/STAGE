@@ -55,8 +55,8 @@ public class StageEntryPoint extends AbstractEntryPoint {
             return;
         }
 
-        StageView view = new StageView();
         try {
+            StageView view = new StageView();
             view.createPartControl(Display.getCurrent(), parent);
         } catch (IOException e) {
             e.printStackTrace();

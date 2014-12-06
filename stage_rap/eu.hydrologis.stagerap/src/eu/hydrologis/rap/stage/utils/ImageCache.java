@@ -33,6 +33,8 @@ public class ImageCache {
     public static final String STOP = "stop_module.gif";
     public static final String GRID = "grid_obj.gif";
 	
+    public static final String OPEN = "prj_obj.gif";
+    public static final String SAVE = "save_edit.gif";
 	
 	private static ImageCache imageCache;
 

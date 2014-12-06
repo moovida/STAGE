@@ -41,10 +41,13 @@ public class StageView {
         stageTab.setText("STAGE");
         mainStageCFolder.setSelection(stageTab);
         StageModulesView stageModulesView = new StageModulesView();
-        stageModulesView.createStageTab(display, mainStageCFolder, stageTab);
+        stageModulesView.createStageModulesTab(display, mainStageCFolder, stageTab);
 
         CTabItem scriptingTab = new CTabItem(mainStageCFolder, SWT.NONE);
         scriptingTab.setText("Geo-scripting");
+        StageScriptingView stageScriptingView = new StageScriptingView();
+        stageScriptingView.createStageScriptingTab(display, mainStageCFolder, scriptingTab);
+
 
         CTabItem fileManagementTab = new CTabItem(mainStageCFolder, SWT.NONE);
         fileManagementTab.setText("File Management");

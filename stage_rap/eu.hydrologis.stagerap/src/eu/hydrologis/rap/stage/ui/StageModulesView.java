@@ -85,13 +85,11 @@ public class StageModulesView {
     private ModuleGui currentSelectedModuleGui;
     private String filterTextString;
 
-    private HashMap<String, Control> module2GuiMap = new HashMap<String, Control>();
     private Display display;
     private org.eclipse.swt.widgets.List logList;
 
-    public void createStageTab( Display display, Composite parent, CTabItem stageTab ) throws IOException {
+    public void createStageModulesTab( Display display, Composite parent, CTabItem stageTab ) throws IOException {
         this.display = display;
-        module2GuiMap.clear();
 
         SashForm mainComposite = new SashForm(parent, SWT.HORIZONTAL);
         mainComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
