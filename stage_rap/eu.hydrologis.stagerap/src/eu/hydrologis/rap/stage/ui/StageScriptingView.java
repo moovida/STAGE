@@ -9,8 +9,15 @@
  */
 package eu.hydrologis.rap.stage.ui;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Date;
+import java.util.List;
 
+import org.eclipse.jface.dialogs.ErrorDialog;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.rap.rwt.RWT;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabItem;
@@ -27,7 +34,12 @@ import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
 
+import eu.hydrologis.rap.stage.core.ScriptHandler;
 import eu.hydrologis.rap.stage.utils.ImageCache;
+import eu.hydrologis.rap.stage.utils.ScriptTemplatesUtil;
+import eu.hydrologis.rap.stage.utils.StageConstants;
+import eu.hydrologis.rap.stage.workspace.StageWorkspace;
+import eu.hydrologis.rap.stage.workspace.User;
 
 /**
  * The stage scripting view.
@@ -37,6 +49,8 @@ import eu.hydrologis.rap.stage.utils.ImageCache;
 public class StageScriptingView {
 
     private org.eclipse.swt.widgets.List logList;
+    private Text scriptTitleText;
+    private Text scriptAreaText;
 
     public void createStageScriptingTab( Display display, Composite parent, CTabItem stageTab ) throws IOException {
 
@@ -67,11 +81,11 @@ public class StageScriptingView {
         titleLabel.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
         titleLabel.setText("Script name");
 
-        Text scriptTitleText = new Text(leftComposite, SWT.SINGLE | SWT.LEAD | SWT.BORDER);
+        scriptTitleText = new Text(leftComposite, SWT.SINGLE | SWT.LEAD | SWT.BORDER);
         scriptTitleText.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
         scriptTitleText.setText("");
 
-        Text scriptAreaText = new Text(leftComposite, SWT.MULTI | SWT.WRAP | SWT.V_SCROLL | SWT.BORDER);
+        scriptAreaText = new Text(leftComposite, SWT.MULTI | SWT.WRAP | SWT.V_SCROLL | SWT.BORDER);
         GridData scriptAreaTextGD = new GridData(SWT.FILL, SWT.FILL, true, true);
         scriptAreaTextGD.horizontalSpan = 2;
         scriptAreaText.setLayoutData(scriptAreaTextGD);
@@ -103,15 +117,15 @@ public class StageScriptingView {
             @Override
             public void widgetSelected( SelectionEvent e ) {
                 try {
-                    // runSelectedModule();
+                    String script = scriptAreaText.getText();
+                    String name = scriptTitleText.getText();
+                    runScript(name, script);
                 } catch (Exception e1) {
                     e1.printStackTrace();
                 }
             }
         });
-
     }
-
     private void addFileGroup( Display display, Composite mainComposite ) {
         Group fileGroup = new Group(mainComposite, SWT.NONE);
         fileGroup.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
@@ -135,10 +149,30 @@ public class StageScriptingView {
         // }
         // });
 
-        Button saveButton = new Button(fileGroup, SWT.PUSH);
+        final Button saveButton = new Button(fileGroup, SWT.PUSH);
         saveButton.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
         saveButton.setToolTipText("Save current script");
         saveButton.setImage(ImageCache.getInstance().getImage(display, ImageCache.SAVE));
+        saveButton.addSelectionListener(new SelectionAdapter(){
+            private static final long serialVersionUID = 1L;
+            @Override
+            public void widgetSelected( SelectionEvent e ) {
+                String title = scriptTitleText.getText();
+                String script = scriptAreaText.getText();
+                File scriptsFolder = StageWorkspace.getInstance().getScriptsFolder(User.getCurrentUserName());
+
+                File scriptFile = new File(scriptsFolder, title + ".groovy");
+
+                try (BufferedWriter writer = new BufferedWriter(new FileWriter(scriptFile))) {
+                    writer.write(script);
+                    MessageDialog.openInformation(saveButton.getShell(), "Information", "Script saved.");
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                    MessageDialog.openWarning(saveButton.getShell(), "ERROR",
+                            "Could not save script: " + e1.getLocalizedMessage());
+                }
+            }
+        });
     }
 
     private void addTemplatesGroup( Display display, Composite mainComposite ) {
@@ -147,9 +181,48 @@ public class StageScriptingView {
         templatesGroup.setLayout(new GridLayout(1, true));
         templatesGroup.setText("Templates");
 
-        Combo templatesCombo = new Combo(templatesGroup, SWT.DROP_DOWN);
+        String[] templates = new String[]{""};
+        List<String> scriptNames = ScriptTemplatesUtil.getScriptNames();
+        if (scriptNames.size() > 0) {
+            templates = scriptNames.toArray(new String[0]);
+        }
+        final Combo templatesCombo = new Combo(templatesGroup, SWT.DROP_DOWN);
         templatesCombo.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-        templatesCombo.setItems(new String[]{"template1", "template2"});
+        templatesCombo.setItems(templates);
+        templatesCombo.addSelectionListener(new SelectionAdapter(){
+            @Override
+            public void widgetSelected( SelectionEvent e ) {
+                int selectionIndex = templatesCombo.getSelectionIndex();
+                if (selectionIndex != -1) {
+                    String scriptName = templatesCombo.getItem(selectionIndex);
+                    String script = ScriptTemplatesUtil.getScriptByName(scriptName);
+
+                    String title = scriptTitleText.getText();
+                    if (title.trim().length() == 0) {
+                        scriptTitleText.setText(scriptName);
+                    } else {
+                        script = "\n\n" + script;
+                    }
+                    scriptAreaText.append(script);
+                }
+            }
+        });
+
     }
 
+    /**
+     * Runs the script.
+     * 
+     * @throws Exception
+     */
+    public void runScript( String name, String script ) throws Exception {
+        String currentUserName = User.getCurrentUserName();
+        String dataPath = StageWorkspace.getInstance().getDataFolder(currentUserName).getAbsolutePath();
+        dataPath = dataPath.replace('\\', '/');
+        script = script.replaceAll(StageWorkspace.STAGE_DATA_FOLDER_SUBSTITUTION_NAME, dataPath);
+        ScriptHandler scriptHandler = new ScriptHandler();
+        String scriptID = name + " " + StageConstants.dateTimeFormatterYYYYMMDDHHMMSS.format(new Date());
+        logList.removeAll();
+        scriptHandler.runModule(scriptID, script, logList);
+    }
 }

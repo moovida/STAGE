@@ -25,7 +25,12 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
+import eu.hydrologis.rap.stage.workspace.StageWorkspace;
+import eu.hydrologis.rap.stage.workspace.User;
+
 public class LoginDialog extends Dialog {
+
+    public static final String SESSION_USER_KEY = "SESSION_USER";
 
     private static final long serialVersionUID = 1L;
 
@@ -122,13 +127,15 @@ public class LoginDialog extends Dialog {
     /**
      * Show login screen and check pwd.
      * 
+     * <p>Dummy implementation.
+     * 
      * @param shell
-     * @return
+     * @return the {@link User} or <code>null</code>.
      */
     public static boolean checkUserLogin( Shell shell ) {
         String user = "testuser";
         HttpSession httpSession = RWT.getUISession().getHttpSession();
-        Object attribute = httpSession.getAttribute(user);
+        Object attribute = httpSession.getAttribute(SESSION_USER_KEY);
         if (attribute instanceof String) {
             return true;
         } else {
@@ -140,7 +147,10 @@ public class LoginDialog extends Dialog {
                 String username = loginDialog.getUsername();
                 String password = loginDialog.getPassword();
                 if (username != null && password != null && username.equals(user) && password.equals("t")) {
-                    httpSession.setAttribute(username, "OK");
+                    httpSession.setAttribute(SESSION_USER_KEY, username);
+
+                    StageWorkspace.getInstance().getDataFolder(username);
+                    StageWorkspace.getInstance().getScriptsFolder(username);
                     return true;
                 }
             }
