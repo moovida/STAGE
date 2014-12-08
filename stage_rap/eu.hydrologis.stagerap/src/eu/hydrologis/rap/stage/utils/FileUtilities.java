@@ -396,4 +396,30 @@ public class FileUtilities {
         writeFile(list, tempFile);
         return tempFile;
     }
+
+    /**
+     * replace illegal characters in a filename with "_"
+     * illegal characters :
+     *           : \ / * ? | < >
+     * @param name
+     * @return
+     */
+    public static String sanitizeFilename( String name ) {
+        return name.replaceAll("[:\\\\/*?|<>]", "_");
+    }
+
+    /**
+     * Check if a file name is valid.
+     * 
+     * @param file the file to check.
+     * @return <code>true</code> if the name is valid.
+     */
+    public static boolean isFilenameValid( File file ) {
+        try {
+            file.getCanonicalPath();
+            return true;
+        } catch (IOException e) {
+            return false;
+        }
+    }
 }

@@ -12,6 +12,7 @@ package eu.hydrologis.rap.stage.utils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Scanner;
 
@@ -33,14 +34,20 @@ public class ScriptTemplatesUtil {
         if (scriptNamesList == null) {
             scriptNamesList = new ArrayList<String>();
             scriptNamesList.add("");
+
+            ArrayList<String> tmpScriptNamesList = new ArrayList<String>();
             ClassLoader classLoader = ScriptTemplatesUtil.class.getClassLoader();
             InputStream inputStream = classLoader.getResourceAsStream(SCRIPT_TEMPLATES_FOLDER + INDEX_FILE_NAME);
             if (inputStream != null) {
                 try (Scanner s = new Scanner(inputStream).useDelimiter("\n")) {
                     while( s.hasNext() ) {
-                        String nextString = s.next();
-                        scriptNamesList.add(nextString);
+                        String nextString = s.next().trim();
+                        if (nextString.length() > 0)
+                            tmpScriptNamesList.add(nextString);
                     }
+
+                    Collections.sort(tmpScriptNamesList);
+                    scriptNamesList.addAll(tmpScriptNamesList);
                 } finally {
                     try {
                         inputStream.close();

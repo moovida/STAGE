@@ -16,8 +16,10 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 
-import org.eclipse.jface.dialogs.ErrorDialog;
+import org.eclipse.jface.dialogs.IInputValidator;
+import org.eclipse.jface.dialogs.InputDialog;
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.window.Window;
 import org.eclipse.rap.rwt.RWT;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabItem;
@@ -35,6 +37,7 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
 
 import eu.hydrologis.rap.stage.core.ScriptHandler;
+import eu.hydrologis.rap.stage.utils.FileUtilities;
 import eu.hydrologis.rap.stage.utils.ImageCache;
 import eu.hydrologis.rap.stage.utils.ScriptTemplatesUtil;
 import eu.hydrologis.rap.stage.utils.StageConstants;
@@ -46,8 +49,22 @@ import eu.hydrologis.rap.stage.workspace.User;
  * 
  * @author Andrea Antonello (www.hydrologis.com)
  */
+@SuppressWarnings("serial")
 public class StageScriptingView {
 
+    private static final String TEMPLATES = "Templates";
+    private static final String ERROR = "ERROR";
+    private static final String SCRIPT_SAVED = "Script saved.";
+    private static final String INFORMATION = "Information";
+    private static final String COULD_NOT_SAVE_SCRIPT = "Could not save script: ";
+    private static final String SCRIPT_NAME_TO_SAVE = "Enter the script name to save to:";
+    private static final String SCRIPT_NAME_NOT_VALID = "The script name is not valid!";
+    private static final String SAVE_CURRENT_SCRIPT = "Save current script";
+    private static final String OPEN_EXISTING_SCRIPT = "Open existing script";
+    private static final String FILE = "File";
+    private static final String RUN_MODULE = "Run module";
+    private static final String EXECUTION = "Execution";
+    private static final String SCRIPT_NAME = "Script name";
     private org.eclipse.swt.widgets.List logList;
     private Text scriptTitleText;
     private Text scriptAreaText;
@@ -79,7 +96,7 @@ public class StageScriptingView {
 
         Label titleLabel = new Label(leftComposite, SWT.NONE);
         titleLabel.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
-        titleLabel.setText("Script name");
+        titleLabel.setText(SCRIPT_NAME);
 
         scriptTitleText = new Text(leftComposite, SWT.SINGLE | SWT.LEAD | SWT.BORDER);
         scriptTitleText.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
@@ -104,12 +121,12 @@ public class StageScriptingView {
         Group execGroup = new Group(mainComposite, SWT.NONE);
         execGroup.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
         execGroup.setLayout(new GridLayout(4, true));
-        execGroup.setText("Execution");
+        execGroup.setText(EXECUTION);
 
         Button runModuleButton = new Button(execGroup, SWT.PUSH);
         runModuleButton.setLayoutData(new GridData(SWT.BEGINNING, SWT.TOP, false, false));
         // runModuleButton.setText("Run module");
-        runModuleButton.setToolTipText("Run module");
+        runModuleButton.setToolTipText(RUN_MODULE);
         runModuleButton.setImage(ImageCache.getInstance().getImage(display, ImageCache.RUN));
         runModuleButton.addSelectionListener(new SelectionAdapter(){
             private static final long serialVersionUID = 1L;
@@ -126,15 +143,16 @@ public class StageScriptingView {
             }
         });
     }
+
     private void addFileGroup( Display display, Composite mainComposite ) {
         Group fileGroup = new Group(mainComposite, SWT.NONE);
         fileGroup.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
         fileGroup.setLayout(new GridLayout(4, true));
-        fileGroup.setText("File");
+        fileGroup.setText(FILE);
 
         Button openButton = new Button(fileGroup, SWT.PUSH);
         openButton.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
-        openButton.setToolTipText("Open existing script");
+        openButton.setToolTipText(OPEN_EXISTING_SCRIPT);
         openButton.setImage(ImageCache.getInstance().getImage(display, ImageCache.OPEN));
         // openButton.addSelectionListener(new SelectionAdapter(){
         // private static final long serialVersionUID = 1L;
@@ -151,35 +169,56 @@ public class StageScriptingView {
 
         final Button saveButton = new Button(fileGroup, SWT.PUSH);
         saveButton.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
-        saveButton.setToolTipText("Save current script");
+        saveButton.setToolTipText(SAVE_CURRENT_SCRIPT);
         saveButton.setImage(ImageCache.getInstance().getImage(display, ImageCache.SAVE));
         saveButton.addSelectionListener(new SelectionAdapter(){
-            private static final long serialVersionUID = 1L;
             @Override
             public void widgetSelected( SelectionEvent e ) {
-                String title = scriptTitleText.getText();
-                String script = scriptAreaText.getText();
-                File scriptsFolder = StageWorkspace.getInstance().getScriptsFolder(User.getCurrentUserName());
+                String scriptTitle = scriptTitleText.getText();
+                String scriptText = scriptAreaText.getText();
 
-                File scriptFile = new File(scriptsFolder, title + ".groovy");
-
-                try (BufferedWriter writer = new BufferedWriter(new FileWriter(scriptFile))) {
-                    writer.write(script);
-                    MessageDialog.openInformation(saveButton.getShell(), "Information", "Script saved.");
-                } catch (IOException e1) {
-                    e1.printStackTrace();
-                    MessageDialog.openWarning(saveButton.getShell(), "ERROR",
-                            "Could not save script: " + e1.getLocalizedMessage());
+                final IInputValidator val = new IInputValidator(){
+                    public String isValid( final String newText ) {
+                        File scriptFile = getScriptFile(newText);
+                        boolean isFilenameValid = FileUtilities.isFilenameValid(scriptFile);
+                        String result = null;
+                        if (!isFilenameValid) {
+                            result = SCRIPT_NAME_NOT_VALID;
+                        }
+                        return result;
+                    }
+                };
+                String title = SCRIPT_NAME;
+                String mesg = SCRIPT_NAME_TO_SAVE;
+                InputDialog inputDialog = new InputDialog(saveButton.getShell(), title, mesg, scriptTitle, val);
+                int returnCode = inputDialog.open();
+                if (returnCode == Window.OK) {
+                    scriptTitle = inputDialog.getValue();
+                    File scriptFile = getScriptFile(scriptTitle);
+                    try (BufferedWriter writer = new BufferedWriter(new FileWriter(scriptFile))) {
+                        writer.write(scriptText);
+                        MessageDialog.openInformation(saveButton.getShell(), INFORMATION, SCRIPT_SAVED);
+                    } catch (IOException e1) {
+                        e1.printStackTrace();
+                        MessageDialog.openWarning(saveButton.getShell(), ERROR, COULD_NOT_SAVE_SCRIPT + e1.getLocalizedMessage());
+                    }
                 }
+
             }
         });
+    }
+
+    private File getScriptFile( String name ) {
+        File scriptsFolder = StageWorkspace.getInstance().getScriptsFolder(User.getCurrentUserName());
+        File scriptFile = new File(scriptsFolder, name + ".groovy");
+        return scriptFile;
     }
 
     private void addTemplatesGroup( Display display, Composite mainComposite ) {
         Group templatesGroup = new Group(mainComposite, SWT.NONE);
         templatesGroup.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
         templatesGroup.setLayout(new GridLayout(1, true));
-        templatesGroup.setText("Templates");
+        templatesGroup.setText(TEMPLATES);
 
         String[] templates = new String[]{""};
         List<String> scriptNames = ScriptTemplatesUtil.getScriptNames();
