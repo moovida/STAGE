@@ -36,6 +36,9 @@ public class ImageCache {
     public static final String OPEN = "prj_obj.gif";
     public static final String SAVE = "save_edit.gif";
 	
+    public static final String FILE = "file.gif";
+    public static final String FOLDER = "folder.gif";
+    
 	private static ImageCache imageCache;
 
 	private HashMap<String, Image> imageMap = new HashMap<String, Image>();

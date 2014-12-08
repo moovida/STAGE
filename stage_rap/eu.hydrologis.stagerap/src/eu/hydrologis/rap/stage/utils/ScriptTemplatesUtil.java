@@ -72,10 +72,11 @@ public class ScriptTemplatesUtil {
         name = name.trim().replace(' ', '_') + ".groovy";
         InputStream inputStream = classLoader.getResourceAsStream(SCRIPT_TEMPLATES_FOLDER + name);
         if (inputStream != null) {
-            try (Scanner s = new Scanner(inputStream).useDelimiter("\n")) {
+            try (Scanner scanner = new Scanner(inputStream)) {
+                scanner.useDelimiter("\n");
                 StringBuilder sb = new StringBuilder();
-                while( s.hasNext() ) {
-                    String nextString = s.next();
+                while( scanner.hasNext() ) {
+                    String nextString = scanner.next();
                     sb.append(nextString).append("\n");
                 }
                 return sb.toString();

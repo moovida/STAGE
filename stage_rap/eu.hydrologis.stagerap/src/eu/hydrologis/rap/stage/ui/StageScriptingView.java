@@ -41,6 +41,7 @@ import eu.hydrologis.rap.stage.utils.FileUtilities;
 import eu.hydrologis.rap.stage.utils.ImageCache;
 import eu.hydrologis.rap.stage.utils.ScriptTemplatesUtil;
 import eu.hydrologis.rap.stage.utils.StageConstants;
+import eu.hydrologis.rap.stage.utilsrap.FileSelectionDialog;
 import eu.hydrologis.rap.stage.workspace.StageWorkspace;
 import eu.hydrologis.rap.stage.workspace.User;
 
@@ -52,6 +53,8 @@ import eu.hydrologis.rap.stage.workspace.User;
 @SuppressWarnings("serial")
 public class StageScriptingView {
 
+    private static final String GROOVY = ".groovy";
+    private static final String FILE_IS_FOLDER = "The selected file is a folder.";
     private static final String TEMPLATES = "Templates";
     private static final String ERROR = "ERROR";
     private static final String SCRIPT_SAVED = "Script saved.";
@@ -150,22 +153,40 @@ public class StageScriptingView {
         fileGroup.setLayout(new GridLayout(4, true));
         fileGroup.setText(FILE);
 
-        Button openButton = new Button(fileGroup, SWT.PUSH);
+        final Button openButton = new Button(fileGroup, SWT.PUSH);
         openButton.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
         openButton.setToolTipText(OPEN_EXISTING_SCRIPT);
         openButton.setImage(ImageCache.getInstance().getImage(display, ImageCache.OPEN));
-        // openButton.addSelectionListener(new SelectionAdapter(){
-        // private static final long serialVersionUID = 1L;
-        //
-        // @Override
-        // public void widgetSelected( SelectionEvent e ) {
-        // try {
-        // runSelectedModule();
-        // } catch (Exception e1) {
-        // e1.printStackTrace();
-        // }
-        // }
-        // });
+        openButton.addSelectionListener(new SelectionAdapter(){
+            public void widgetSelected( SelectionEvent e ) {
+                File scriptsFolder = StageWorkspace.getInstance().getScriptsFolder(User.getCurrentUserName());
+                FileSelectionDialog fileDialog = new FileSelectionDialog(openButton.getShell(), scriptsFolder,
+                        new String[]{GROOVY}, new String[]{GROOVY});
+                int returnCode = fileDialog.open();
+                if (returnCode == SWT.CANCEL) {
+                    return;
+                }
+                File selectedFile = fileDialog.getSelectedFile();
+                if (selectedFile != null && selectedFile.exists()) {
+                    if (selectedFile.isDirectory()) {
+                        MessageDialog.openWarning(openButton.getShell(), ERROR, FILE_IS_FOLDER);
+                        return;
+                    }
+                    try {
+                        String readFile = FileUtilities.readFile(selectedFile);
+                        String name = selectedFile.getName();
+                        if (name.endsWith(GROOVY)) {
+                            name = name.replaceFirst(GROOVY, "");
+                        }
+                        scriptTitleText.setText(name);
+                        scriptAreaText.setText(readFile);
+                    } catch (IOException e1) {
+                        e1.printStackTrace();
+                        MessageDialog.openWarning(openButton.getShell(), ERROR, e1.getLocalizedMessage());
+                    }
+                }
+            }
+        });
 
         final Button saveButton = new Button(fileGroup, SWT.PUSH);
         saveButton.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
@@ -210,7 +231,7 @@ public class StageScriptingView {
 
     private File getScriptFile( String name ) {
         File scriptsFolder = StageWorkspace.getInstance().getScriptsFolder(User.getCurrentUserName());
-        File scriptFile = new File(scriptsFolder, name + ".groovy");
+        File scriptFile = new File(scriptsFolder, name + GROOVY);
         return scriptFile;
     }
 
