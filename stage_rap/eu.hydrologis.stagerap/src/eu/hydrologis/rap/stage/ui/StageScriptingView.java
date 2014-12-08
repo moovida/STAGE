@@ -53,6 +53,8 @@ import eu.hydrologis.rap.stage.workspace.User;
 @SuppressWarnings("serial")
 public class StageScriptingView {
 
+    private static final String EMPTY_SCRIPT_NAME = "The script name can't be empty.";
+    private static final String SCRIPT_IS_EMPTY = "Script is empty";
     private static final String GROOVY = ".groovy";
     private static final String FILE_IS_FOLDER = "The selected file is a folder.";
     private static final String TEMPLATES = "Templates";
@@ -76,7 +78,7 @@ public class StageScriptingView {
 
         Composite mainComposite = new Composite(parent, SWT.NONE);
         mainComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
-        mainComposite.setLayout(new GridLayout(3, true));
+        mainComposite.setLayout(new GridLayout(3, false));
 
         addRunGroup(display, mainComposite);
 
@@ -122,8 +124,8 @@ public class StageScriptingView {
 
     private void addRunGroup( Display display, Composite mainComposite ) {
         Group execGroup = new Group(mainComposite, SWT.NONE);
-        execGroup.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
-        execGroup.setLayout(new GridLayout(4, true));
+        execGroup.setLayoutData(new GridData(SWT.LEAD, SWT.FILL, false, false));
+        execGroup.setLayout(new GridLayout(1, true));
         execGroup.setText(EXECUTION);
 
         Button runModuleButton = new Button(execGroup, SWT.PUSH);
@@ -149,8 +151,8 @@ public class StageScriptingView {
 
     private void addFileGroup( Display display, Composite mainComposite ) {
         Group fileGroup = new Group(mainComposite, SWT.NONE);
-        fileGroup.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
-        fileGroup.setLayout(new GridLayout(4, true));
+        fileGroup.setLayoutData(new GridData(SWT.LEAD, SWT.FILL, false, false));
+        fileGroup.setLayout(new GridLayout(2, true));
         fileGroup.setText(FILE);
 
         final Button openButton = new Button(fileGroup, SWT.PUSH);
@@ -237,7 +239,7 @@ public class StageScriptingView {
 
     private void addTemplatesGroup( Display display, Composite mainComposite ) {
         Group templatesGroup = new Group(mainComposite, SWT.NONE);
-        templatesGroup.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+        templatesGroup.setLayoutData(new GridData(SWT.LEAD, SWT.FILL, false, false));
         templatesGroup.setLayout(new GridLayout(1, true));
         templatesGroup.setText(TEMPLATES);
 
@@ -280,6 +282,14 @@ public class StageScriptingView {
         String dataPath = StageWorkspace.getInstance().getDataFolder(currentUserName).getAbsolutePath();
         dataPath = dataPath.replace('\\', '/');
         script = script.replaceAll(StageWorkspace.STAGE_DATA_FOLDER_SUBSTITUTION_NAME, dataPath);
+        if (script.length() == 0) {
+            MessageDialog.openWarning(scriptAreaText.getShell(), ERROR, SCRIPT_IS_EMPTY);
+            return;
+        }
+        if (name.length() == 0) {
+            MessageDialog.openWarning(scriptAreaText.getShell(), ERROR, EMPTY_SCRIPT_NAME);
+            return;
+        }
         ScriptHandler scriptHandler = new ScriptHandler();
         String scriptID = name + " " + StageConstants.dateTimeFormatterYYYYMMDDHHMMSS.format(new Date());
         logList.removeAll();

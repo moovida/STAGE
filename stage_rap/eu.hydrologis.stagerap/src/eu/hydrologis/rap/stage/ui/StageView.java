@@ -48,9 +48,10 @@ public class StageView {
         StageScriptingView stageScriptingView = new StageScriptingView();
         stageScriptingView.createStageScriptingTab(display, mainStageCFolder, scriptingTab);
 
-
         CTabItem fileManagementTab = new CTabItem(mainStageCFolder, SWT.NONE);
         fileManagementTab.setText("File Management");
+        StageFilemanagementView stageFileManagementView = new StageFilemanagementView();
+        stageFileManagementView.createStageFileManagementTab(display, mainStageCFolder, fileManagementTab);
 
         CTabItem viewerTab = new CTabItem(mainStageCFolder, SWT.NONE);
         viewerTab.setText("Simple Viewer");
