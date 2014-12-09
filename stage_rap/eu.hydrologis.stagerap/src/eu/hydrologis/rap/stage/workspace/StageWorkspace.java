@@ -56,4 +56,35 @@ public class StageWorkspace {
         }
         return dataFolder;
     }
+
+    /**
+     * Convert a file to its relative to datafolder version.
+     * 
+     * @param currentFile the file to trim.
+     * @return the relative path.
+     */
+    public static String makeRelativeToDataFolder( File currentFile ) {
+        File dataFolder = getInstance().getDataFolder(User.getCurrentUserName());
+
+        String dataFolderPath = dataFolder.getAbsolutePath();
+        String filePath = currentFile.getAbsolutePath();
+
+        String relativePath = filePath.replaceFirst(dataFolderPath, "");
+        if (relativePath.startsWith("/") && !new File(relativePath).exists()) {
+            relativePath = relativePath.substring(1);
+        }
+        return relativePath;
+    }
+
+    /**
+     * Add to the relative file path the data folder. 
+     * 
+     * @param relativePath the relative path.
+     * @return the complete absolute path.
+     */
+    public static File makeRelativeDataPathToFile( String relativePath ) {
+        File dataFolder = getInstance().getDataFolder(User.getCurrentUserName());
+        File file = new File(dataFolder, relativePath);
+        return file;
+    }
 }

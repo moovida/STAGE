@@ -2,7 +2,6 @@ package eu.hydrologis.rap.stage.utilsrap;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.lang.reflect.InvocationTargetException;
 
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -35,9 +34,13 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
 import eu.hydrologis.rap.stage.utils.ImageCache;
+import eu.hydrologis.rap.stage.workspace.StageWorkspace;
+import eu.hydrologis.rap.stage.workspace.User;
 
 /**
  * A folder browser dialog.
+ * 
+ * @author Andrea Antonello (www.hydrologis.com)
  */
 @SuppressWarnings("serial")
 public class FileSelectionDialog extends Dialog {
@@ -60,6 +63,16 @@ public class FileSelectionDialog extends Dialog {
         this(parent, SWT.APPLICATION_MODAL, parentFile, extentionsToHide, allowedExtentions);
     }
 
+    /**
+     * Constructor.
+     * 
+     * @param parent the parent shell.
+     * @param style the style to use.
+     * @param parentFile the root folder to start from.
+     * @param extentionsToHide the array of extensions to hide in the browser (i.e. 
+     *          they are trimmed away from the end of the name).
+     * @param allowedExtentions the array of allowed extensions to show.
+     */
     public FileSelectionDialog( Shell parent, int style, File parentFile, String[] extentionsToHide, String[] allowedExtentions ) {
         super(parent, style);
         this.parent = parent;
@@ -80,6 +93,21 @@ public class FileSelectionDialog extends Dialog {
     public File getSelectedFile() {
         return selectedFile;
     }
+
+    /**
+     * Getter for the relative file path.
+     * 
+     * @return the file path relative to the user data space.
+     */
+    public String getSelectedFileRelativePath() {
+        if (selectedFile != null) {
+            String relativePath = StageWorkspace.makeRelativeToDataFolder(selectedFile);
+            return relativePath;
+        }
+        return null;
+    }
+
+
 
     @Override
     protected void prepareOpen() {
@@ -164,6 +192,9 @@ public class FileSelectionDialog extends Dialog {
                                 }
                                 // allowed if extension is allowed
                                 String name = file.getName();
+                                if (name.equals("content-type.tmp")) {
+                                    return false;
+                                }
                                 boolean isAllowed = true;
                                 if (allowedExtentions != null) {
                                     isAllowed = false;

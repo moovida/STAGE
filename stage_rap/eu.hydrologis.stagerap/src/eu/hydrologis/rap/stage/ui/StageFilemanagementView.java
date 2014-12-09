@@ -12,14 +12,16 @@ package eu.hydrologis.rap.stage.ui;
 import java.io.File;
 import java.io.IOException;
 
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.rap.addons.fileupload.DiskFileUploadReceiver;
 import org.eclipse.rap.addons.fileupload.FileDetails;
 import org.eclipse.rap.addons.fileupload.FileUploadEvent;
 import org.eclipse.rap.addons.fileupload.FileUploadHandler;
 import org.eclipse.rap.addons.fileupload.FileUploadListener;
+import org.eclipse.rap.rwt.RWT;
+import org.eclipse.rap.rwt.client.Client;
 import org.eclipse.rap.rwt.service.ServerPushSession;
-import org.eclipse.rap.rwt.widgets.DialogCallback;
-import org.eclipse.rap.rwt.widgets.DialogUtil;
+import org.eclipse.rap.rwt.service.UISession;
 import org.eclipse.rap.rwt.widgets.FileUpload;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabItem;
@@ -31,7 +33,6 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
@@ -54,9 +55,11 @@ public class StageFilemanagementView {
     private Label fileNameLabel;
     private Button uploadButton;
     private ServerPushSession pushSession;
+    private Display display;
 
     public void createStageFileManagementTab( Display display, Composite parent, CTabItem stageTab ) throws IOException {
 
+        this.display = display;
         Composite mainComposite = new Composite(parent, SWT.NONE);
         mainComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
         mainComposite.setLayout(new GridLayout(1, true));
@@ -83,14 +86,14 @@ public class StageFilemanagementView {
         uploadGroup.setText("Files Upload");
 
         fileUpload = new FileUpload(uploadGroup, SWT.NONE);
-        fileUpload.setText("Select File");
+        fileUpload.setText("Select file to upload");
         fileUpload.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
         fileNameLabel = new Label(uploadGroup, SWT.NONE);
         fileNameLabel.setText("no file selected");
         fileNameLabel.setLayoutData(ExampleUtil.createHorzFillData());
         fileNameLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
         uploadButton = new Button(uploadGroup, SWT.PUSH);
-        uploadButton.setText("Upload");
+        uploadButton.setText("Upload file");
         uploadButton.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
         new Label(uploadGroup, SWT.NONE);
         fileUpload.addSelectionListener(new SelectionAdapter(){
@@ -135,42 +138,34 @@ public class StageFilemanagementView {
             }
 
             public void uploadFailed( FileUploadEvent event ) {
-                addToLog("upload failed: " + event.getException());
+                final Exception ex = event.getException();
+                display.syncExec(new Runnable(){
+                    public void run() {
+                        MessageDialog.openWarning(fileNameLabel.getShell(), "ERROR",
+                                "File upload failed with error: " + ex.getLocalizedMessage());
+                    }
+                });
+
+                ex.printStackTrace();
             }
 
             public void uploadFinished( FileUploadEvent event ) {
+                if (pushSession != null)
+                    pushSession.stop();
+                StringBuilder sb = new StringBuilder();
                 for( FileDetails file : event.getFileDetails() ) {
-                    addToLog("received: " + file.getFileName());
+                    sb.append(",").append(file.getFileName());
                 }
+                final String filesStr = sb.substring(1);
+                display.syncExec(new Runnable(){
+                    public void run() {
+                        MessageDialog.openInformation(fileNameLabel.getShell(), "INFORMATION", "Successfully uploaded: "
+                                + filesStr);
+                    }
+                });
             }
         });
         return uploadHandler.getUploadUrl();
-    }
-
-    private void addToLog( final String message ) {
-        System.out.println(message);
-
-        if (pushSession != null)
-            pushSession.stop();
-        // if (!logText.isDisposed()) {
-        // logText.getDisplay().asyncExec(new Runnable(){
-        // public void run() {
-        // String text = logText.getText();
-        // if (INITIAL_TEXT.equals(text)) {
-        // text = "";
-        // }
-        // logText.setText(text + message + "\n");
-        // pushSession.stop();
-        // }
-        // });
-        // }
-    }
-
-    private Composite createFileDialogArea( Composite parent ) {
-        Composite area = new Composite(parent, SWT.NONE);
-        area.setLayout(ExampleUtil.createGridLayout(2, true, true, true));
-        createAddMultiButton(area);
-        return area;
     }
 
     private Composite createFileDownloadArea( Composite parent ) {
@@ -178,50 +173,8 @@ public class StageFilemanagementView {
         downloadGroup.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
         downloadGroup.setLayout(new GridLayout(2, false));
         downloadGroup.setText("Files Download");
-        // ExampleUtil.createHeading(area, "File download", 2);
         createDownloadButton(downloadGroup);
         return downloadGroup;
-    }
-
-    // private void createAddSingleButton( Composite parent ) {
-    // Button button = new Button(parent, SWT.PUSH);
-    // button.setLayoutData(ExampleUtil.createHorzFillData());
-    // button.setText("Single File");
-    // button.setToolTipText("Launches file dialog for single file selection.");
-    // final Shell parentShell = parent.getShell();
-    // button.addSelectionListener(new SelectionAdapter(){
-    // @Override
-    // public void widgetSelected( SelectionEvent e ) {
-    // openFileDialog(parentShell, false);
-    // }
-    // });
-    // }
-
-    private void createAddMultiButton( Composite parent ) {
-        Button button = new Button(parent, SWT.PUSH);
-        button.setLayoutData(ExampleUtil.createHorzFillData());
-        button.setText("Files Upload");
-        button.setToolTipText("Upload one or multiple files.");
-        final Shell parentShell = parent.getShell();
-        button.addSelectionListener(new SelectionAdapter(){
-            @Override
-            public void widgetSelected( SelectionEvent e ) {
-                final FileDialog fileDialog = new FileDialog(parentShell, getDialogStyle(true));
-                fileDialog.setText(true ? "Upload Files" : "Upload File");
-                DialogUtil.open(fileDialog, new DialogCallback(){
-                    public void dialogClosed( int returnCode ) {
-                        showUploadResults(fileDialog);
-
-                        // FIXME
-                        final String url = startUploadReceiver();
-                        pushSession = new ServerPushSession();
-                        pushSession.start();
-
-                        // dfileUpload.submit(url);
-                    }
-                });
-            }
-        });
     }
 
     private void createDownloadButton( Composite parent ) {
@@ -249,34 +202,6 @@ public class StageFilemanagementView {
                 }
             }
         });
-    }
-
-    private void showUploadResults( FileDialog fileDialog ) {
-        String[] selectedFiles = fileDialog.getFileNames();
-        for( String fileName : selectedFiles ) {
-            addToLog("received: " + new File(fileName).getName());
-        }
-    }
-
-    // private void createClearButton( Composite parent ) {
-    // Button button = new Button(parent, SWT.PUSH);
-    // button.setLayoutData(ExampleUtil.createHorzFillData());
-    // button.setText("Clear");
-    // button.setToolTipText("Clears the results list");
-    // button.addSelectionListener(new SelectionAdapter(){
-    // @Override
-    // public void widgetSelected( SelectionEvent e ) {
-    // logText.setText(INITIAL_TEXT);
-    // }
-    // });
-    // }
-
-    private static int getDialogStyle( boolean multi ) {
-        int result = SWT.SHELL_TRIM | SWT.APPLICATION_MODAL;
-        if (multi) {
-            result |= SWT.MULTI;
-        }
-        return result;
     }
 
 }
