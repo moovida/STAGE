@@ -55,5 +55,8 @@ public class StageView {
 
         CTabItem viewerTab = new CTabItem(mainStageCFolder, SWT.NONE);
         viewerTab.setText("Simple Viewer");
+        StageSimpleViewerView stageViewerView = new StageSimpleViewerView();
+        stageViewerView.createStageSimpleViewerTab(display, mainStageCFolder, viewerTab);
+
     }
 }

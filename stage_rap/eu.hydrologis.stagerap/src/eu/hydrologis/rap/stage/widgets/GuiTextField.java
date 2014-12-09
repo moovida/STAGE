@@ -215,7 +215,9 @@ public class GuiTextField extends ModuleGuiElement implements ModifyListener, Fo
                 }
             }
 
-            data.fieldValue = StageWorkspace.makeRelativeToDataFolder(new File(data.fieldValue));
+            if (data.fieldValue.length()>0) {
+                data.fieldValue = StageWorkspace.makeRelativeToDataFolder(new File(data.fieldValue));
+            }
 
             data.fieldValue = checkBackSlash(data.fieldValue, isFileOrFolder);
             text.setText(data.fieldValue);
