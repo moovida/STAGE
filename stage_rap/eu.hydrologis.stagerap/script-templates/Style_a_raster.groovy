@@ -17,6 +17,7 @@ newStyle = styler.style("elev")
 
 // write the style into the sld file
 sldFile = new File(sld)
+sldFile.delete()
 println "Writing style to file: " + sld
 sldFile << newStyle
 println "Finished."

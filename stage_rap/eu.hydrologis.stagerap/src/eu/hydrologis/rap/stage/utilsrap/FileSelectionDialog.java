@@ -2,6 +2,7 @@ package eu.hydrologis.rap.stage.utilsrap;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.util.Arrays;
 
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -35,7 +36,6 @@ import org.eclipse.swt.widgets.Text;
 
 import eu.hydrologis.rap.stage.utils.ImageCache;
 import eu.hydrologis.rap.stage.workspace.StageWorkspace;
-import eu.hydrologis.rap.stage.workspace.User;
 
 /**
  * A folder browser dialog.
@@ -217,6 +217,8 @@ public class FileSelectionDialog extends Dialog {
                                 return isAllowed;
                             }
                         });
+                        
+                        Arrays.sort(listFiles);
                         return listFiles;
                     }
                 }

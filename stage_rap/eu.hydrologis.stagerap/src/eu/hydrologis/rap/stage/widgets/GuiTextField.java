@@ -215,7 +215,7 @@ public class GuiTextField extends ModuleGuiElement implements ModifyListener, Fo
                 }
             }
 
-            if (data.fieldValue.length()>0) {
+            if (data.fieldValue.length() > 0 && isFileOrFolder) {
                 data.fieldValue = StageWorkspace.makeRelativeToDataFolder(new File(data.fieldValue));
             }
 
@@ -442,8 +442,12 @@ public class GuiTextField extends ModuleGuiElement implements ModifyListener, Fo
         // text.setText(textStr);
         // text.addModifyListener(this);
         // }
-        File file = StageWorkspace.makeRelativeDataPathToFile(tmpTextStr);
-        data.fieldValue = file.getAbsolutePath();
+        if (isFileOrFolder) {
+            File file = StageWorkspace.makeRelativeDataPathToFile(tmpTextStr);
+            data.fieldValue = file.getAbsolutePath();
+        } else {
+            data.fieldValue = textStr;
+        }
     }
 
     public boolean hasData() {

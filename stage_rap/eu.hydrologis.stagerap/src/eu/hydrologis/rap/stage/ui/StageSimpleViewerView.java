@@ -14,8 +14,6 @@ import java.io.File;
 import java.io.IOException;
 
 import org.eclipse.rap.rwt.RWT;
-import org.eclipse.rap.rwt.service.ServerPushSession;
-import org.eclipse.rap.rwt.widgets.FileUpload;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.custom.CTabItem;
@@ -29,13 +27,11 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
-import org.geotools.coverage.grid.GridGeometry2D;
+import org.eclipse.swt.widgets.Text;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.jgrasstools.gears.utils.images.ImageGenerator;
 
-import com.vividsolutions.jts.geom.Envelope;
-
-import eu.hydrologis.rap.stage.utilsrap.DownloadUtils;
+import eu.hydrologis.rap.stage.utils.FileUtilities;
 import eu.hydrologis.rap.stage.utilsrap.FileSelectionDialog;
 import eu.hydrologis.rap.stage.workspace.StageWorkspace;
 import eu.hydrologis.rap.stage.workspace.User;
@@ -48,49 +44,49 @@ import eu.hydrologis.rap.stage.workspace.User;
 @SuppressWarnings("serial")
 public class StageSimpleViewerView {
 
+    private static final int DEFAULT_HEIGHT = 600;
+    private static final int DEFAULT_WIDTH = 800;
     private final static String SERVICE_HANDLER = "imageServiceHandler";
     private final static String IMAGE_KEY = "imageKey";
     private Browser browser;
+    private File[] selectedFiles = new File[5];
+    private Text heightText;
+    private Text widthText;
 
     public void createStageSimpleViewerTab( Display display, Composite parent, CTabItem stageTab ) throws IOException {
 
         Composite mainComposite = new Composite(parent, SWT.NONE);
         mainComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
-        mainComposite.setLayout(new GridLayout(1, true));
+        mainComposite.setLayout(new GridLayout(5, true));
 
         Group fileSelectionGroup = new Group(mainComposite, SWT.NONE);
         fileSelectionGroup.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
         fileSelectionGroup.setLayout(new GridLayout(2, false));
-        fileSelectionGroup.setText("Simple Viewer File Selection");
+        fileSelectionGroup.setText("Parameters");
 
-        Button button = new Button(fileSelectionGroup, SWT.PUSH);
-        button.setLayoutData(new GridData(SWT.LEAD, SWT.CENTER, false, false));
-        button.setText("Select Map File");
-        // button.setToolTipText("Download a file");
-        final Shell parentShell = fileSelectionGroup.getShell();
-        button.addSelectionListener(new SelectionAdapter(){
-            @Override
-            public void widgetSelected( SelectionEvent e ) {
-                try {
-                    File userFolder = StageWorkspace.getInstance().getDataFolder(User.getCurrentUserName());
-                    FileSelectionDialog fileDialog = new FileSelectionDialog(parentShell, userFolder, null, null);
-                    int returnCode = fileDialog.open();
-                    if (returnCode == SWT.CANCEL) {
-                        return;
-                    }
+        Label widthLabel = new Label(fileSelectionGroup, SWT.NONE);
+        widthLabel.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
+        widthLabel.setText("Image width");
+        widthText = new Text(fileSelectionGroup, SWT.SINGLE | SWT.LEAD | SWT.BORDER);
+        widthText.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+        widthText.setText("" + DEFAULT_WIDTH);
 
-                    File selectedFile = fileDialog.getSelectedFile();
-                    if (selectedFile != null && selectedFile.exists() && !selectedFile.isDirectory()) {
-                        setImage(browser, selectedFile);
-                    }
-                } catch (Exception e1) {
-                    e1.printStackTrace();
-                }
-            }
-        });
+        Label heightLabel = new Label(fileSelectionGroup, SWT.NONE);
+        heightLabel.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
+        heightLabel.setText("Image height");
+        heightText = new Text(fileSelectionGroup, SWT.SINGLE | SWT.LEAD | SWT.BORDER);
+        heightText.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+        heightText.setText("" + DEFAULT_HEIGHT);
+
+        new Label(fileSelectionGroup, SWT.NONE);
+        new Label(fileSelectionGroup, SWT.NONE);
+
+        createFileSelectionButtons(fileSelectionGroup);
 
         Group viewerGroup = new Group(mainComposite, SWT.NONE);
-        viewerGroup.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+        GridData viewerGroupGD = new GridData(SWT.FILL, SWT.FILL, true, true);
+        viewerGroupGD.horizontalSpan = 4;
+        viewerGroup.setLayoutData(viewerGroupGD);
         viewerGroup.setLayout(new GridLayout(1, false));
         viewerGroup.setText("Viewer");
 
@@ -106,26 +102,93 @@ public class StageSimpleViewerView {
         stageTab.setControl(mainComposite);
     }
 
-    private void setImage( Browser browser, File imageFile ) throws Exception {
+    private void createFileSelectionButtons( Group fileSelectionGroup ) {
+        for( int i = 0; i < selectedFiles.length; i++ ) {
+            Button button = new Button(fileSelectionGroup, SWT.PUSH);
+            button.setLayoutData(new GridData(SWT.LEAD, SWT.FILL, false, false));
+            button.setText("Map File " + (i + 1));
+
+            final Label label = new Label(fileSelectionGroup, SWT.NONE);
+            label.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+            label.setText("");
+
+            final int index = i;
+            final Shell parentShell = fileSelectionGroup.getShell();
+            button.addSelectionListener(new SelectionAdapter(){
+                @Override
+                public void widgetSelected( SelectionEvent e ) {
+                    try {
+                        File userFolder = StageWorkspace.getInstance().getDataFolder(User.getCurrentUserName());
+                        FileSelectionDialog fileDialog = new FileSelectionDialog(parentShell, userFolder, null, null);
+                        int returnCode = fileDialog.open();
+                        if (returnCode == SWT.CANCEL) {
+                            selectedFiles[index] = null;
+                            label.setText("");
+                            return;
+                        }
+
+                        selectedFiles[index] = fileDialog.getSelectedFile();
+                        label.setText(selectedFiles[index].getName());
+                    } catch (Exception e1) {
+                        e1.printStackTrace();
+                    }
+                }
+            });
+
+        }
+        new Label(fileSelectionGroup, SWT.NONE);
+        new Label(fileSelectionGroup, SWT.NONE);
+        Button drawButton = new Button(fileSelectionGroup, SWT.PUSH);
+        drawButton.setLayoutData(new GridData(SWT.LEAD, SWT.CENTER, false, false));
+        drawButton.setText("Draw map");
+        drawButton.addSelectionListener(new SelectionAdapter(){
+            @Override
+            public void widgetSelected( SelectionEvent e ) {
+                try {
+                    setImage(browser, selectedFiles);
+                } catch (Exception e1) {
+                    e1.printStackTrace();
+                }
+            }
+        });
+
+    }
+
+    private void setImage( Browser browser, File[] imageFiles ) throws Exception {
         // create the image
-        BufferedImage image = createImage(imageFile);
+        BufferedImage image = createImage(imageFiles);
         // store the image in the UISession for the service handler
         RWT.getUISession().setAttribute(IMAGE_KEY, image);
         // create the HTML with a single <img> tag.
         browser.setText(createHtml(IMAGE_KEY));
     }
 
-    private BufferedImage createImage( File imageFile ) throws Exception {
-        String name = imageFile.getName();
-
+    private BufferedImage createImage( File[] imageFiles ) throws Exception {
         final ImageGenerator imgGen = new ImageGenerator(null);
-        if (name.endsWith("asc") || name.endsWith("tiff")) {
-            imgGen.addCoveragePath(imageFile.getAbsolutePath());
-        } else {
-            imgGen.addFeaturePath(imageFile.getAbsolutePath(), null);
+        for( File imageFile : imageFiles ) {
+            if (imageFile == null)
+                continue;
+            String name = imageFile.getName().toLowerCase();
+            if (FileUtilities.isSupportedRaster(name)) {
+                imgGen.addCoveragePath(imageFile.getAbsolutePath());
+            }
+            if (FileUtilities.isSupportedVector(name)) {
+                imgGen.addFeaturePath(imageFile.getAbsolutePath(), null);
+            }
         }
         ReferencedEnvelope maxEnv = imgGen.setLayers();
-        BufferedImage image = imgGen.getImageWithCheck(maxEnv, 800, 600, 0.0, null);
+
+        int width = DEFAULT_WIDTH;
+        int height = DEFAULT_HEIGHT;
+        try {
+            int w = Integer.parseInt(widthText.getText());
+            int h = Integer.parseInt(heightText.getText());
+            width = w;
+            height = h;
+        } catch (Exception e) {
+        }
+
+        BufferedImage image = imgGen.getImageWithCheck(maxEnv, width, height, 0.0, null);
         return image;
     }
 

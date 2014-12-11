@@ -41,6 +41,28 @@ import java.util.List;
  */
 public class FileUtilities {
 
+    /**
+     * Checks if the name is of a supported raster file.
+     * 
+     * @param name the name.
+     * @return <code>true</code> if the raster is supported.
+     */
+    public static boolean isSupportedRaster( String name ) {
+        name = name.toLowerCase();
+        return name.endsWith("asc") || name.endsWith("tiff") || name.endsWith("tif");
+    }
+
+    /**
+     * Checks if the name is of a supported vector file.
+     * 
+     * @param name the name.
+     * @return <code>true</code> if the vector is supported.
+     */
+    public static boolean isSupportedVector( String name ) {
+        name = name.toLowerCase();
+        return name.endsWith("shp");
+    }
+
     public static void copyFile( String fromFile, String toFile ) throws IOException {
         File in = new File(fromFile);
         File out = new File(toFile);
