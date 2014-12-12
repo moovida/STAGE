@@ -6,6 +6,7 @@ public class StageWorkspace {
     public static String STAGE_DATA_FOLDER_SUBSTITUTION_NAME = "DATAFOLDER";
 
     private static final String COULD_NOT_CREATE_DATA_FOLDER = "Could not create data folder in workspace.";
+    private static final String COULD_NOT_CREATE_GEOPAP_FOLDER = "Could not create geopaparazzi folder in workspace.";
     private static final String COULD_NOT_CREATE_SCRIPTS_FOLDER = "Could not create scripts folder in workspace.";
     private static final String COULD_NOT_CREATE_USER_FOLDER = "Could not create user folder in workspace.";
     private static final String NO_WORKSPACE_DEFINED = "No workspace defined for the current installation.";
@@ -55,6 +56,15 @@ public class StageWorkspace {
             throw new RuntimeException(COULD_NOT_CREATE_DATA_FOLDER);
         }
         return dataFolder;
+    }
+
+    public File getGeopaparazziFolder( String user ) {
+        File userFolder = getUserFolder(user);
+        File geopaparazziFolder = new File(userFolder, "geopaparazzi");
+        if (!geopaparazziFolder.exists() && !geopaparazziFolder.mkdirs()) {
+            throw new RuntimeException(COULD_NOT_CREATE_GEOPAP_FOLDER);
+        }
+        return geopaparazziFolder;
     }
 
     /**
