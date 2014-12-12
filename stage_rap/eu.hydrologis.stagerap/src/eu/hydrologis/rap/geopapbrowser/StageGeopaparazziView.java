@@ -11,8 +11,12 @@ package eu.hydrologis.rap.geopapbrowser;
 
 import static org.jgrasstools.gears.io.geopaparazzi.geopap4.TableDescriptions.TABLE_METADATA;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FilenameFilter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -31,6 +35,7 @@ import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.rap.rwt.RWT;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.custom.StackLayout;
 import org.eclipse.swt.events.ModifyEvent;
@@ -49,6 +54,7 @@ import org.jgrasstools.gears.io.geopaparazzi.geopap4.TableDescriptions.MetadataT
 import org.jgrasstools.gears.io.geopaparazzi.geopap4.TimeUtilities;
 
 import eu.hydrologis.rap.stage.utils.ImageCache;
+import eu.hydrologis.rap.stage.utilsrap.ImageUtil;
 import eu.hydrologis.rap.stage.workspace.StageWorkspace;
 import eu.hydrologis.rap.stage.workspace.User;
 
@@ -71,7 +77,6 @@ public class StageGeopaparazziView {
     private static final String PROJECTS = "Projects";
 
     private Composite projectViewComposite;
-    private StackLayout projectViewStackLayout;
     private TreeViewer modulesViewer;
 
     private String filterTextString;
@@ -81,6 +86,7 @@ public class StageGeopaparazziView {
     private static boolean hasDriver = false;
     private List<ProjectInfo> projectInfos;
     private ProjectInfo currentSelectedProject;
+    private Browser infoBrowser;
 
     static {
         try {
@@ -139,14 +145,13 @@ public class StageGeopaparazziView {
         parametersTabsGroup.setText(PARAMETERS);
 
         projectViewComposite = new Composite(parametersTabsGroup, SWT.BORDER);
-        projectViewStackLayout = new StackLayout();
-        projectViewStackLayout.marginWidth = 15;
-        projectViewStackLayout.marginHeight = 15;
-        projectViewComposite.setLayout(projectViewStackLayout);
+        projectViewComposite.setLayout(new GridLayout(1, false));
         projectViewComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
-        Label noProjectLabel = getNoProjectLabel();
-        projectViewStackLayout.topControl = noProjectLabel;
+        infoBrowser = new Browser(projectViewComposite, SWT.NONE);
+        infoBrowser.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+
+        setNoProjectLabel();
 
         mainComposite.setWeights(new int[]{1, 2});
         try {
@@ -201,12 +206,14 @@ public class StageGeopaparazziView {
         }
     }
 
-    private Label getNoProjectLabel() {
-        Label noModuleLabel = new Label(projectViewComposite, SWT.NONE);
-        noModuleLabel.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, true));
-        noModuleLabel.setData(RWT.MARKUP_ENABLED, Boolean.TRUE);
-        noModuleLabel.setText("<span style='font:bold 26px Arial;'>" + NO_MODULE_SELECTED + "</span>");
-        return noModuleLabel;
+    private void setNoProjectLabel() {
+        infoBrowser.setText("<h1>No project selected</h1>");
+        // Label noModuleLabel = new Label(projectViewComposite, SWT.NONE);
+        // noModuleLabel.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, true));
+        // noModuleLabel.setData(RWT.MARKUP_ENABLED, Boolean.TRUE);
+        // noModuleLabel.setText("<span style='font:bold 26px Arial;'>" + NO_MODULE_SELECTED +
+        // "</span>");
+        // return noModuleLabel;
     }
 
     private void addTextFilter( Composite modulesComposite ) {
@@ -315,17 +322,22 @@ public class StageGeopaparazziView {
                 Object selectedItem = sel.getFirstElement();
                 if (selectedItem == null) {
                     // unselected, show empty panel
-                    putUnselected();
+                    setNoProjectLabel();
                     return;
                 }
 
                 if (selectedItem instanceof ProjectInfo) {
                     currentSelectedProject = (ProjectInfo) selectedItem;
-
+                    try {
+                        String projectTemplate = getProjectTemplate();
+                        infoBrowser.setText(projectTemplate);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                     // projectViewStackLayout.topControl = control;
                     // projectViewComposite.layout(true);
                 } else {
-                    putUnselected();
+                    setNoProjectLabel();
                 }
             }
 
@@ -364,13 +376,19 @@ public class StageGeopaparazziView {
         });
     }
 
-    /**
-     * Put the properties view to an label that defines no selection.
-     */
-    public void putUnselected() {
-        Label noModuleLabel = getNoProjectLabel();
-        projectViewStackLayout.topControl = noModuleLabel;
-        projectViewComposite.layout(true);
+    public static String getProjectTemplate() throws Exception {
+        ClassLoader classLoader = ImageUtil.class.getClassLoader();
+        InputStream inputStream = classLoader.getResourceAsStream("resources/project.html");
+        if (inputStream != null) {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while( (line = reader.readLine()) != null ) {
+                sb.append(line).append("\n");
+            }
+            return sb.toString();
+        }
+        return "";
     }
 
 }
