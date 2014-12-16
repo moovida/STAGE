@@ -9,12 +9,15 @@
  */
 package eu.hydrologis.rap.geopapbrowser;
 
+import static org.jgrasstools.gears.io.geopaparazzi.geopap4.TableDescriptions.TABLE_GPSLOGS;
+import static org.jgrasstools.gears.io.geopaparazzi.geopap4.TableDescriptions.TABLE_GPSLOG_PROPERTIES;
+import static org.jgrasstools.gears.io.geopaparazzi.geopap4.TableDescriptions.TABLE_GPSLOG_DATA;
 import static org.jgrasstools.gears.io.geopaparazzi.geopap4.TableDescriptions.TABLE_METADATA;
+import static org.jgrasstools.gears.io.geopaparazzi.geopap4.TableDescriptions.TABLE_NOTES;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FilenameFilter;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
@@ -37,7 +40,6 @@ import org.eclipse.rap.rwt.RWT;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.custom.SashForm;
-import org.eclipse.swt.custom.StackLayout;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.graphics.Image;
@@ -50,10 +52,13 @@ import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
+import org.jgrasstools.gears.io.geopaparazzi.geopap4.TableDescriptions.GpsLogsDataTableFields;
+import org.jgrasstools.gears.io.geopaparazzi.geopap4.TableDescriptions.GpsLogsPropertiesTableFields;
+import org.jgrasstools.gears.io.geopaparazzi.geopap4.TableDescriptions.GpsLogsTableFields;
 import org.jgrasstools.gears.io.geopaparazzi.geopap4.TableDescriptions.MetadataTableFields;
+import org.jgrasstools.gears.io.geopaparazzi.geopap4.TableDescriptions.NotesTableFields;
 import org.jgrasstools.gears.io.geopaparazzi.geopap4.TimeUtilities;
 
-import eu.hydrologis.rap.stage.utils.ImageCache;
 import eu.hydrologis.rap.stage.utilsrap.ImageUtil;
 import eu.hydrologis.rap.stage.workspace.StageWorkspace;
 import eu.hydrologis.rap.stage.workspace.User;
@@ -168,6 +173,7 @@ public class StageGeopaparazziView {
             try (Connection connection = DriverManager.getConnection("jdbc:sqlite:" + geopapDatabaseFile.getAbsolutePath())) {
                 String projectInfo = getProjectInfo(connection);
                 ProjectInfo info = new ProjectInfo();
+                info.databaseFile = geopapDatabaseFile;
                 info.fileName = geopapDatabaseFile.getName();
                 info.metadata = projectInfo;
                 infoList.add(info);
@@ -330,6 +336,10 @@ public class StageGeopaparazziView {
                     currentSelectedProject = (ProjectInfo) selectedItem;
                     try {
                         String projectTemplate = getProjectTemplate();
+
+                        // substitute the notes info
+                        projectTemplate = setData(projectTemplate, currentSelectedProject.databaseFile);
+
                         infoBrowser.setText(projectTemplate);
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -346,6 +356,145 @@ public class StageGeopaparazziView {
         return modulesViewer;
     }
 
+    /**
+     * Extract data from the db and add them to the map view.
+     * 
+     * @param projectTemplate
+     * @return
+     * @throws Exception 
+     */
+    private String setData( String projectTemplate, File dbFile ) throws Exception {
+        try (Connection connection = DriverManager.getConnection("jdbc:sqlite:" + dbFile.getAbsolutePath())) {
+
+            // NOTES
+
+            List<String[]> noteDataList = getNotesText(connection);
+            StringBuilder sb = new StringBuilder();
+            int index = 0;
+            for( String[] noteData : noteDataList ) {
+                // [lon, lat, altim, dateTimeString, text, descr]
+                String lon = noteData[0];
+                String lat = noteData[1];
+                String altim = noteData[2];
+                String date = noteData[3];
+                String text = noteData[4];
+                String descr = noteData[5];
+
+                if (index == 0) {
+                    sb.append("var firstLL = L.latLng(" + lat + ", " + lon + ");\n");
+                    sb.append("var fixBounds = L.latLngBounds(firstLL, firstLL);\n");
+                } else {
+                    sb.append("fixBounds = fixBounds.extend(L.latLng(" + lat + ", " + lon + "));\n");
+                }
+                index++;
+
+                String note = "L.marker([" + lat + ", " + lon //
+                        + "]).addTo(map).bindPopup(\"" //
+                        + "<b>Text:</b> " + text + "<br/>" //
+                        + "<b>Descr:</b> " + descr + "<br/>" //
+                        + "<b>Timestamp:</b> " + date + "<br/>" //
+                        + "<b>Altim:</b> " + altim + "<br/>" //
+                        + "\");";
+                sb.append(note).append("\n");
+            }
+
+            projectTemplate = projectTemplate.replaceFirst("//MARKERS", sb.toString());
+
+            // TRACKS
+            StringBuilder sbLogs = new StringBuilder();
+            // [51.509, -0.08],
+            // [51.503, -0.06],
+            // [51.51, -0.047]
+            try (Statement statement = connection.createStatement()) {
+                statement.setQueryTimeout(30); // set timeout to 30 sec.
+
+                String sql = "select " + //
+                        GpsLogsTableFields.COLUMN_ID.getFieldName() + "," + //
+                        GpsLogsTableFields.COLUMN_LOG_STARTTS.getFieldName() + "," + //
+                        GpsLogsTableFields.COLUMN_LOG_ENDTS.getFieldName() + "," + //
+                        GpsLogsTableFields.COLUMN_LOG_TEXT.getFieldName() + //
+                        " from " + TABLE_GPSLOGS; //
+
+                // first get the logs
+                ResultSet rs = statement.executeQuery(sql);
+                int lineIndex = 0;
+                while( rs.next() ) {
+                    long id = rs.getLong(1);
+
+                    long startDateTime = rs.getLong(2);
+                    String startDateTimeString = TimeUtilities.INSTANCE.TIME_FORMATTER_LOCAL.format(new Date(startDateTime));
+                    long endDateTime = rs.getLong(3);
+                    String endDateTimeString = TimeUtilities.INSTANCE.TIME_FORMATTER_LOCAL.format(new Date(endDateTime));
+                    String text = rs.getString(4);
+
+                    sbLogs.append("var polyline" + lineIndex + " = L.polyline([\n");
+
+                    // points
+                    String query = "select " //
+                            + GpsLogsDataTableFields.COLUMN_DATA_LAT.getFieldName()
+                            + ","
+                            + GpsLogsDataTableFields.COLUMN_DATA_LON.getFieldName()
+                            + ","
+                            + GpsLogsDataTableFields.COLUMN_DATA_TS.getFieldName()//
+                            + " from " + TABLE_GPSLOG_DATA + " where "
+                            + //
+                            GpsLogsDataTableFields.COLUMN_LOGID.getFieldName() + " = " + id
+                            + " order by "
+                            + GpsLogsDataTableFields.COLUMN_DATA_TS.getFieldName();
+
+                    try (Statement newStatement = connection.createStatement()) {
+                        newStatement.setQueryTimeout(30);
+                        ResultSet result = newStatement.executeQuery(query);
+
+                        while( result.next() ) {
+                            double lat = result.getDouble(1);
+                            double lon = result.getDouble(2);
+                            sbLogs.append("[" + lat + ", " + lon + "],\n");
+                        }
+                    }
+
+                    sbLogs.append("], {color: '");
+                    // color
+                    String colorQuery = "select " //
+                            + GpsLogsPropertiesTableFields.COLUMN_PROPERTIES_COLOR.getFieldName()
+                            + " from "
+                            + TABLE_GPSLOG_PROPERTIES + " where " + //
+                            GpsLogsPropertiesTableFields.COLUMN_LOGID.getFieldName() + " = " + id;
+
+                    String color = "red";
+                    try (Statement newStatement = connection.createStatement()) {
+                        newStatement.setQueryTimeout(30);
+                        ResultSet result = newStatement.executeQuery(colorQuery);
+
+                        if (result.next()) {
+                            color = result.getString(1);
+                        }
+                        if (color == null || color.length() == 0) {
+                            color = "red";
+                        }
+                    }
+
+                    sbLogs.append(color + "'}).addTo(map);\n");
+                    sbLogs.append("polyline" + lineIndex + ".bindPopup(\"" //
+                            + "<b>Name:</b> " + text + "<br/>" //
+                            + "<b>Start</b>: " + startDateTimeString + "<br/>" //
+                            + "<b>End</b>: " + endDateTimeString + "<br/>" //
+                            + "\");\n");
+//                    + "\").openPopup();\n");
+
+                    
+                    sbLogs.append("if(!fixBounds){ fixBounds = polyline" + lineIndex + ".getBounds();}\n");
+                    sbLogs.append("fixBounds = fixBounds.extend(polyline" + lineIndex + ".getBounds());\n");
+                    lineIndex++;
+                }
+
+            }
+
+            projectTemplate = projectTemplate.replaceFirst("//LOGS", sbLogs.toString());
+
+        }
+        return projectTemplate;
+    }
     /**
      * Resfresh the viewer.
      * 
@@ -389,6 +538,62 @@ public class StageGeopaparazziView {
             return sb.toString();
         }
         return "";
+    }
+
+    /**
+     * @param connection
+     * @return the list of [lon, lat, altim, dateTimeString, text, descr]
+     * @throws Exception
+     */
+    public static List<String[]> getNotesText( Connection connection ) throws Exception {
+        String textFN = NotesTableFields.COLUMN_TEXT.getFieldName();
+        String descFN = NotesTableFields.COLUMN_DESCRIPTION.getFieldName();
+        String tsFN = NotesTableFields.COLUMN_TS.getFieldName();
+        String altimFN = NotesTableFields.COLUMN_ALTIM.getFieldName();
+        String latFN = NotesTableFields.COLUMN_LAT.getFieldName();
+        String lonFN = NotesTableFields.COLUMN_LON.getFieldName();
+
+        String sql = "select " + //
+                latFN + "," + //
+                lonFN + "," + //
+                altimFN + "," + //
+                tsFN + "," + //
+                textFN + "," + //
+                descFN + " from " + //
+                TABLE_NOTES;
+
+        List<String[]> notesDescriptionList = new ArrayList<>();
+        try (Statement statement = connection.createStatement()) {
+            statement.setQueryTimeout(30); // set timeout to 30 sec.
+            ResultSet rs = statement.executeQuery(sql);
+            while( rs.next() ) {
+                double lat = rs.getDouble(latFN);
+                double lon = rs.getDouble(lonFN);
+                double altim = rs.getDouble(altimFN);
+                long ts = rs.getLong(tsFN);
+                String dateTimeString = TimeUtilities.INSTANCE.TIME_FORMATTER_LOCAL.format(new Date(ts));
+                String text = rs.getString(textFN);
+                String descr = rs.getString(descFN);
+                if (descr == null)
+                    descr = "";
+
+                if (lat == 0 || lon == 0) {
+                    continue;
+                }
+
+                notesDescriptionList.add(new String[]{//
+                        String.valueOf(lon),//
+                                String.valueOf(lat),//
+                                String.valueOf(altim),//
+                                dateTimeString,//
+                                text,//
+                                descr//
+                        });
+
+            }
+
+        }
+        return notesDescriptionList;
     }
 
 }
