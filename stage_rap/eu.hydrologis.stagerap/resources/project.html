@@ -12,10 +12,30 @@
     <script type='text/javascript' src='http://cdn.leafletjs.com/leaflet-0.7.2/leaflet.js?2'></script>
 </head>
 <body>
-	<div id="map" style="width: 1024px; height: 800px"></div>
+	<H1>PROJECTTITLE</H1>
+	<p>PROJECTMETADATA</p>
+
+	<div id="map" style="width: 800px; height: 600px"></div>
+	
+	<div id="images">
+		IMAGETABLE
+	</div>
 
 	<script>
 		var map = L.map('map').setView([0.0, 0.0], 10);
+		
+		var infoIcon = L.icon({
+		    iconUrl: 'http://maps.google.com/mapfiles/kml/pal4/icon29.png',
+		    iconSize:     [32, 32], 
+		    iconAnchor:   [16, 16], 
+		    popupAnchor:  [0, -16] 
+		});
+		var photoIcon = L.icon({
+		    iconUrl: 'http://maps.google.com/mapfiles/kml/pal4/icon38.png',
+		    iconSize:     [32, 32],
+		    iconAnchor:   [16, 16], 
+		    popupAnchor:  [0, -16] 
+		});
 
 		var mapbox = L.tileLayer('https://{s}.tiles.mapbox.com/v3/{id}/{z}/{x}/{y}.png', {
 			maxZoom: 19,
@@ -65,7 +85,7 @@
 		function onMapClick(e) {
 			popup
 				.setLatLng(e.latlng)
-				.setContent("You clicked at: <br/>longitude = " + e.latlng.lng + "<br/>langitude = " + e.latlng.lat)
+				.setContent("You clicked at: <br/>longitude = " + e.latlng.lng + "<br/>latitude = " + e.latlng.lat)
 				.openOn(map);
 		}
 
