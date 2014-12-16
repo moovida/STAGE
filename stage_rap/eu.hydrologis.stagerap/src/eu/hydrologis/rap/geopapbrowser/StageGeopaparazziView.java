@@ -31,6 +31,8 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -44,6 +46,9 @@ import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.rap.rwt.RWT;
+import org.eclipse.rap.rwt.client.service.BrowserNavigation;
+import org.eclipse.rap.rwt.client.service.BrowserNavigationEvent;
+import org.eclipse.rap.rwt.client.service.BrowserNavigationListener;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.custom.SashForm;
@@ -57,6 +62,7 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.TabItem;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
 import org.jgrasstools.gears.io.geopaparazzi.geopap4.DaoImages;
@@ -130,6 +136,15 @@ public class StageGeopaparazziView {
             // TODO
         }
 
+        BrowserNavigation service = RWT.getClient().getService(BrowserNavigation.class);
+        service.addBrowserNavigationListener(new BrowserNavigationListener(){
+            @Override
+            public void navigated( BrowserNavigationEvent event ) {
+                String state = event.getState();
+                System.out.println();
+            }
+        });
+
         File geopaparazziFolder = StageWorkspace.getInstance().getGeopaparazziFolder(User.getCurrentUserName());
         File[] projectFiles = geopaparazziFolder.listFiles(new FilenameFilter(){
             @Override
@@ -137,6 +152,8 @@ public class StageGeopaparazziView {
                 return name.endsWith(".gpap");
             }
         });
+        Arrays.sort(projectFiles, Collections.reverseOrder());
+
         projectInfos = readProjectInfos(projectFiles);
 
         SashForm mainComposite = new SashForm(parent, SWT.HORIZONTAL);
@@ -252,7 +269,7 @@ public class StageGeopaparazziView {
         filterLabel.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
         filterLabel.setText("Filter");
 
-        final Text filterText = new Text(modulesComposite, SWT.SINGLE | SWT.LEAD | SWT.BORDER);
+        final Text filterText = new Text(modulesComposite, SWT.SINGLE | SWT.LEAD | SWT.BORDER | SWT.ICON_SEARCH | SWT.ICON_CANCEL);
         filterText.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
         filterText.addModifyListener(new ModifyListener(){
             private static final long serialVersionUID = 1L;
@@ -263,7 +280,7 @@ public class StageGeopaparazziView {
                     if (filterTextString == null || filterTextString.length() == 0) {
                         relayout(false, null);
                     } else {
-                        relayout(true, filterTextString);
+                        relayout(false, filterTextString);
                     }
                 } catch (InvocationTargetException | InterruptedException e) {
                     e.printStackTrace();
@@ -470,6 +487,19 @@ public class StageGeopaparazziView {
                         + "<b>Altim:</b> " + altim + "<br/>" //
                         + "\");";
                 sb.append(note).append("\n");
+            }
+
+            for( org.jgrasstools.gears.io.geopaparazzi.geopap4.Image image : currentSelectedProject.images ) {
+                String dateTimeString = TimeUtilities.INSTANCE.TIME_FORMATTER_LOCAL.format(new Date(image.getTs()));
+
+                String pic = "L.marker([" + image.getLat() + ", " + image.getLon() //
+                        + "], {icon: photoIcon}).addTo(map).bindPopup(\"" //
+                        + "<b>Image:</b> " + image.getName() + "<br/>" //
+                        + "<b>Timestamp:</b> " + dateTimeString + "<br/>" //
+                        + "<b>Azimuth:</b> " + (int) image.getAzim() + " deg<br/>" //
+                        + "<b>Altim:</b> " + (int) image.getAltim() + " m<br/>" //
+                        + "\");";
+                sb.append(pic).append("\n");
             }
 
             projectTemplate = projectTemplate.replaceFirst("//MARKERS", sb.toString());
@@ -715,6 +745,7 @@ public class StageGeopaparazziView {
             RWT.getUISession().setAttribute(IMAGE_KEY, bufferedImage);
             // create the HTML with a single <img> tag.
             browser.setText(createHtml(IMAGE_KEY));
+            newImageFile.delete();
         }
     }
 
