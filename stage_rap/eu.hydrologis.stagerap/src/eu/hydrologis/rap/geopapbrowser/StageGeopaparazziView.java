@@ -721,10 +721,17 @@ public class StageGeopaparazziView {
     private BufferedImage createImage( File imageFile ) throws Exception {
         BufferedImage image = ImageIO.read(imageFile);
 
-        int width = 800;
         int imageWidth = image.getWidth();
         int imageHeight = image.getHeight();
-        int height = imageHeight * width / imageWidth;
+        int width;
+        int height;
+        if (imageWidth > imageHeight) {
+            width = 800;
+            height = imageHeight * width / imageWidth;
+        } else {
+            height = 800;
+            width = height * imageWidth / imageHeight;
+        }
 
         BufferedImage resizedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
         Graphics2D g = resizedImage.createGraphics();
