@@ -19,10 +19,12 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import eu.hydrologis.rap.stage.utils.StageUtils;
+import eu.hydrologis.rap.stage.workspace.LoginChecker;
 import eu.hydrologis.rap.stage.workspace.StageWorkspaceUtilities;
 
 /**
- * The geopaparazzi projects download servlet.
+ * The geopaparazzi projects list download servlet.
  * 
  * @author Andrea Antonello (www.hydrologis.com)
  *
@@ -40,63 +42,43 @@ public class QueryGeopaparazziProjectsServlet extends HttpServlet {
 
     protected void doGet( HttpServletRequest req, HttpServletResponse resp ) throws ServletException, IOException {
         resp.setContentType("application/json");
-        PrintWriter out = resp.getWriter();
-        // UISession session = RWT.getUISession();
-        //
-        // session.exec(new Runnable(){
-        // public void run() {
-        //
-        // }
-        // });
 
-        Object user = req.getAttribute("user");
-        Object pwd = req.getAttribute("password");
-        String userString = null;
-        if (user != null) {
-            userString = user.toString();
-        }
-        if (user == null) {
-            userString = "testuser";
-            // throw new ServletException("Error on user!");
+        String authHeader = req.getHeader("Authorization");
+        PrintWriter out = resp.getWriter();
+
+        String[] userPwd = StageUtils.getUserPwdWithBasicAuthentication(authHeader);
+        if (userPwd == null || !LoginChecker.isLoginOk(userPwd[0], userPwd[1])) {
+            out.print("<b>No permission!</b>");
+            out.flush();
+            return;
         }
 
         try {
-            File[] geopaparazziProjectFiles = StageWorkspaceUtilities.getGeopaparazziProjectFiles(userString);
-            List<HashMap<String, String>> projectMetadata = StageWorkspaceUtilities.readProjectMetadata(geopaparazziProjectFiles);
+            File[] geopaparazziProjectFiles = StageWorkspaceUtilities.getGeopaparazziProjectFiles(userPwd[0]);
+            List<HashMap<String, String>> projectMetadataList = StageWorkspaceUtilities
+                    .readProjectMetadata(geopaparazziProjectFiles);
 
             StringBuilder sb = new StringBuilder();
-            sb.append("[");
-            sb.append("    {");
-            sb.append("        \"status\": \"1\",");
-            sb.append("        \"error\": {");
-            sb.append("            \"errcode\": \"0\",");
-            sb.append("            \"errortype\": \"http... sys...\",");
-            sb.append("            \"errmsg\": \"\",");
-            sb.append("            \"errdata\": []");
-            sb.append("        }");
-            sb.append("    },");
-            sb.append("    {");
-            sb.append("        \"projects\": [");
+            sb.append("{");
+            sb.append("\"projects\": [");
 
-            for( int i = 0; i < projectMetadata.size(); i++ ) {
-                HashMap<String, String> metadataMap = projectMetadata.get(i);
+            for( int i = 0; i < projectMetadataList.size(); i++ ) {
+                HashMap<String, String> metadataMap = projectMetadataList.get(i);
                 long fileSize = geopaparazziProjectFiles[i].length();
                 if (i > 0)
                     sb.append(",");
-                sb.append("            {");
-                sb.append("                \"id\": \"" + metadataMap.get("creationts") + "\",");
-                sb.append("                \"title\": \"" + metadataMap.get("name") + "\",");
-                sb.append("                \"date\": \"" + metadataMap.get("creationts") + "\",");
-                sb.append("                \"author\": \"" + metadataMap.get("creationuser") + "\",");
-                sb.append("                \"name\": \"" + metadataMap.get("name") + "\",");
-                sb.append("                \"size\": \"" + fileSize + "\"");
-                sb.append("            }");
+                sb.append("{");
+                sb.append("    \"id\": \"" + geopaparazziProjectFiles[i].getName() + "\",");
+                sb.append("    \"title\": \"" + metadataMap.get("description") + "\",");
+                sb.append("    \"date\": \"" + metadataMap.get("creationts") + "\",");
+                sb.append("    \"author\": \"" + metadataMap.get("creationuser") + "\",");
+                sb.append("    \"name\": \"" + metadataMap.get("name") + "\",");
+                sb.append("    \"size\": \"" + fileSize + "\"");
+                sb.append("}");
             }
 
-            sb.append("        ]");
-            sb.append("    }");
             sb.append("]");
-            sb.append("");
+            sb.append("}");
 
             out.print(sb.toString());
             out.flush();

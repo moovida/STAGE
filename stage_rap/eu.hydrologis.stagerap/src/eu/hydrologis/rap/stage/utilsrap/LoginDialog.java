@@ -25,6 +25,7 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
+import eu.hydrologis.rap.stage.workspace.LoginChecker;
 import eu.hydrologis.rap.stage.workspace.StageWorkspace;
 import eu.hydrologis.rap.stage.workspace.User;
 
@@ -133,7 +134,6 @@ public class LoginDialog extends Dialog {
      * @return the {@link User} or <code>null</code>.
      */
     public static boolean checkUserLogin( Shell shell ) {
-        String user = "testuser";
         HttpSession httpSession = RWT.getUISession().getHttpSession();
         Object attribute = httpSession.getAttribute(SESSION_USER_KEY);
         if (attribute instanceof String) {
@@ -141,12 +141,12 @@ public class LoginDialog extends Dialog {
         } else {
             String message = LOGINMESSAGE;
             final LoginDialog loginDialog = new LoginDialog(shell, LOGIN, message);
-            loginDialog.setUsername(user);
+            loginDialog.setUsername(LoginChecker.TESTUSER);
             int returnCode = loginDialog.open();
             if (returnCode == Window.OK) {
                 String username = loginDialog.getUsername();
                 String password = loginDialog.getPassword();
-                if (username != null && password != null && username.equals(user) && password.equals("t")) {
+                if (LoginChecker.isLoginOk(username, password)) {
                     httpSession.setAttribute(SESSION_USER_KEY, username);
 
                     StageWorkspace.getInstance().getDataFolder(username);

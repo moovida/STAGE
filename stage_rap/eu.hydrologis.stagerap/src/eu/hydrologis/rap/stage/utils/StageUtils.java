@@ -12,8 +12,12 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.util.Collection;
+import java.util.StringTokenizer;
+
+import org.geotools.data.Base64;
 
 import oms3.Access;
 import oms3.ComponentAccess;
@@ -386,5 +390,34 @@ public class StageUtils {
             }
         }
         return out.toString();
+    }
+
+    public static String[] getUserPwdWithBasicAuthentication( String authHeader ) {
+        if (authHeader != null) {
+            StringTokenizer st = new StringTokenizer(authHeader);
+            if (st.hasMoreTokens()) {
+                String basic = st.nextToken();
+
+                if (basic.equalsIgnoreCase("Basic")) {
+                    String credentials;
+                    try {
+                        credentials = new String(Base64.decode(st.nextToken()), "UTF-8");
+                    } catch (UnsupportedEncodingException e) {
+                        e.printStackTrace();
+                        return null;
+                    }
+                    int p = credentials.indexOf(":");
+                    if (p != -1) {
+                        String login = credentials.substring(0, p).trim();
+                        String password = credentials.substring(p + 1).trim();
+
+                        return new String[]{login, password};
+                    } else {
+                        return null;
+                    }
+                }
+            }
+        }
+        return null;
     }
 }

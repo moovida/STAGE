@@ -34,7 +34,7 @@ public class DownloadUtils {
 		return true;
 	}
 
-	private static final class DownloadService implements ServiceHandler {
+	public static final class DownloadService implements ServiceHandler {
 
 		private final byte[] data;
 		private final String filename;
