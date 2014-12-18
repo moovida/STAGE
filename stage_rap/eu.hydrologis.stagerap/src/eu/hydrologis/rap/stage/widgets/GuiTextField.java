@@ -432,7 +432,7 @@ public class GuiTextField extends ModuleGuiElement implements ModifyListener, Fo
         // text.setText(textStr);
         // text.addModifyListener(this);
         // }
-        if (isFileOrFolder) {
+        if (isFileOrFolder && tmpTextStr.length() > 0) {
             File file = StageWorkspace.makeRelativeDataPathToFile(tmpTextStr);
             data.fieldValue = file.getAbsolutePath();
         } else {
