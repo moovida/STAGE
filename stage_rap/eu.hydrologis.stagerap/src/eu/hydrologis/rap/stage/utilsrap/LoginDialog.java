@@ -151,6 +151,7 @@ public class LoginDialog extends Dialog {
 
                     StageWorkspace.getInstance().getDataFolder(username);
                     StageWorkspace.getInstance().getScriptsFolder(username);
+                    StageWorkspace.getInstance().getGeopaparazziFolder(username);
                     return true;
                 }
             }

@@ -1,11 +1,10 @@
 /*
- * JGrass - Free Open Source Java GIS http://www.jgrass.org 
+ * Stage - Spatial Toolbox And Geoscript Environment 
  * (C) HydroloGIS - www.hydrologis.com 
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
- * (http://www.eclipse.org/legal/epl-v10.html), and the HydroloGIS BSD
- * License v1.0 (http://udig.refractions.net/files/hsd3-v10.html).
+ * (http://www.eclipse.org/legal/epl-v10.html).
  */
 package eu.hydrologis.rap.geopapbrowser;
 
@@ -15,16 +14,12 @@ import static org.jgrasstools.gears.io.geopaparazzi.geopap4.TableDescriptions.TA
 import static org.jgrasstools.gears.io.geopaparazzi.geopap4.TableDescriptions.TABLE_METADATA;
 import static org.jgrasstools.gears.io.geopaparazzi.geopap4.TableDescriptions.TABLE_NOTES;
 
-import java.awt.Graphics2D;
-import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -36,8 +31,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-import javax.imageio.ImageIO;
-
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITreeContentProvider;
@@ -46,11 +39,9 @@ import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.rap.rwt.RWT;
-import org.eclipse.rap.rwt.client.service.BrowserNavigation;
-import org.eclipse.rap.rwt.client.service.BrowserNavigationEvent;
-import org.eclipse.rap.rwt.client.service.BrowserNavigationListener;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.browser.Browser;
+import org.eclipse.swt.browser.BrowserFunction;
 import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
@@ -62,7 +53,6 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.TabItem;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
 import org.jgrasstools.gears.io.geopaparazzi.geopap4.DaoImages;
@@ -73,9 +63,11 @@ import org.jgrasstools.gears.io.geopaparazzi.geopap4.TableDescriptions.MetadataT
 import org.jgrasstools.gears.io.geopaparazzi.geopap4.TableDescriptions.NotesTableFields;
 import org.jgrasstools.gears.io.geopaparazzi.geopap4.TimeUtilities;
 
+import eu.hydrologis.rap.geopapbrowser.functions.OpenImageFunction;
 import eu.hydrologis.rap.stage.ui.ImageServiceHandler;
 import eu.hydrologis.rap.stage.utils.FileUtilities;
 import eu.hydrologis.rap.stage.utils.ImageCache;
+import eu.hydrologis.rap.stage.utils.ImageUtils;
 import eu.hydrologis.rap.stage.utilsrap.ImageUtil;
 import eu.hydrologis.rap.stage.workspace.StageWorkspace;
 import eu.hydrologis.rap.stage.workspace.User;
@@ -112,6 +104,7 @@ public class StageGeopaparazziView {
     private List<ProjectInfo> projectInfos;
     private ProjectInfo currentSelectedProject;
     private Browser infoBrowser;
+    private boolean CACHE_HTML_TO_FILE;
 
     static {
         try {
@@ -136,14 +129,14 @@ public class StageGeopaparazziView {
             // TODO
         }
 
-        BrowserNavigation service = RWT.getClient().getService(BrowserNavigation.class);
-        service.addBrowserNavigationListener(new BrowserNavigationListener(){
-            @Override
-            public void navigated( BrowserNavigationEvent event ) {
-                String state = event.getState();
-                System.out.println();
-            }
-        });
+//        BrowserNavigation service = RWT.getClient().getService(BrowserNavigation.class);
+//        service.addBrowserNavigationListener(new BrowserNavigationListener(){
+//            @Override
+//            public void navigated( BrowserNavigationEvent event ) {
+//                String state = event.getState();
+//                System.out.println();
+//            }
+//        });
 
         File geopaparazziFolder = StageWorkspace.getInstance().getGeopaparazziFolder(User.getCurrentUserName());
         File[] projectFiles = geopaparazziFolder.listFiles(new FilenameFilter(){
@@ -371,6 +364,7 @@ public class StageGeopaparazziView {
 
         modulesViewer.addSelectionChangedListener(new ISelectionChangedListener(){
 
+            @SuppressWarnings("serial")
             public void selectionChanged( SelectionChangedEvent event ) {
                 if (!(event.getSelection() instanceof IStructuredSelection)) {
                     return;
@@ -390,11 +384,34 @@ public class StageGeopaparazziView {
                         String projectTemplate = getProjectTemplate();
 
                         // substitute the notes info
-                        String projectHtmlFile = setData(projectTemplate, currentSelectedProject);
-
-                        String html = FileUtilities.readFile(projectHtmlFile);
+                        String projectHtml = setData(projectTemplate, currentSelectedProject);
+                        if (CACHE_HTML_TO_FILE) {
+                            projectHtml = FileUtilities.readFile(projectHtml);
+                        }
                         // infoBrowser.setUrl("file:" + projectHtmlFile);
-                        infoBrowser.setText(html);
+                        infoBrowser.setText(projectHtml);
+
+                        if (projectHtml.contains("openGpImage")) {
+                            final BrowserFunction openImageFunction = new OpenImageFunction(infoBrowser, "openGpImage",
+                                    currentSelectedProject.databaseFile);
+//                            infoBrowser.addProgressListener(new ProgressListener(){
+//                                @Override
+//                                public void completed( ProgressEvent event ) {
+//                                    infoBrowser.addLocationListener(new LocationAdapter(){
+//                                        @Override
+//                                        public void changed( LocationEvent event ) {
+//                                            infoBrowser.removeLocationListener(this);
+//                                            System.out.println("left java function-aware page, so disposed CustomFunction");
+//                                            openImageFunction.dispose();
+//                                        }
+//                                    });
+//                                }
+//                                @Override
+//                                public void changed( ProgressEvent event ) {
+//                                }
+//                            });
+                        }
+
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -412,7 +429,8 @@ public class StageGeopaparazziView {
                     }
 
                     try {
-                        setImage(infoBrowser, selectedImage, currentSelectedProject.databaseFile);
+                        ImageUtils.setImageInBrowser(infoBrowser, selectedImage.getId(), selectedImage.getName(),
+                                currentSelectedProject.databaseFile, IMAGE_KEY, SERVICE_HANDLER);
                     } catch (Exception e) {
                         e.printStackTrace();
                         setNoProjectLabel();
@@ -438,14 +456,18 @@ public class StageGeopaparazziView {
         File dbFile = currentSelectedProject.databaseFile;
         File parentFile = dbFile.getParentFile();
         String name = dbFile.getName();
-        String folderName = name.replaceFirst("\\.gpap", "");
-        File projectFolderFile = new File(parentFile, folderName);
-        File projectFile = new File(projectFolderFile, "project.html");
-        if (projectFolderFile.exists()) {
-            return projectFile.getAbsolutePath();
-        } else {
-            if (!projectFolderFile.mkdirs()) {
-                throw new IOException("Unable to create the project data folder.");
+
+        File projectFile = null;
+        if (CACHE_HTML_TO_FILE) {
+            String folderName = name.replaceFirst("\\.gpap", "");
+            File projectFolderFile = new File(parentFile, folderName);
+            projectFile = new File(projectFolderFile, "project.html");
+            if (projectFolderFile.exists()) {
+                return projectFile.getAbsolutePath();
+            } else {
+                if (!projectFolderFile.mkdirs()) {
+                    throw new IOException("Unable to create the project data folder.");
+                }
             }
         }
 
@@ -461,6 +483,7 @@ public class StageGeopaparazziView {
 
             List<String[]> noteDataList = getNotesText(connection);
             StringBuilder sb = new StringBuilder();
+            sb.append("\n\n// GP NOTES\n");
             int index = 0;
             for( String[] noteData : noteDataList ) {
                 // [lon, lat, altim, dateTimeString, text, descr]
@@ -471,35 +494,42 @@ public class StageGeopaparazziView {
                 String text = noteData[4];
                 String descr = noteData[5];
 
+                sb.append("var ll" + index + " = L.latLng(" + lat + ", " + lon + ");\n");
                 if (index == 0) {
-                    sb.append("var firstLL = L.latLng(" + lat + ", " + lon + ");\n");
-                    sb.append("var fixBounds = L.latLngBounds(firstLL, firstLL);\n");
+                    sb.append("fixBounds = L.latLngBounds(ll" + index + ", ll" + index + ");\n");
                 } else {
-                    sb.append("fixBounds = fixBounds.extend(L.latLng(" + lat + ", " + lon + "));\n");
+                    sb.append("fixBounds = fixBounds.extend(ll" + index + ");\n");
                 }
-                index++;
 
-                String note = "L.marker([" + lat + ", " + lon //
-                        + "], {icon: infoIcon}).addTo(map).bindPopup(\"" //
+                String note = "L.marker(ll" + index //
+                        + ", {icon: infoIcon}).addTo(map).bindPopup(\"" //
                         + "<b>Text:</b> " + text + "<br/>" //
                         + "<b>Descr:</b> " + descr + "<br/>" //
                         + "<b>Timestamp:</b> " + date + "<br/>" //
                         + "<b>Altim:</b> " + altim + "<br/>" //
                         + "\");";
                 sb.append(note).append("\n");
+                index++;
             }
 
+            /*
+             * IMAGES
+             */
+            sb.append("\n\n// GP IMAGE NOTES\n");
             for( org.jgrasstools.gears.io.geopaparazzi.geopap4.Image image : currentSelectedProject.images ) {
-                String dateTimeString = TimeUtilities.INSTANCE.TIME_FORMATTER_LOCAL.format(new Date(image.getTs()));
-
-                String pic = "L.marker([" + image.getLat() + ", " + image.getLon() //
-                        + "], {icon: photoIcon}).addTo(map).bindPopup(\"" //
-                        + "<b>Image:</b> " + image.getName() + "<br/>" //
-                        + "<b>Timestamp:</b> " + dateTimeString + "<br/>" //
-                        + "<b>Azimuth:</b> " + (int) image.getAzim() + " deg<br/>" //
-                        + "<b>Altim:</b> " + (int) image.getAltim() + " m<br/>" //
-                        + "\");";
+                sb.append("var ll" + index + " = L.latLng(" + image.getLat() + ", " + image.getLon() + ");\n");
+                String pic = "var marker" + index + " =L.marker(ll" + index + ", {icon: photoIcon});";
                 sb.append(pic).append("\n");
+                String function = "marker" + index + ".on('click', function(e){\nopenGpImage(" + //
+                        image.getId() + ",'" + image.getName() + "')\n});";
+                sb.append(function).append("\n");
+                sb.append("marker" + index + ".addTo(map);").append("\n");
+                if (index == 0) {
+                    sb.append("fixBounds = L.latLngBounds(ll" + index + ", ll" + index + ");\n");
+                } else {
+                    sb.append("fixBounds = fixBounds.extend(ll" + index + ");\n");
+                }
+                index++;
             }
 
             projectTemplate = projectTemplate.replaceFirst("//MARKERS", sb.toString());
@@ -627,8 +657,12 @@ public class StageGeopaparazziView {
 
         }
 
-        FileUtilities.writeFile(projectTemplate, projectFile);
-        return projectFile.getAbsolutePath();
+        if (CACHE_HTML_TO_FILE) {
+            FileUtilities.writeFile(projectTemplate, projectFile);
+            return projectFile.getAbsolutePath();
+        } else {
+            return projectTemplate;
+        }
     }
     /**
      * Resfresh the viewer.
@@ -729,65 +763,6 @@ public class StageGeopaparazziView {
 
         }
         return notesDescriptionList;
-    }
-
-    private void setImage( Browser browser, org.jgrasstools.gears.io.geopaparazzi.geopap4.Image image, File dbFile )
-            throws Exception {
-        try (Connection connection = DriverManager.getConnection("jdbc:sqlite:" + dbFile.getAbsolutePath())) {
-            File newImageFile = File.createTempFile("stage" + new Date().getTime(), image.getName());
-            byte[] imageData = DaoImages.getImageData(connection, image.getImageDataId());
-            try (OutputStream outStream = new FileOutputStream(newImageFile)) {
-                outStream.write(imageData);
-            }
-
-            BufferedImage bufferedImage = createImage(newImageFile);
-            // store the image in the UISession for the service handler
-            RWT.getUISession().setAttribute(IMAGE_KEY, bufferedImage);
-            // create the HTML with a single <img> tag.
-            browser.setText(createHtml(IMAGE_KEY));
-            newImageFile.delete();
-        }
-    }
-
-    private BufferedImage createImage( File imageFile ) throws Exception {
-        BufferedImage image = ImageIO.read(imageFile);
-
-        int imageWidth = image.getWidth();
-        int imageHeight = image.getHeight();
-        int width;
-        int height;
-        if (imageWidth > imageHeight) {
-            width = 800;
-            height = imageHeight * width / imageWidth;
-        } else {
-            height = 800;
-            width = height * imageWidth / imageHeight;
-        }
-
-        BufferedImage resizedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-        Graphics2D g = resizedImage.createGraphics();
-        g.drawImage(image, 0, 0, width, height, null);
-        g.dispose();
-
-        return resizedImage;
-    }
-
-    private String createHtml( String key ) {
-        StringBuffer html = new StringBuffer();
-        html.append("<img src=\"");
-        html.append(createImageUrl(key));
-        html.append("\"/>");
-        return html.toString();
-    }
-
-    private String createImageUrl( String key ) {
-        StringBuffer url = new StringBuffer();
-        url.append(RWT.getServiceManager().getServiceHandlerUrl(SERVICE_HANDLER));
-        url.append("&imageId=");
-        url.append(key);
-        url.append("&nocache=");
-        url.append(System.currentTimeMillis());
-        return url.toString();
     }
 
 }
