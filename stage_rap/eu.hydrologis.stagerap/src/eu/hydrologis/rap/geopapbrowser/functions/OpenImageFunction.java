@@ -33,16 +33,6 @@ public class OpenImageFunction extends BrowserFunction {
         ImageDialog imageDialog = new ImageDialog(browser.getShell(), "Image: " + imageName, databaseFile, id, imageName);
         imageDialog.open();
 
-        // String dateTimeString = TimeUtilities.INSTANCE.TIME_FORMATTER_LOCAL.format(new
-        // Date(image.getTs()));
-        // String pic = "L.marker([" + image.getLat() + ", " + image.getLon() //
-        // + "], {icon: photoIcon}).addTo(map).bindPopup(\"" //
-        // + "<b>Image:</b> " + image.getName() + "<br/>" //
-        // + "<b>Timestamp:</b> " + dateTimeString + "<br/>" //
-        // + "<b>Azimuth:</b> " + (int) image.getAzim() + " deg<br/>" //
-        // + "<b>Altim:</b> " + (int) image.getAltim() + " m<br/>" //
-        // + "\");";
-        // MessageDialog.openInformation(browser.getShell(), "Image", "Image shown" + imageId);
         return null;
     }
 }

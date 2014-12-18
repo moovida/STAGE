@@ -8,48 +8,24 @@
  */
 package eu.hydrologis.rap.stage;
 
-import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 
-import org.eclipse.rap.addons.fileupload.DiskFileUploadReceiver;
-import org.eclipse.rap.addons.fileupload.FileDetails;
-import org.eclipse.rap.addons.fileupload.FileUploadEvent;
-import org.eclipse.rap.addons.fileupload.FileUploadHandler;
-import org.eclipse.rap.addons.fileupload.FileUploadListener;
 import org.eclipse.rap.rwt.RWT;
 import org.eclipse.rap.rwt.application.AbstractEntryPoint;
-import org.eclipse.rap.rwt.service.ServerPushSession;
-import org.eclipse.rap.rwt.widgets.DialogCallback;
-import org.eclipse.rap.rwt.widgets.DialogUtil;
-import org.eclipse.rap.rwt.widgets.FileUpload;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.SelectionAdapter;
-import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Shell;
-import org.eclipse.swt.widgets.Text;
 
 import eu.hydrologis.rap.stage.ui.StageView;
-import eu.hydrologis.rap.stage.utilsrap.DownloadUtils;
-import eu.hydrologis.rap.stage.utilsrap.ExampleUtil;
 import eu.hydrologis.rap.stage.utilsrap.LoginDialog;
 
+/**
+ * @author Andrea Antonello (www.hydrologis.com)
+ *
+ */
 public class StageEntryPoint extends AbstractEntryPoint {
-
-    private static final String INITIAL_TEXT = "no files uploaded.";
-    private FileUpload fileUpload;
-    private Label fileNameLabel;
-    private Button uploadButton;
-    private Text logText;
-    private ServerPushSession pushSession;
 
     @Override
     protected void createContents( final Composite parent ) {

@@ -14,6 +14,10 @@ import org.eclipse.rap.rwt.RWT;
 
 import eu.hydrologis.rap.stage.utilsrap.LoginDialog;
 
+/**
+ * @author Andrea Antonello (www.hydrologis.com)
+ *
+ */
 public class User {
 
     private String name;

@@ -10,6 +10,12 @@ package eu.hydrologis.rap.stage.workspace;
 
 import java.io.File;
 
+/**
+ * The main workspace class.
+ * 
+ * @author Andrea Antonello (www.hydrologis.com)
+ *
+ */
 public class StageWorkspace {
     public static String STAGE_DATA_FOLDER_SUBSTITUTION_NAME = "DATAFOLDER";
 

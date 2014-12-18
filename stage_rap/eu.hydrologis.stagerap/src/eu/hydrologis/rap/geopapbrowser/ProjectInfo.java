@@ -12,6 +12,12 @@ import java.io.File;
 
 import org.jgrasstools.gears.io.geopaparazzi.geopap4.Image;
 
+/**
+ * Project information.
+ * 
+ * @author Andrea Antonello (www.hydrologis.com)
+ *
+ */
 public class ProjectInfo {
     File databaseFile;
     String fileName;
