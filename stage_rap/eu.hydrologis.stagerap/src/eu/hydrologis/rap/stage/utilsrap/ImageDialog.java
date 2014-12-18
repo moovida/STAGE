@@ -1,4 +1,3 @@
-
 package eu.hydrologis.rap.stage.utilsrap;
 
 import java.io.File;
@@ -21,6 +20,14 @@ public class ImageDialog extends Dialog {
 
     private final static String SERVICE_HANDLER = "imageServiceHandler4dialog";
     private final static String IMAGE_KEY = "imageKey4dialog";
+    static {
+        // register the service handler
+        try {
+            RWT.getServiceManager().registerServiceHandler(SERVICE_HANDLER, new ImageServiceHandler());
+        } catch (Exception e1) {
+            e1.printStackTrace();
+        }
+    }
 
     public static final String SESSION_USER_KEY = "SESSION_USER";
 

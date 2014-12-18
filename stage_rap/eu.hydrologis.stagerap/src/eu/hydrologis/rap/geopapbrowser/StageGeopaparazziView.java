@@ -42,9 +42,11 @@ import org.eclipse.rap.rwt.RWT;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.custom.SashForm;
+import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
@@ -67,6 +69,7 @@ import eu.hydrologis.rap.stage.ui.ImageServiceHandler;
 import eu.hydrologis.rap.stage.utils.FileUtilities;
 import eu.hydrologis.rap.stage.utils.ImageCache;
 import eu.hydrologis.rap.stage.utils.ImageUtils;
+import eu.hydrologis.rap.stage.utils.StageUtils;
 import eu.hydrologis.rap.stage.utilsrap.ImageUtil;
 import eu.hydrologis.rap.stage.workspace.StageWorkspace;
 import eu.hydrologis.rap.stage.workspace.User;
@@ -95,10 +98,10 @@ public class StageGeopaparazziView {
     private static boolean hasDriver = false;
     private List<ProjectInfo> projectInfos;
     private ProjectInfo currentSelectedProject;
-    private Browser infoBrowser;
+    private Browser dataBrowser;
     private boolean CACHE_HTML_TO_FILE;
 
-    private Label infoLabel;
+    private Browser infoBrowser;
 
     static {
         try {
@@ -107,6 +110,13 @@ public class StageGeopaparazziView {
             hasDriver = true;
         } catch (Exception e) {
         }
+
+        // register the service handler
+        try {
+            RWT.getServiceManager().registerServiceHandler(SERVICE_HANDLER, new ImageServiceHandler());
+        } catch (Exception e1) {
+            e1.printStackTrace();
+        }
     }
 
     public void createGeopaparazziTab( Display display, Composite parent ) throws Exception {
@@ -114,13 +124,6 @@ public class StageGeopaparazziView {
 
         if (!hasDriver) {
             throw new Exception("No SQLite drivers available to read geopaparazzi projects.");
-        }
-
-        // register the service handler
-        try {
-            RWT.getServiceManager().registerServiceHandler(SERVICE_HANDLER, new ImageServiceHandler());
-        } catch (Exception e1) {
-            e1.printStackTrace();
         }
 
         File geopaparazziFolder = StageWorkspace.getInstance().getGeopaparazziFolder(User.getCurrentUserName());
@@ -164,10 +167,10 @@ public class StageGeopaparazziView {
         infoGroup.setLayout(new GridLayout(1, false));
         infoGroup.setText("Info");
 
-        infoLabel = new Label(infoGroup, SWT.None);
-        infoLabel.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
-        infoLabel.setData(RWT.MARKUP_ENABLED, Boolean.TRUE);
-        infoLabel.setText("");
+        infoBrowser = new Browser(infoGroup, SWT.NONE);
+        infoBrowser.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+        // infoLabel.setData(RWT.MARKUP_ENABLED, Boolean.TRUE);
+        infoBrowser.setText("");
 
         Group parametersTabsGroup = new Group(mainComposite, SWT.NONE);
         GridData modulesGuiCompositeGD = new GridData(SWT.FILL, SWT.FILL, true, true);
@@ -181,8 +184,8 @@ public class StageGeopaparazziView {
         projectViewComposite.setLayout(new GridLayout(1, false));
         projectViewComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
-        infoBrowser = new Browser(projectViewComposite, SWT.NONE);
-        infoBrowser.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+        dataBrowser = new Browser(projectViewComposite, SWT.NONE);
+        dataBrowser.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
         setNoProjectLabel();
 
@@ -227,14 +230,14 @@ public class StageGeopaparazziView {
                 String value = rs.getString(MetadataTableFields.COLUMN_VALUE.getFieldName());
 
                 if (!key.endsWith("ts")) {
-                    sb.append("<b>").append(key).append(":</b> ").append(value).append("<br/>");
+                    sb.append("<b>").append(key).append(":</b> ").append(StageUtils.escapeHTML(value)).append("<br/>");
                 } else {
                     try {
                         long ts = Long.parseLong(value);
                         String dateTimeString = TimeUtilities.INSTANCE.TIME_FORMATTER_LOCAL.format(new Date(ts));
                         sb.append("<b>").append(key).append(":</b> ").append(dateTimeString).append("<br/>");
                     } catch (Exception e) {
-                        sb.append("<b>").append(key).append(":</b> ").append(value).append("<br/>");
+                        sb.append("<b>").append(key).append(":</b> ").append(StageUtils.escapeHTML(value)).append("<br/>");
                     }
                 }
             }
@@ -244,7 +247,7 @@ public class StageGeopaparazziView {
     }
 
     private void setNoProjectLabel() {
-        infoBrowser.setText("<h1>No project selected</h1>");
+        dataBrowser.setText("<h1>No project selected</h1>");
         // Label noModuleLabel = new Label(projectViewComposite, SWT.NONE);
         // noModuleLabel.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, true));
         // noModuleLabel.setData(RWT.MARKUP_ENABLED, Boolean.TRUE);
@@ -382,7 +385,9 @@ public class StageGeopaparazziView {
                          */
                         String titleName = currentSelectedProject.fileName;
                         titleName = titleName.replace('_', ' ').replaceFirst("\\.gpap", "");
-                        infoLabel.setText(titleName + "<br/><br/>" + currentSelectedProject.metadata);
+                        String text = titleName + "<br/><br/>" + currentSelectedProject.metadata;
+
+                        infoBrowser.setText(text);
 
                         /*
                          * set the project view
@@ -394,10 +399,10 @@ public class StageGeopaparazziView {
                             projectHtml = FileUtilities.readFile(projectHtml);
                         }
                         // infoBrowser.setUrl("file:" + projectHtmlFile);
-                        infoBrowser.setText(projectHtml);
+                        dataBrowser.setText(projectHtml);
 
                         if (projectHtml.contains("openGpImage")) {
-                            new OpenImageFunction(infoBrowser, "openGpImage", currentSelectedProject.databaseFile);
+                            new OpenImageFunction(dataBrowser, "openGpImage", currentSelectedProject.databaseFile);
                             // infoBrowser.addProgressListener(new ProgressListener(){
                             // @Override
                             // public void completed( ProgressEvent event ) {
@@ -434,13 +439,13 @@ public class StageGeopaparazziView {
 
                     try {
                         String dateTimeString = TimeUtilities.INSTANCE.TIME_FORMATTER_LOCAL.format(new Date(selectedImage.getTs()));
-                        String picInfo = "<b>Image:</b> " + selectedImage.getName() + "<br/>" //
+                        String picInfo = "<b>Image:</b> " + StageUtils.escapeHTML(selectedImage.getName()) + "<br/>" //
                                 + "<b>Timestamp:</b> " + dateTimeString + "<br/>" //
                                 + "<b>Azimuth:</b> " + (int) selectedImage.getAzim() + " deg<br/>" //
                                 + "<b>Altim:</b> " + (int) selectedImage.getAltim() + " m<br/>";
-                        infoLabel.setText(picInfo);
+                        infoBrowser.setText(picInfo);
 
-                        ImageUtils.setImageInBrowser(infoBrowser, selectedImage.getId(), selectedImage.getName(),
+                        ImageUtils.setImageInBrowser(dataBrowser, selectedImage.getId(), selectedImage.getName(),
                                 currentSelectedProject.databaseFile, IMAGE_KEY, SERVICE_HANDLER);
                     } catch (Exception e) {
                         e.printStackTrace();
