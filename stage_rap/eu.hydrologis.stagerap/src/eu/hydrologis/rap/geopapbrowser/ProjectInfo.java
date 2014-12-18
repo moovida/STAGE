@@ -19,9 +19,9 @@ import org.jgrasstools.gears.io.geopaparazzi.geopap4.Image;
  *
  */
 public class ProjectInfo {
-    File databaseFile;
-    String fileName;
-    String metadata;
+    public File databaseFile;
+    public String fileName;
+    public String metadata;
 
-    Image[] images;
+    public Image[] images;
 }

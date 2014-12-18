@@ -16,7 +16,6 @@ import static org.jgrasstools.gears.io.geopaparazzi.geopap4.TableDescriptions.TA
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -26,8 +25,6 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -42,11 +39,9 @@ import org.eclipse.rap.rwt.RWT;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.custom.SashForm;
-import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
@@ -71,8 +66,7 @@ import eu.hydrologis.rap.stage.utils.ImageCache;
 import eu.hydrologis.rap.stage.utils.ImageUtils;
 import eu.hydrologis.rap.stage.utils.StageUtils;
 import eu.hydrologis.rap.stage.utilsrap.ImageUtil;
-import eu.hydrologis.rap.stage.workspace.StageWorkspace;
-import eu.hydrologis.rap.stage.workspace.User;
+import eu.hydrologis.rap.stage.workspace.StageWorkspaceUtilities;
 
 /**
  * The geopaparazzi view.
@@ -126,15 +120,7 @@ public class StageGeopaparazziView {
             throw new Exception("No SQLite drivers available to read geopaparazzi projects.");
         }
 
-        File geopaparazziFolder = StageWorkspace.getInstance().getGeopaparazziFolder(User.getCurrentUserName());
-        File[] projectFiles = geopaparazziFolder.listFiles(new FilenameFilter(){
-            @Override
-            public boolean accept( File dir, String name ) {
-                return name.endsWith(".gpap");
-            }
-        });
-        Arrays.sort(projectFiles, Collections.reverseOrder());
-
+        File[] projectFiles = StageWorkspaceUtilities.getGeopaparazziProjectFiles(null);
         projectInfos = readProjectInfos(projectFiles);
 
         SashForm mainComposite = new SashForm(parent, SWT.HORIZONTAL);

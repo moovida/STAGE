@@ -7,7 +7,8 @@ Bundle-Vendor: HydroloGIS S.r.l.
 Require-Bundle: org.eclipse.rap.rwt,
  org.eclipse.rap.jface,
  org.eclipse.rap.addons.fileupload,
- org.eclipse.rap.addons.filedialog
+ org.eclipse.rap.addons.filedialog,
+ org.eclipse.equinox.http.registry
 Service-Component: OSGI-INF/contribution.xml
 Import-Package: javax.servlet;version="2.6.0",
  javax.servlet.http;version="2.6.0"
