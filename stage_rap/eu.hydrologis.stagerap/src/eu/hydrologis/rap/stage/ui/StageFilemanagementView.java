@@ -17,10 +17,7 @@ import org.eclipse.rap.addons.fileupload.FileDetails;
 import org.eclipse.rap.addons.fileupload.FileUploadEvent;
 import org.eclipse.rap.addons.fileupload.FileUploadHandler;
 import org.eclipse.rap.addons.fileupload.FileUploadListener;
-import org.eclipse.rap.rwt.RWT;
-import org.eclipse.rap.rwt.client.Client;
 import org.eclipse.rap.rwt.service.ServerPushSession;
-import org.eclipse.rap.rwt.service.UISession;
 import org.eclipse.rap.rwt.widgets.FileUpload;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabItem;
@@ -55,6 +52,10 @@ public class StageFilemanagementView {
     private Button uploadButton;
     private ServerPushSession pushSession;
     private Display display;
+    private FileUpload gpFileUpload;
+    private Label gpFileNameLabel;
+    private Button gpUploadButton;
+    private ServerPushSession gpPushSession;
 
     public void createStageFileManagementTab( Display display, Composite parent, CTabItem stageTab ) throws IOException {
 
@@ -75,6 +76,9 @@ public class StageFilemanagementView {
         // fileDialogArea.setLayoutData(ExampleUtil.createHorzFillData());
         Control fileDownloadArea = createFileDownloadArea(parent);
         fileDownloadArea.setLayoutData(ExampleUtil.createHorzFillData());
+        
+        Control geopapFileUploadArea = createGeopaparazziFileUploadArea(parent);
+        geopapFileUploadArea.setLayoutData(ExampleUtil.createHorzFillData());
         return parent;
     }
 
@@ -114,6 +118,42 @@ public class StageFilemanagementView {
         return uploadGroup;
     }
 
+    private Control createGeopaparazziFileUploadArea( Composite parent ) {
+        Group uploadGroup = new Group(parent, SWT.NONE);
+        uploadGroup.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+        uploadGroup.setLayout(new GridLayout(2, false));
+        uploadGroup.setText("Geopaparazzi Projects Upload");
+
+        gpFileUpload = new FileUpload(uploadGroup, SWT.NONE);
+        gpFileUpload.setText("Select project to upload");
+        gpFileUpload.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
+        gpFileNameLabel = new Label(uploadGroup, SWT.NONE);
+        gpFileNameLabel.setText("no file selected");
+        gpFileNameLabel.setLayoutData(ExampleUtil.createHorzFillData());
+        gpFileNameLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+        gpUploadButton = new Button(uploadGroup, SWT.PUSH);
+        gpUploadButton.setText("Upload file");
+        gpUploadButton.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
+        new Label(uploadGroup, SWT.NONE);
+        gpFileUpload.addSelectionListener(new SelectionAdapter(){
+            @Override
+            public void widgetSelected( SelectionEvent e ) {
+                String fileName = gpFileUpload.getFileName();
+                gpFileNameLabel.setText(fileName == null ? "" : fileName);
+            }
+        });
+        final String url = startGpUploadReceiver();
+        gpPushSession = new ServerPushSession();
+        gpUploadButton.addSelectionListener(new SelectionAdapter(){
+            @Override
+            public void widgetSelected( SelectionEvent e ) {
+                gpPushSession.start();
+                gpFileUpload.submit(url);
+            }
+        });
+        return uploadGroup;
+    }
+    
     private String startUploadReceiver() {
         DiskFileUploadReceiver receiver = new DiskFileUploadReceiver(){
             @Override
@@ -159,6 +199,59 @@ public class StageFilemanagementView {
                 display.syncExec(new Runnable(){
                     public void run() {
                         MessageDialog.openInformation(fileNameLabel.getShell(), "INFORMATION", "Successfully uploaded: "
+                                + filesStr);
+                    }
+                });
+            }
+        });
+        return uploadHandler.getUploadUrl();
+    }
+    
+    private String startGpUploadReceiver() {
+        DiskFileUploadReceiver receiver = new DiskFileUploadReceiver(){
+            @Override
+            protected File createTargetFile( FileDetails details ) throws IOException {
+                String fileName = "upload.tmp";
+                if (details != null && details.getFileName() != null) {
+                    fileName = details.getFileName();
+                }
+
+                File dataFolder = StageWorkspace.getInstance().getGeopaparazziFolder(User.getCurrentUserName());
+                File result = new File(dataFolder, fileName);
+                result.createNewFile();
+                return result;
+            }
+        };
+        FileUploadHandler uploadHandler = new FileUploadHandler(receiver);
+        uploadHandler.addUploadListener(new FileUploadListener(){
+
+            public void uploadProgress( FileUploadEvent event ) {
+                // handle upload progress
+            }
+
+            public void uploadFailed( FileUploadEvent event ) {
+                final Exception ex = event.getException();
+                display.syncExec(new Runnable(){
+                    public void run() {
+                        MessageDialog.openWarning(gpFileNameLabel.getShell(), "ERROR",
+                                "File upload failed with error: " + ex.getLocalizedMessage());
+                    }
+                });
+
+                ex.printStackTrace();
+            }
+
+            public void uploadFinished( FileUploadEvent event ) {
+                if (gpPushSession != null)
+                    gpPushSession.stop();
+                StringBuilder sb = new StringBuilder();
+                for( FileDetails file : event.getFileDetails() ) {
+                    sb.append(",").append(file.getFileName());
+                }
+                final String filesStr = sb.substring(1);
+                display.syncExec(new Runnable(){
+                    public void run() {
+                        MessageDialog.openInformation(gpFileNameLabel.getShell(), "INFORMATION", "Successfully uploaded: "
                                 + filesStr);
                     }
                 });
