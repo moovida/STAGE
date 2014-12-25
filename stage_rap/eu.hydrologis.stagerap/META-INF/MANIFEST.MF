@@ -6,11 +6,21 @@ Bundle-Version: 1.0.0
 Bundle-Vendor: HydroloGIS S.r.l.
 Require-Bundle: org.eclipse.rap.rwt,
  org.eclipse.rap.jface,
- eu.hydrologis.stageraplibs;bundle-version="1.0.0",
+ eu.hydrologis.stageraplibs,
  org.eclipse.rap.addons.fileupload,
  org.eclipse.rap.addons.filedialog,
- org.eclipse.equinox.http.registry
+ org.eclipse.equinox.http.registry;resolution:=optional
 Service-Component: OSGI-INF/contribution.xml
-Import-Package: javax.servlet;version="2.6.0",
- javax.servlet.http;version="2.6.0"
+Import-Package: javax.imageio,
+ javax.imageio.event,
+ javax.imageio.metadata,
+ javax.imageio.plugins.bmp,
+ javax.imageio.plugins.jpeg,
+ javax.imageio.spi,
+ javax.imageio.stream,
+ javax.servlet;version="2.6.0",
+ javax.servlet.annotation;version="2.6.0",
+ javax.servlet.descriptor;version="2.6.0",
+ javax.servlet.http;version="2.6.0",
+ javax.servlet.resources;version="2.6.0"
 Bundle-ClassPath: .

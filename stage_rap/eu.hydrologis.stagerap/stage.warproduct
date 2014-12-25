@@ -5,6 +5,7 @@
    <plugins>
       <plugin id="com.ibm.icu.base"/>
       <plugin id="eu.hydrologis.stagerap"/>
+      <plugin id="eu.hydrologis.stageraplibs"/>
       <plugin id="javax.xml"/>
       <plugin id="org.apache.felix.gogo.command"/>
       <plugin id="org.apache.felix.gogo.runtime"/>
@@ -44,6 +45,7 @@
    <configurations>
       <plugin id="com.ibm.icu.base" autoStart="true" startLevel="0" />
       <plugin id="eu.hydrologis.stagerap" autoStart="true" startLevel="0" />
+      <plugin id="eu.hydrologis.stageraplibs" autoStart="true" startLevel="0" />
       <plugin id="javax.xml" autoStart="true" startLevel="0" />
       <plugin id="org.apache.felix.gogo.command" autoStart="true" startLevel="0" />
       <plugin id="org.apache.felix.gogo.runtime" autoStart="true" startLevel="0" />

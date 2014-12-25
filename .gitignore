@@ -20,3 +20,5 @@ eu.udig.jconsole/bin
 stage_rap/eu.hydrologis.stagerap/bin
 stage_rap/eu.hydrologis.stageraplibs/bin
 eu.udig.omsbox/bin
+stage_rap/org.eclipse.rap.addons.filedialog/bin
+stage_rap/org.eclipse.rap.addons.fileupload/bin

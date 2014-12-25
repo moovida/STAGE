@@ -14,7 +14,7 @@
 <intAttribute key="default_start_level" value="4"/>
 <booleanAttribute key="includeOptional" value="false"/>
 <booleanAttribute key="org.eclipse.debug.core.appendEnvironmentVariables" value="true"/>
-<stringAttribute key="org.eclipse.jdt.launching.JRE_CONTAINER" value="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
+<stringAttribute key="org.eclipse.jdt.launching.JRE_CONTAINER" value="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jdk1.7.0_67"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-os ${target.os} -ws ${target.ws} -arch ${target.arch} -nl ${target.nl} -console -consolelog"/>
 <stringAttribute key="org.eclipse.jdt.launching.SOURCE_PATH_PROVIDER" value="org.eclipse.pde.ui.workbenchClasspathProvider"/>
 <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Declipse.ignoreApp=true -Dosgi.noShutdown=true -Dorg.eclipse.equinox.http.jetty.log.stderr.threshold=info -Dorg.eclipse.rap.workbenchAutostart=false -Dosgi.parentClassloader=ext -Dstage.workspace=&quot;/home/hydrologis/TMP/STAGETEST/&quot;"/>
@@ -37,5 +37,5 @@
 <booleanAttribute key="tracing" value="false"/>
 <booleanAttribute key="useCustomFeatures" value="false"/>
 <booleanAttribute key="useDefaultConfigArea" value="true"/>
-<stringAttribute key="workspace_bundles" value="eu.hydrologis.stagerap@default:default,org.eclipse.rap.addons.filedialog@default:default,org.eclipse.rap.addons.fileupload@default:default"/>
+<stringAttribute key="workspace_bundles" value="eu.hydrologis.stagerap@default:default,eu.hydrologis.stageraplibs@default:default,org.eclipse.rap.addons.filedialog@default:default,org.eclipse.rap.addons.fileupload@default:default"/>
 </launchConfiguration>
