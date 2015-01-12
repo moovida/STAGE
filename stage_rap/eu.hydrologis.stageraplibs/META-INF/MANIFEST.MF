@@ -284,6 +284,7 @@ Export-Package: antlr,
  javax.measure.converter,
  javax.measure.quantity,
  javax.measure.unit,
+ javax.vecmath,
  jline,
  net.miginfocom.demo,
  net.miginfocom.examples,
@@ -1056,3 +1057,6 @@ Export-Package: antlr,
  org.scannotation,
  org.scannotation.archiveiterator,
  org.sqlite
+Bundle-ActivationPolicy: lazy
+Require-Bundle: org.eclipse.rap.rwt,
+ org.eclipse.rap.jface
