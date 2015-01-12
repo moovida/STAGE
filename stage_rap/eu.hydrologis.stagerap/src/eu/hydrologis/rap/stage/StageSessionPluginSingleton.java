@@ -39,6 +39,7 @@ public class StageSessionPluginSingleton {
     private File modulesFolder;
     private File libsFolder;
     private File configFolder;
+    private File jreFolder;
     private boolean doIgnoreProcessingRegion = true;
 
     private HashMap<String, Process> runningProcessesMap = new HashMap<String, Process>();
@@ -48,6 +49,7 @@ public class StageSessionPluginSingleton {
         modulesFolder = new File(installationFolder, LIBS_MAIN_FOLDER_NAME + "/" + MODULES_SUBFOLDER_NAME);
         libsFolder = new File(installationFolder, LIBS_MAIN_FOLDER_NAME + "/" + LIBS_SUBFOLDER_NAME);
         configFolder = new File(installationFolder, "stageconfig");
+        jreFolder = new File(installationFolder, "jre");
         if (!configFolder.exists()) {
             configFolder.mkdirs();
         }
@@ -63,6 +65,10 @@ public class StageSessionPluginSingleton {
 
     public File getLibsFolders() {
         return libsFolder;
+    }
+
+    public File getJreFolders() {
+        return jreFolder;
     }
 
     public String[] retrieveSavedJars() {

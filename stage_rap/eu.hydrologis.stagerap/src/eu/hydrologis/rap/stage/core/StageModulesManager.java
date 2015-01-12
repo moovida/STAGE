@@ -35,6 +35,7 @@ import oms3.annotations.Status;
 import oms3.annotations.UI;
 import oms3.annotations.Unit;
 import oms3.util.Components;
+import eu.hydrologis.rap.log.StageLogger;
 import eu.hydrologis.rap.stage.StageSessionPluginSingleton;
 import eu.hydrologis.rap.stage.utils.AnnotationUtilities;
 import eu.hydrologis.rap.stage.utils.ResourceFinder;
@@ -112,6 +113,7 @@ public class StageModulesManager {
                 }
             }
         }
+
         return jarsPathList;
     }
 
@@ -249,7 +251,28 @@ public class StageModulesManager {
         if (loadedJarsList.size() == 0) {
             return;
         }
+
+        // add jai/imageio
+        File jreFolder = StageSessionPluginSingleton.getInstance().getJreFolders();
+        File extLibsFolder = new File(jreFolder.getAbsolutePath() + File.separator + "lib" + File.separator + "ext");
+        if (extLibsFolder.exists()) {
+            StageLogger.logDebug("ADDING JAI JARS FROM JRE");
+            File[] jaiJarFiles = extLibsFolder.listFiles(new FilenameFilter(){
+                public boolean accept( File dir, String name ) {
+                    return name.contains("jai") || name.contains("jiio");
+                }
+            });
+            for( File jaiJarFile : jaiJarFiles ) {
+                String path = jaiJarFile.getAbsolutePath();
+                if (!loadedJarsList.contains(path)) {
+                    loadedJarsList.add(path);
+                    StageLogger.logDebug("--> " + path);
+                }
+            }
+        }
+
         List<URL> urlList = new ArrayList<URL>();
+        StageLogger.logDebug("ADDED TO URL CLASSLOADER:");
         for( int i = 0; i < loadedJarsList.size(); i++ ) {
             String jarPath = loadedJarsList.get(i);
             File jarFile = new File(jarPath);
@@ -257,47 +280,47 @@ public class StageModulesManager {
                 continue;
             }
             urlList.add(jarFile.toURI().toURL());
+            StageLogger.logDebug("--> " + jarPath);
         }
         URL[] urls = (URL[]) urlList.toArray(new URL[urlList.size()]);
-
-        jarClassloader = new URLClassLoader(urls, this.getClass().getClassLoader());
-
         List<Class< ? >> classesList = new ArrayList<Class< ? >>();
 
         jarClassloader = new URLClassLoader(urls, this.getClass().getClassLoader());
 
+        StageLogger.logDebug("LOAD MODULES:");
         for( URL url : urlList ) {
             ResourceFinder finder = new ResourceFinder("META-INF/", url);
             Map<String, Properties> servicesList = finder.mapAllProperties("services");
-            Set<Entry<String, Properties>> servicesEntrySets = servicesList.entrySet();
-            for( Entry<String, Properties> serviceEntry : servicesEntrySets ) {
-                Properties properties = serviceEntry.getValue();
-                Set<Entry<Object, Object>> entrySet = properties.entrySet();
-                for( Entry<Object, Object> entry : entrySet ) {
-                    String className = entry.getKey().toString();
-                    // Avoid loading of oms modules, load only the file based
-                    // modules
-                    String simpleName = className;
-                    int lastDot = simpleName.lastIndexOf(".");
-                    if (lastDot != -1) {
-                        simpleName = simpleName.substring(lastDot + 1);
-                    }
-                    if (simpleName.startsWith("Oms")) {
-                        continue;
-                    }
+            Properties jgtProperties = servicesList.get("org.jgrasstools.gears.libs.modules.JGTModel");
+            if (jgtProperties == null) {
+                continue;
+            }
+            Set<Entry<Object, Object>> entrySet = jgtProperties.entrySet();
+            for( Entry<Object, Object> entry : entrySet ) {
+                String className = entry.getKey().toString();
+                // Avoid loading of oms modules, load only the file based
+                // modules
+                String simpleName = className;
+                int lastDot = simpleName.lastIndexOf(".");
+                if (lastDot != -1) {
+                    simpleName = simpleName.substring(lastDot + 1);
+                }
+                if (simpleName.startsWith("Oms")) {
+                    continue;
+                }
 
-                    Class< ? > possibleModulesClass = null;
-                    try {
-                        possibleModulesClass = Class.forName(className, true, jarClassloader);
-                    } catch (Exception e) {
-                        // ignore and try to gather as much as possible
-                    }
-                    if (possibleModulesClass != null) {
-                        // extract only the ones properly annotated
-                        Name name = possibleModulesClass.getAnnotation(Name.class);
-                        if (name != null) {
-                            classesList.add(possibleModulesClass);
-                        }
+                Class< ? > possibleModulesClass = null;
+                try {
+                    possibleModulesClass = Class.forName(className, true, jarClassloader);
+                } catch (Exception e) {
+                    // ignore and try to gather as much as possible
+                }
+                if (possibleModulesClass != null) {
+                    // extract only the ones properly annotated
+                    Name name = possibleModulesClass.getAnnotation(Name.class);
+                    if (name != null) {
+                        classesList.add(possibleModulesClass);
+                        StageLogger.logDebug("--> " + className);
                     }
                 }
             }
