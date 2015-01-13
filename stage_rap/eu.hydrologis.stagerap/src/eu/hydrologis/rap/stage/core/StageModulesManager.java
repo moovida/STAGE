@@ -198,25 +198,24 @@ public class StageModulesManager {
             return;
         }
 
-        // // add jai/imageio
-        // File jreFolder = StageSessionPluginSingleton.getInstance().getJreFolders();
-        // File extLibsFolder = new File(jreFolder.getAbsolutePath() + File.separator + "lib" +
-        // File.separator + "ext");
-        // if (extLibsFolder.exists()) {
-        // StageLogger.logDebug("ADDING JAI JARS FROM JRE");
-        // File[] jaiJarFiles = extLibsFolder.listFiles(new FilenameFilter(){
-        // public boolean accept( File dir, String name ) {
-        // return name.contains("jai") || name.contains("jiio");
-        // }
-        // });
-        // for( File jaiJarFile : jaiJarFiles ) {
-        // String path = jaiJarFile.getAbsolutePath();
-        // if (!loadedJarsList.contains(path)) {
-        // loadedJarsList.add(path);
-        // StageLogger.logDebug("--> " + path);
-        // }
-        // }
-        // }
+//        // // add jai/imageio
+//        File jreFolder = StageSessionPluginSingleton.getInstance().getJreFolders();
+//        File extLibsFolder = new File(jreFolder.getAbsolutePath() + File.separator + "lib" + File.separator + "ext");
+//        if (extLibsFolder.exists()) {
+//            StageLogger.logDebug("ADDING JAI JARS FROM JRE");
+//            File[] jaiJarFiles = extLibsFolder.listFiles(new FilenameFilter(){
+//                public boolean accept( File dir, String name ) {
+//                    return name.contains("jai") || name.contains("jiio");
+//                }
+//            });
+//            for( File jaiJarFile : jaiJarFiles ) {
+//                String path = jaiJarFile.getAbsolutePath();
+//                if (!loadedJarsList.contains(path)) {
+//                    loadedJarsList.add(path);
+//                    StageLogger.logDebug("--> " + path);
+//                }
+//            }
+//        }
 
         List<URL> urlList = new ArrayList<URL>();
         StageLogger.logDebug("ADDED TO URL CLASSLOADER:");
