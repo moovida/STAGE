@@ -54,15 +54,6 @@ public class StageModulesManager {
 
     private List<String> loadedJarsList = new ArrayList<String>();
     private TreeMap<String, List<ModuleDescription>> modulesMap;
-    private List<ModuleDescription> gridReaders = new ArrayList<ModuleDescription>();
-    private List<ModuleDescription> rasterReaders = new ArrayList<ModuleDescription>();
-    private List<ModuleDescription> rasterWriters = new ArrayList<ModuleDescription>();
-    private List<ModuleDescription> featureReaders = new ArrayList<ModuleDescription>();
-    private List<ModuleDescription> featureWriters = new ArrayList<ModuleDescription>();
-    private List<ModuleDescription> hashMapReaders = new ArrayList<ModuleDescription>();
-    private List<ModuleDescription> hashMapWriters = new ArrayList<ModuleDescription>();
-    private List<ModuleDescription> listReaders = new ArrayList<ModuleDescription>();
-    private List<ModuleDescription> listWriters = new ArrayList<ModuleDescription>();
 
     private URLClassLoader jarClassloader;
 
@@ -171,15 +162,6 @@ public class StageModulesManager {
             } else {
                 if (rescan) {
                     modulesMap.clear();
-                    gridReaders.clear();
-                    rasterReaders.clear();
-                    rasterWriters.clear();
-                    featureReaders.clear();
-                    featureWriters.clear();
-                    hashMapReaders.clear();
-                    hashMapWriters.clear();
-                    listWriters.clear();
-                    listReaders.clear();
                 } else {
                     if (modulesMap.size() > 0) {
                         return modulesMap;
@@ -202,42 +184,6 @@ public class StageModulesManager {
         return modulesMap;
     }
 
-    public List<ModuleDescription> getFeatureReaders() {
-        return cloneList(featureReaders);
-    }
-
-    public List<ModuleDescription> getFeatureWriters() {
-        return cloneList(featureWriters);
-    }
-
-    public List<ModuleDescription> getGridReaders() {
-        return cloneList(gridReaders);
-    }
-
-    public List<ModuleDescription> getRasterReaders() {
-        return cloneList(rasterReaders);
-    }
-
-    public List<ModuleDescription> getRasterWriters() {
-        return cloneList(rasterWriters);
-    }
-
-    public List<ModuleDescription> getHashMapReaders() {
-        return cloneList(hashMapReaders);
-    }
-
-    public List<ModuleDescription> getHashMapWriters() {
-        return cloneList(hashMapWriters);
-    }
-
-    public List<ModuleDescription> getListReaders() {
-        return cloneList(listReaders);
-    }
-
-    public List<ModuleDescription> getListWriters() {
-        return cloneList(listWriters);
-    }
-
     public List<ModuleDescription> cloneList( List<ModuleDescription> list ) {
         List<ModuleDescription> copy = new ArrayList<ModuleDescription>();
         for( ModuleDescription moduleDescription : list ) {
@@ -252,24 +198,25 @@ public class StageModulesManager {
             return;
         }
 
-        // add jai/imageio
-        File jreFolder = StageSessionPluginSingleton.getInstance().getJreFolders();
-        File extLibsFolder = new File(jreFolder.getAbsolutePath() + File.separator + "lib" + File.separator + "ext");
-        if (extLibsFolder.exists()) {
-            StageLogger.logDebug("ADDING JAI JARS FROM JRE");
-            File[] jaiJarFiles = extLibsFolder.listFiles(new FilenameFilter(){
-                public boolean accept( File dir, String name ) {
-                    return name.contains("jai") || name.contains("jiio");
-                }
-            });
-            for( File jaiJarFile : jaiJarFiles ) {
-                String path = jaiJarFile.getAbsolutePath();
-                if (!loadedJarsList.contains(path)) {
-                    loadedJarsList.add(path);
-                    StageLogger.logDebug("--> " + path);
-                }
-            }
-        }
+        // // add jai/imageio
+        // File jreFolder = StageSessionPluginSingleton.getInstance().getJreFolders();
+        // File extLibsFolder = new File(jreFolder.getAbsolutePath() + File.separator + "lib" +
+        // File.separator + "ext");
+        // if (extLibsFolder.exists()) {
+        // StageLogger.logDebug("ADDING JAI JARS FROM JRE");
+        // File[] jaiJarFiles = extLibsFolder.listFiles(new FilenameFilter(){
+        // public boolean accept( File dir, String name ) {
+        // return name.contains("jai") || name.contains("jiio");
+        // }
+        // });
+        // for( File jaiJarFile : jaiJarFiles ) {
+        // String path = jaiJarFile.getAbsolutePath();
+        // if (!loadedJarsList.contains(path)) {
+        // loadedJarsList.add(path);
+        // StageLogger.logDebug("--> " + path);
+        // }
+        // }
+        // }
 
         List<URL> urlList = new ArrayList<URL>();
         StageLogger.logDebug("ADDED TO URL CLASSLOADER:");
@@ -311,7 +258,7 @@ public class StageModulesManager {
 
                 Class< ? > possibleModulesClass = null;
                 try {
-                    possibleModulesClass = Class.forName(className, true, jarClassloader);
+                    possibleModulesClass = Class.forName(className, false, jarClassloader);
                 } catch (Exception e) {
                     // ignore and try to gather as much as possible
                 }
@@ -398,28 +345,13 @@ public class StageModulesManager {
                     addOutput(access, module);
                 }
 
-                if (categoryStr.equals(StageConstants.GRIDGEOMETRYREADER)) {
-                    gridReaders.add(module);
-                } else if (categoryStr.equals(StageConstants.RASTERREADER)) {
-                    rasterReaders.add(module);
-                } else if (categoryStr.equals(StageConstants.RASTERWRITER)) {
-                    rasterWriters.add(module);
-                } else if (categoryStr.equals(StageConstants.VECTORREADER)) {
-                    featureReaders.add(module);
-                } else if (categoryStr.equals(StageConstants.VECTORWRITER)) {
-                    featureWriters.add(module);
-                } else if (categoryStr.equals(StageConstants.GENERICREADER)) {
+                if (categoryStr.equals(StageConstants.GRIDGEOMETRYREADER) || categoryStr.equals(StageConstants.RASTERREADER)
+                        || categoryStr.equals(StageConstants.RASTERWRITER) || categoryStr.equals(StageConstants.VECTORREADER)
+                        || categoryStr.equals(StageConstants.VECTORWRITER) || categoryStr.equals(StageConstants.GENERICREADER)
+                        || categoryStr.equals(StageConstants.GENERICWRITER) || categoryStr.equals(StageConstants.HASHMAP_READER)
+                        || categoryStr.equals(StageConstants.HASHMAP_WRITER) || categoryStr.equals(StageConstants.LIST_READER)
+                        || categoryStr.equals(StageConstants.LIST_WRITER)) {
                     // ignore for now
-                } else if (categoryStr.equals(StageConstants.GENERICWRITER)) {
-                    // ignore for now
-                } else if (categoryStr.equals(StageConstants.HASHMAP_READER)) {
-                    hashMapReaders.add(module);
-                } else if (categoryStr.equals(StageConstants.HASHMAP_WRITER)) {
-                    hashMapWriters.add(module);
-                } else if (categoryStr.equals(StageConstants.LIST_READER)) {
-                    listReaders.add(module);
-                } else if (categoryStr.equals(StageConstants.LIST_WRITER)) {
-                    listWriters.add(module);
                 } else {
                     List<ModuleDescription> modulesList4Category = modulesMap.get(categoryStr);
                     if (modulesList4Category == null) {
@@ -536,7 +468,7 @@ public class StageModulesManager {
      * @throws ClassNotFoundException
      */
     public Class< ? > getModulesClass( String className ) throws ClassNotFoundException {
-        Class< ? > moduleClass = Class.forName(className, true, jarClassloader);
+        Class< ? > moduleClass = Class.forName(className, false, jarClassloader);
         return moduleClass;
     }
 

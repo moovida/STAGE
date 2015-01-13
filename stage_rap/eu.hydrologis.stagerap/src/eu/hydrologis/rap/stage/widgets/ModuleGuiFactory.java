@@ -53,20 +53,22 @@ public class ModuleGuiFactory {
                 handleTextField(inputData, row, guiElements);
             } else if (isAtLeastOneAssignable(inputData.fieldType, Boolean.class, boolean.class)) {
                 handleBooleanField(inputData, row, guiElements);
-//            } else if (isAtLeastOneAssignable(inputData.fieldType, GridCoverage2D.class)) {
-//                handleGridcoverageInputField(inputData, row, guiElements);
-//            } else if (isAtLeastOneAssignable(inputData.fieldType, GridGeometry2D.class)) {
-//                handleGridgeometryInputField(inputData, row, guiElements);
-//            } else if (isAtLeastOneAssignable(inputData.fieldType, SimpleFeatureCollection.class)) {
-//                handleFeatureInputField(inputData, row, guiElements);
-//            } else if (isAtLeastOneAssignable(inputData.fieldType, HashMap.class)) {
-//                handleHashMapInputField(inputData, row, guiElements);
-//            } else if (isAtLeastOneAssignable(inputData.fieldType, List.class)) {
-//                if (inputData.guiHints != null && inputData.guiHints.equals(OmsBoxConstants.FILESPATHLIST_UI_HINT)) {
-//                    handleFilesPathListInputField(inputData, row, guiElements);
-//                } else {
-//                    handleListInputField(inputData, row, guiElements);
-//                }
+                // } else if (isAtLeastOneAssignable(inputData.fieldType, GridCoverage2D.class)) {
+                // handleGridcoverageInputField(inputData, row, guiElements);
+                // } else if (isAtLeastOneAssignable(inputData.fieldType, GridGeometry2D.class)) {
+                // handleGridgeometryInputField(inputData, row, guiElements);
+                // } else if (isAtLeastOneAssignable(inputData.fieldType,
+                // SimpleFeatureCollection.class)) {
+                // handleFeatureInputField(inputData, row, guiElements);
+                // } else if (isAtLeastOneAssignable(inputData.fieldType, HashMap.class)) {
+                // handleHashMapInputField(inputData, row, guiElements);
+                // } else if (isAtLeastOneAssignable(inputData.fieldType, List.class)) {
+                // if (inputData.guiHints != null &&
+                // inputData.guiHints.equals(OmsBoxConstants.FILESPATHLIST_UI_HINT)) {
+                // handleFilesPathListInputField(inputData, row, guiElements);
+                // } else {
+                // handleListInputField(inputData, row, guiElements);
+                // }
             } else {
                 if (!inputData.fieldType.endsWith("ProgressMonitor")) {
                     System.out.println("Skipping input field: " + inputData.fieldType);
@@ -95,19 +97,19 @@ public class ModuleGuiFactory {
         // } else if (isAtLeastOneAssignable(outputData.fieldType, Boolean.class, boolean.class)) {
         // handleBooleanField(outputData, row, guiElements);
         // } else
-//        if (isAtLeastOneAssignable(outputData.fieldType, GridCoverage2D.class)) {
-//            handleGridcoverageOutputField(outputData, row, guiElements);
-//        } else if (isAtLeastOneAssignable(outputData.fieldType, SimpleFeatureCollection.class)) {
-//            handleFeatureOutputField(outputData, row, guiElements);
-//        } else 
-//            if (isAtLeastOneAssignable(outputData.fieldType, HashMap.class)) {
-//            handleHashMapOutputField(outputData, row, guiElements);
-//        } else if (isAtLeastOneAssignable(outputData.fieldType, List.class)) {
-//            handleListOutputField(outputData, row, guiElements);
-//        } else {
-//            if (outputData != null)
-//                System.out.println("Skipping output field: " + outputData.fieldType);
-//        }
+        // if (isAtLeastOneAssignable(outputData.fieldType, GridCoverage2D.class)) {
+        // handleGridcoverageOutputField(outputData, row, guiElements);
+        // } else if (isAtLeastOneAssignable(outputData.fieldType, SimpleFeatureCollection.class)) {
+        // handleFeatureOutputField(outputData, row, guiElements);
+        // } else
+        // if (isAtLeastOneAssignable(outputData.fieldType, HashMap.class)) {
+        // handleHashMapOutputField(outputData, row, guiElements);
+        // } else if (isAtLeastOneAssignable(outputData.fieldType, List.class)) {
+        // handleListOutputField(outputData, row, guiElements);
+        // } else {
+        // if (outputData != null)
+        // System.out.println("Skipping output field: " + outputData.fieldType);
+        // }
         return guiElements;
         // throw new IllegalArgumentException();
     }
@@ -248,333 +250,6 @@ public class ModuleGuiFactory {
         GuiBooleanField booleanField = new GuiBooleanField(data, textConstraint);
         guiElements.add(booleanField);
     }
-
-//    private void handleGridcoverageInputField( FieldData data, int[] row, List<ModuleGuiElement> guiElements ) {
-//        StringBuilder sb = new StringBuilder();
-//        sb.append("cell ");
-//        sb.append(0);
-//        sb.append(" ");
-//        sb.append(row[0]);
-//        sb.append(" ");
-//        int labelCol = COLUMNS / 3;
-//        sb.append(labelCol);
-//        sb.append(" ");
-//        sb.append(1);
-//        // sb.append(", growx");
-//        String labelConstraint = sb.toString();
-//
-//        GuiLabel label = new GuiLabel(data, labelConstraint, false);
-//        guiElements.add(label);
-//
-//        sb = new StringBuilder();
-//        sb.append("cell ");
-//        sb.append(labelCol + 1);
-//        sb.append(" ");
-//        sb.append(row[0]);
-//        sb.append(" ");
-//        sb.append(COLUMNS - labelCol);
-//        sb.append(" ");
-//        sb.append(1);
-//        sb.append(", growx");
-//        String textConstraint = sb.toString();
-//
-//        GuiCoverageInputField coverage = new GuiCoverageInputField(data, textConstraint);
-//        guiElements.add(coverage);
-//    }
-//    private void handleGridcoverageOutputField( FieldData data, int[] row, List<ModuleGuiElement> guiElements ) {
-//        StringBuilder sb = new StringBuilder();
-//        sb.append("cell ");
-//        sb.append(0);
-//        sb.append(" ");
-//        sb.append(row[0]);
-//        sb.append(" ");
-//        int labelCol = COLUMNS / 3;
-//        sb.append(labelCol);
-//        sb.append(" ");
-//        sb.append(1);
-//        // sb.append(", growx");
-//        String labelConstraint = sb.toString();
-//
-//        GuiLabel label = new GuiLabel(data, labelConstraint, false);
-//        guiElements.add(label);
-//
-//        sb = new StringBuilder();
-//        sb.append("cell ");
-//        sb.append(labelCol + 1);
-//        sb.append(" ");
-//        sb.append(row[0]);
-//        sb.append(" ");
-//        sb.append(COLUMNS - labelCol);
-//        sb.append(" ");
-//        sb.append(1);
-//        sb.append(", growx");
-//        String textConstraint = sb.toString();
-//
-//        GuiCoverageOutputField coverage = new GuiCoverageOutputField(data, textConstraint);
-//        guiElements.add(coverage);
-//    }
-//
-//    private void handleFeatureInputField( FieldData data, int[] row, List<ModuleGuiElement> guiElements ) {
-//        StringBuilder sb = new StringBuilder();
-//        sb.append("cell ");
-//        sb.append(0);
-//        sb.append(" ");
-//        sb.append(row[0]);
-//        sb.append(" ");
-//        int labelCol = COLUMNS / 3;
-//        sb.append(labelCol);
-//        sb.append(" ");
-//        sb.append(1);
-//        // sb.append(", growx");
-//        String labelConstraint = sb.toString();
-//
-//        GuiLabel label = new GuiLabel(data, labelConstraint, false);
-//        guiElements.add(label);
-//
-//        sb = new StringBuilder();
-//        sb.append("cell ");
-//        sb.append(labelCol + 1);
-//        sb.append(" ");
-//        sb.append(row[0]);
-//        sb.append(" ");
-//        sb.append(COLUMNS - labelCol);
-//        sb.append(" ");
-//        sb.append(1);
-//        sb.append(", growx");
-//        String textConstraint = sb.toString();
-//
-//        GuiFeatureInputField feature = new GuiFeatureInputField(data, textConstraint);
-//        guiElements.add(feature);
-//    }
-//    private void handleFeatureOutputField( FieldData data, int[] row, List<ModuleGuiElement> guiElements ) {
-//        StringBuilder sb = new StringBuilder();
-//        sb.append("cell ");
-//        sb.append(0);
-//        sb.append(" ");
-//        sb.append(row[0]);
-//        sb.append(" ");
-//        int labelCol = COLUMNS / 3;
-//        sb.append(labelCol);
-//        sb.append(" ");
-//        sb.append(1);
-//        // sb.append(", growx");
-//        String labelConstraint = sb.toString();
-//
-//        GuiLabel label = new GuiLabel(data, labelConstraint, false);
-//        guiElements.add(label);
-//
-//        sb = new StringBuilder();
-//        sb.append("cell ");
-//        sb.append(labelCol + 1);
-//        sb.append(" ");
-//        sb.append(row[0]);
-//        sb.append(" ");
-//        sb.append(COLUMNS - labelCol);
-//        sb.append(" ");
-//        sb.append(1);
-//        sb.append(", growx");
-//        String textConstraint = sb.toString();
-//
-//        GuiFeatureOutputField coverage = new GuiFeatureOutputField(data, textConstraint);
-//        guiElements.add(coverage);
-//    }
-
-    private void handleHashMapInputField( FieldData data, int[] row, List<ModuleGuiElement> guiElements ) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("cell ");
-        sb.append(0);
-        sb.append(" ");
-        sb.append(row[0]);
-        sb.append(" ");
-        int labelCol = COLUMNS / 3;
-        sb.append(labelCol);
-        sb.append(" ");
-        sb.append(1);
-        // sb.append(", growx");
-        String labelConstraint = sb.toString();
-
-        GuiLabel label = new GuiLabel(data, labelConstraint, false);
-        guiElements.add(label);
-
-        sb = new StringBuilder();
-        sb.append("cell ");
-        sb.append(labelCol + 1);
-        sb.append(" ");
-        sb.append(row[0]);
-        sb.append(" ");
-        sb.append(COLUMNS - labelCol);
-        sb.append(" ");
-        sb.append(1);
-        sb.append(", growx");
-        String textConstraint = sb.toString();
-
-        GuiHashMapInputField hashmap = new GuiHashMapInputField(data, textConstraint);
-        guiElements.add(hashmap);
-    }
-
-    private void handleHashMapOutputField( FieldData data, int[] row, List<ModuleGuiElement> guiElements ) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("cell ");
-        sb.append(0);
-        sb.append(" ");
-        sb.append(row[0]);
-        sb.append(" ");
-        int labelCol = COLUMNS / 3;
-        sb.append(labelCol);
-        sb.append(" ");
-        sb.append(1);
-        // sb.append(", growx");
-        String labelConstraint = sb.toString();
-
-        GuiLabel label = new GuiLabel(data, labelConstraint, false);
-        guiElements.add(label);
-
-        sb = new StringBuilder();
-        sb.append("cell ");
-        sb.append(labelCol + 1);
-        sb.append(" ");
-        sb.append(row[0]);
-        sb.append(" ");
-        sb.append(COLUMNS - labelCol);
-        sb.append(" ");
-        sb.append(1);
-        sb.append(", growx");
-        String textConstraint = sb.toString();
-
-        GuiHashMapOutputField hashmap = new GuiHashMapOutputField(data, textConstraint);
-        guiElements.add(hashmap);
-    }
-
-    private void handleListInputField( FieldData data, int[] row, List<ModuleGuiElement> guiElements ) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("cell ");
-        sb.append(0);
-        sb.append(" ");
-        sb.append(row[0]);
-        sb.append(" ");
-        int labelCol = COLUMNS / 3;
-        sb.append(labelCol);
-        sb.append(" ");
-        sb.append(1);
-        String labelConstraint = sb.toString();
-
-        GuiLabel label = new GuiLabel(data, labelConstraint, false);
-        guiElements.add(label);
-
-        sb = new StringBuilder();
-        sb.append("cell ");
-        sb.append(labelCol + 1);
-        sb.append(" ");
-        sb.append(row[0]);
-        sb.append(" ");
-        sb.append(COLUMNS - labelCol);
-        sb.append(" ");
-        sb.append(1);
-        sb.append(", growx");
-        String textConstraint = sb.toString();
-
-        GuiListInputField hashmap = new GuiListInputField(data, textConstraint);
-        guiElements.add(hashmap);
-    }
-
-    private void handleFilesPathListInputField( FieldData data, int[] row, List<ModuleGuiElement> guiElements ) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("cell ");
-        sb.append(0);
-        sb.append(" ");
-        sb.append(row[0]);
-        sb.append(" ");
-        sb.append(COLUMNS);
-        sb.append(" ");
-        sb.append(1);
-        String labelConstraint = sb.toString();
-
-        GuiLabel label = new GuiLabel(data, labelConstraint, false);
-        guiElements.add(label);
-
-        row[0] = row[0] + 1;
-        sb = new StringBuilder();
-        sb.append("cell ");
-        sb.append(0);
-        sb.append(" ");
-        sb.append(row[0]);
-        sb.append(" ");
-        sb.append(COLUMNS);
-        sb.append(" ");
-        sb.append(StageConstants.LISTHEIGHT);
-        row[0] = row[0] + StageConstants.LISTHEIGHT;
-        sb.append(", growx, growy");
-        String textConstraint = sb.toString();
-
-        GuiFilespathListInputField coverageList = new GuiFilespathListInputField(data, textConstraint);
-        guiElements.add(coverageList);
-    }
-
-    private void handleListOutputField( FieldData data, int[] row, List<ModuleGuiElement> guiElements ) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("cell ");
-        sb.append(0);
-        sb.append(" ");
-        sb.append(row[0]);
-        sb.append(" ");
-        int labelCol = COLUMNS / 3;
-        sb.append(labelCol);
-        sb.append(" ");
-        sb.append(1);
-        // sb.append(", growx");
-        String labelConstraint = sb.toString();
-
-        GuiLabel label = new GuiLabel(data, labelConstraint, false);
-        guiElements.add(label);
-
-        sb = new StringBuilder();
-        sb.append("cell ");
-        sb.append(labelCol + 1);
-        sb.append(" ");
-        sb.append(row[0]);
-        sb.append(" ");
-        sb.append(COLUMNS - labelCol);
-        sb.append(" ");
-        sb.append(1);
-        sb.append(", growx");
-        String textConstraint = sb.toString();
-
-        GuiListOutputField hashmap = new GuiListOutputField(data, textConstraint);
-        guiElements.add(hashmap);
-    }
-
-//    private void handleGridgeometryInputField( FieldData data, int[] row, List<ModuleGuiElement> guiElements ) {
-//        StringBuilder sb = new StringBuilder();
-//        sb.append("cell ");
-//        sb.append(0);
-//        sb.append(" ");
-//        sb.append(row[0]);
-//        sb.append(" ");
-//        int labelCol = COLUMNS / 3;
-//        sb.append(labelCol);
-//        sb.append(" ");
-//        sb.append(1);
-//        // sb.append(", growx");
-//        String labelConstraint = sb.toString();
-//
-//        GuiLabel label = new GuiLabel(data, labelConstraint, false);
-//        guiElements.add(label);
-//
-//        sb = new StringBuilder();
-//        sb.append("cell ");
-//        sb.append(labelCol + 1);
-//        sb.append(" ");
-//        sb.append(row[0]);
-//        sb.append(" ");
-//        sb.append(COLUMNS - labelCol);
-//        sb.append(" ");
-//        sb.append(1);
-//        sb.append(", growx");
-//        String textConstraint = sb.toString();
-//
-//        GuiGridgeometryInputField gridgeometry = new GuiGridgeometryInputField(data, textConstraint);
-//        guiElements.add(gridgeometry);
-//    }
 
     private void handleComboField( FieldData data, int[] row, List<ModuleGuiElement> guiElements ) {
         StringBuilder sb = new StringBuilder();
