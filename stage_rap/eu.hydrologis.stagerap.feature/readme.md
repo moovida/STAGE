@@ -1,0 +1,1 @@
+This feature allows to deploy of STAGE plugins and dependencies.
