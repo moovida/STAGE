@@ -12,20 +12,22 @@ import static eu.hydrologis.rap.stage.utils.StageConstants.LIBS_MAIN_FOLDER_NAME
 import static eu.hydrologis.rap.stage.utils.StageConstants.LIBS_SUBFOLDER_NAME;
 import static eu.hydrologis.rap.stage.utils.StageConstants.MODULES_SUBFOLDER_NAME;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
+
+import java.io.File;
+import java.io.IOException;
+
+import eu.hydrologis.rap.stage.utils.StageConstants;
+import eu.hydrologis.rap.stage.workspace.StageWorkspace;
 
 import org.eclipse.rap.rwt.RWT;
 import org.eclipse.rap.rwt.SingletonUtil;
 import org.eclipse.rap.rwt.service.ApplicationContext;
 import org.eclipse.rap.rwt.service.SettingStore;
-
-import eu.hydrologis.rap.stage.utils.StageConstants;
 
 public class StageSessionPluginSingleton {
 
@@ -45,7 +47,9 @@ public class StageSessionPluginSingleton {
     private HashMap<String, Process> runningProcessesMap = new HashMap<String, Process>();
 
     private StageSessionPluginSingleton() {
-        installationFolder = new File(".");
+        installationFolder = StageWorkspace.getInstance().getStageWorkspaceFolder();
+//        installationFolder = new File(".");
+        
         modulesFolder = new File(installationFolder, LIBS_MAIN_FOLDER_NAME + "/" + MODULES_SUBFOLDER_NAME);
         libsFolder = new File(installationFolder, LIBS_MAIN_FOLDER_NAME + "/" + LIBS_SUBFOLDER_NAME);
         configFolder = new File(installationFolder, "stageconfig");
@@ -91,7 +95,7 @@ public class StageSessionPluginSingleton {
                     return new String[0];
                 }
 
-                String[] existingJarsArray = (String[]) existingList.toArray(new String[existingList.size()]);
+                String[] existingJarsArray = existingList.toArray(new String[existingList.size()]);
                 return existingJarsArray;
             }
         }
