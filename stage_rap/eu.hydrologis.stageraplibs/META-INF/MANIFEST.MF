@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Stagerap Libs
-Bundle-SymbolicName: eu.hydrologis.stageraplibs
+Bundle-SymbolicName: eu.hydrologis.stageraplibs;singleton:=true
 Bundle-Version: 1.0.0
 Bundle-Vendor: HydroloGIS S.r.l.
 Bundle-ClassPath: .,
@@ -1057,7 +1057,6 @@ Export-Package: antlr,
  org.scannotation,
  org.scannotation.archiveiterator,
  org.sqlite
-Bundle-ActivationPolicy: lazy
 Require-Bundle: org.eclipse.rap.rwt,
  org.eclipse.rap.jface
 Import-Package: javax.imageio,
@@ -1080,3 +1079,4 @@ Import-Package: javax.imageio,
  javax.swing,
  javax.swing.event,
  javax.swing.tree
+Bundle-ActivationPolicy: lazy

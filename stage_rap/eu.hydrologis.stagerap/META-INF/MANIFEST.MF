@@ -32,3 +32,4 @@ Import-Package: javax.imageio,
  javax.swing.event,
  javax.swing.tree
 Bundle-ClassPath: .
+Bundle-ActivationPolicy: lazy
