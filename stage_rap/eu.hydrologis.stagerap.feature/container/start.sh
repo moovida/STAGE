@@ -13,7 +13,7 @@ JAVA_HOME=/home/falko/bin/jdk1.8
 
 cd $INSTALLDIR
 
-export VMARGS='-Xverify:none -server -XX:+TieredCompilation -Xmx1024m -XX:NewRatio=4 -XX:+UseG1GC -XX:MinHeapFreeRatio=20 -XX:MaxHeapFreeRatio=30 -XX:SoftRefLRUPolicyMSPerMB=1000'
+export VMARGS='-Djava.awt.headless=true -Xverify:none -server -XX:+TieredCompilation -Xmx1024m -XX:NewRatio=4 -XX:+UseG1GC -XX:MinHeapFreeRatio=20 -XX:MaxHeapFreeRatio=30 -XX:SoftRefLRUPolicyMSPerMB=1000'
 export ARGS='-console -consolelog -registryMultiLanguage'
 export LOGARGS='-Dorg.apache.commons.logging.Log=org.apache.commons.logging.impl.SimpleLog -Dorg.eclipse.equinox.http.jetty.log.stderr.threshold=info'
 
