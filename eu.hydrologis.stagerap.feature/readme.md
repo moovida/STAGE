@@ -9,7 +9,6 @@ More info and docs:
 
   - the container subdir contains the OSGi launcher
   - extracted from Eclipse-IDE install
-  - currently: Linux-32bit and Win-32bit 
 
 ## Deploy
 
