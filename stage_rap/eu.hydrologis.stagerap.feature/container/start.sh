@@ -1,21 +1,34 @@
-#!/bin/bash -v
+#!/bin/bash
 
-# Simple start script
-#   - set working dir the INSTALLDIR (allow eclipse exe to find runtime)
-#   - find Java (hard wired)
-#   - find the workspace (hard wired)
-#   - define Java param and app params
+# STAGE start script for UNIX based Systems
 
-INSTALLDIR=`dirname $0`
-WORKSPACE=/home/falko/servers/virgo-nano-rap-3.7.0.CI-2014-11-24_03-37-00/
+# DATA TO BE CONFIGURED
+# START
+INSTALLDIR=`pwd`
+WORKSPACE=$INSTALLDIR/STAGEWORKSPACE
 PORT=10000
-JAVA_HOME=/home/falko/bin/jdk1.8
+MAXHEAP=4g
+# END
 
-cd $INSTALLDIR
 
-export VMARGS='-Djava.awt.headless=true -Xverify:none -server -XX:+TieredCompilation -Xmx1024m -XX:NewRatio=4 -XX:+UseG1GC -XX:MinHeapFreeRatio=20 -XX:MaxHeapFreeRatio=30 -XX:SoftRefLRUPolicyMSPerMB=1000'
-export ARGS='-console -consolelog -registryMultiLanguage'
-export LOGARGS='-Dorg.apache.commons.logging.Log=org.apache.commons.logging.impl.SimpleLog -Dorg.eclipse.equinox.http.jetty.log.stderr.threshold=info'
 
-echo $WORKSPACE
-./eclipse -vm $JAVA_HOME/bin/java $ARGS -vmargs $VMARGS -Dorg.osgi.service.http.port=$PORT -Dstage.workspace=$WORKSPACE $LOGARGS
+export VMARGS="-Djava.awt.headless=true -Xverify:none -server -XX:+TieredCompilation -Xmx$MAXHEAP -XX:NewRatio=4 -XX:+UseG1GC -XX:MinHeapFreeRatio=20 -XX:MaxHeapFreeRatio=30 -XX:SoftRefLRUPolicyMSPerMB=1000"
+export ARGS="-console -consolelog -registryMultiLanguage"
+export LOGARGS="-Dorg.apache.commons.logging.Log=org.apache.commons.logging.impl.SimpleLog -Dorg.eclipse.equinox.http.jetty.log.stderr.threshold=info"
+
+
+hardware=`uname -i`
+
+EXEC=stage32
+JRE=$INSTALLDIR/jre32/
+if [ "$hardware" = "x86_64" ]
+then
+   JRE=$INSTALLDIR/jre64/
+   EXEC=stage64
+fi
+
+echo "INSTALLDIR = $INSTALLDIR"
+echo "WORKSPACE = $WORKSPACE"
+echo "JAVA = $JRE/bin/java"
+echo "./$EXEC -vm $JRE/bin/java $ARGS -vmargs $VMARGS -Dorg.osgi.service.http.port=$PORT -Dstage.workspace=$WORKSPACE $LOGARGS"
+./$EXEC -vm $JRE/bin/java $ARGS -vmargs $VMARGS -Dorg.osgi.service.http.port=$PORT -Dstage.workspace=$WORKSPACE $LOGARGS

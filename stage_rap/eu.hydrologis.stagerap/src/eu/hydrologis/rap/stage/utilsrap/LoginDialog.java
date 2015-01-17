@@ -149,9 +149,15 @@ public class LoginDialog extends Dialog {
                 if (LoginChecker.isLoginOk(username, password)) {
                     httpSession.setAttribute(SESSION_USER_KEY, username);
 
-                    StageWorkspace.getInstance().getDataFolder(username);
-                    StageWorkspace.getInstance().getScriptsFolder(username);
-                    StageWorkspace.getInstance().getGeopaparazziFolder(username);
+                    try {
+                        StageWorkspace.getInstance().getDataFolder(username);
+                        StageWorkspace.getInstance().getScriptsFolder(username);
+                        StageWorkspace.getInstance().getGeopaparazziFolder(username);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        MessageDialogUtil.openError(shell, "Error", "An error occurred while trying to access the workspace.",
+                                null);
+                    }
                     return true;
                 }
             }

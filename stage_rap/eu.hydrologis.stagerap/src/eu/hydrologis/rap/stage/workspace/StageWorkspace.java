@@ -45,11 +45,11 @@ public class StageWorkspace {
     }
 
     public File getStageWorkspaceFolder() {
-		return stageWorkspaceFolder;
-	}
+        return stageWorkspaceFolder;
+    }
 
-	public File getUserFolder( String user ) {
-        File userFolder = new File( new File(stageWorkspaceFolder, "STAGEWORKSPACE"), user);
+    public File getUserFolder( String user ) {
+        File userFolder = new File(stageWorkspaceFolder, user);
         if (!userFolder.exists()) {
             if (!userFolder.mkdirs()) {
                 throw new RuntimeException(COULD_NOT_CREATE_USER_FOLDER);
