@@ -13,12 +13,12 @@ hs_err_pid*
 
 *.swp
 *.swp~
-eu.hydrologis.jconsole/bin
-eu.hydrologis.jgrass.jconsole/bin
-eu.hydrologis.stage/bin
-eu.udig.jconsole/bin
-stage_rap/eu.hydrologis.stagerap/bin
-stage_rap/eu.hydrologis.stageraplibs/bin
-eu.udig.omsbox/bin
-stage_rap/org.eclipse.rap.addons.filedialog/bin
-stage_rap/org.eclipse.rap.addons.fileupload/bin
+
+eu.hydrologis.stage.application/bin
+eu.hydrologis.stage.feature/bin
+eu.hydrologis.stage.geopaparazzi/bin
+eu.hydrologis.stage.libs/bin
+eu.hydrologis.stage.modules/bin
+org.eclipse.rap.addons.filedialog/bin
+org.eclipse.rap.addons.fileupload/bin
+
