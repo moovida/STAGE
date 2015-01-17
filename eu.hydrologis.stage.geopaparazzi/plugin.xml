@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="org.eclipse.equinox.http.registry.servlets">
+      <servlet
+            alias="/stage_gplist_download"
+            class="eu.hydrologis.stage.geopaparazzi.servlets.QueryGeopaparazziProjectsServlet">
+      </servlet>
+      <servlet
+            alias="/stage_gpproject_download"
+            class="eu.hydrologis.stage.geopaparazzi.servlets.DownloadGeopaparazziProjectServlet">
+      </servlet>
+   </extension>
+
+</plugin>
