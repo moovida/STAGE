@@ -46,12 +46,12 @@ public class QueryGeopaparazziProjectsServlet extends HttpServlet {
         String authHeader = req.getHeader("Authorization");
         PrintWriter out = resp.getWriter();
 
-        String[] userPwd = {"testuser", "t"};//StageUtils.getUserPwdWithBasicAuthentication(authHeader);
+        String[] userPwd = {"testuser", "t"};// StageUtils.getUserPwdWithBasicAuthentication(authHeader);
         String user = "null";
         if (userPwd != null) {
             user = userPwd[0];
         }
-        StageLogger.logDebug("Project query incoming with user: " + user);
+        StageLogger.logDebug(this, "Project query incoming with user: " + user);
 
         if (userPwd == null || !LoginChecker.isLoginOk(userPwd[0], userPwd[1])) {
             out.print("<b>No permission!</b>");

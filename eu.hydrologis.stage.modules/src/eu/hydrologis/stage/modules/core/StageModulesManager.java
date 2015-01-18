@@ -24,7 +24,6 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.logging.Logger;
 
 import oms3.Access;
 import oms3.ComponentAccess;
@@ -36,6 +35,7 @@ import oms3.annotations.Status;
 import oms3.annotations.UI;
 import oms3.annotations.Unit;
 import oms3.util.Components;
+import eu.hydrologis.stage.libs.StageLibsActivator;
 import eu.hydrologis.stage.libs.log.StageLogger;
 import eu.hydrologis.stage.modules.StageSessionPluginSingleton;
 import eu.hydrologis.stage.modules.utils.AnnotationUtilities;
@@ -74,9 +74,9 @@ public class StageModulesManager {
         /*
          * load modules
          */
-        File modulesFolder = StageSessionPluginSingleton.getInstance().getModulesFolders();
+        File modulesFolder = StageLibsActivator.getModulesLibsFolder();
         if (modulesFolder != null) {
-            StageSessionPluginSingleton.getInstance().log("Searching module libraries in: " + modulesFolder.getAbsolutePath());
+            StageLogger.logDebug(this, "Searching module libraries in: " + modulesFolder.getAbsolutePath());
             File[] extraJars = modulesFolder.listFiles(new FilenameFilter(){
                 public boolean accept( File dir, String name ) {
                     return name.endsWith(".jar");
@@ -91,9 +91,9 @@ public class StageModulesManager {
          * load libs
          */
         if (!onlyModules) {
-            File libsFolder = StageSessionPluginSingleton.getInstance().getLibsFolders();
+            File libsFolder = StageLibsActivator.getGeotoolsLibsFolder();
             if (libsFolder != null) {
-                StageSessionPluginSingleton.getInstance().log("Searching libs in: " + libsFolder.getAbsolutePath());
+                StageLogger.logDebug(this, "Searching libs in: " + libsFolder.getAbsolutePath());
                 File[] extraJars = libsFolder.listFiles(new FilenameFilter(){
                     public boolean accept( File dir, String name ) {
                         return name.endsWith(".jar");
@@ -200,7 +200,7 @@ public class StageModulesManager {
         }
 
         List<URL> urlList = new ArrayList<URL>();
-        StageLogger.logDebug("ADDED TO URL CLASSLOADER:");
+        StageLogger.logDebug(this, "ADDED TO URL CLASSLOADER:");
         for( int i = 0; i < loadedJarsList.size(); i++ ) {
             String jarPath = loadedJarsList.get(i);
             File jarFile = new File(jarPath);
@@ -208,14 +208,14 @@ public class StageModulesManager {
                 continue;
             }
             urlList.add(jarFile.toURI().toURL());
-            StageLogger.logDebug("--> " + jarPath);
+            StageLogger.logDebug(this, "--> " + jarPath);
         }
         URL[] urls = (URL[]) urlList.toArray(new URL[urlList.size()]);
         List<Class< ? >> classesList = new ArrayList<Class< ? >>();
 
         jarClassloader = new URLClassLoader(urls, this.getClass().getClassLoader());
 
-        StageLogger.logDebug("LOAD MODULES:");
+        StageLogger.logDebug(this, "LOAD MODULES:");
         for( URL url : urlList ) {
             ResourceFinder finder = new ResourceFinder("META-INF/", url);
             Map<String, Properties> servicesList = finder.mapAllProperties("services");
@@ -248,7 +248,7 @@ public class StageModulesManager {
                     Name name = possibleModulesClass.getAnnotation(Name.class);
                     if (name != null) {
                         classesList.add(possibleModulesClass);
-                        StageLogger.logDebug("--> " + className);
+                        StageLogger.logDebug(this, "--> " + className);
                     }
                 }
             }
@@ -257,9 +257,9 @@ public class StageModulesManager {
         if (classesList.size() == 0) {
             // try the old and slow way
             try {
-                StageLogger.logDebug("URLS TO LOAD:");
+                StageLogger.logDebug(this, "URLS TO LOAD:");
                 for( URL url : urls ) {
-                    StageLogger.logDebug(url.toExternalForm());
+                    StageLogger.logDebug(this, url.toExternalForm());
                 }
                 List<Class< ? >> allComponents = new ArrayList<Class< ? >>();
                 allComponents = Components.getComponentClasses(jarClassloader, urls);
@@ -344,11 +344,9 @@ public class StageModulesManager {
 
             } catch (NoClassDefFoundError e) {
                 if (moduleClass != null)
-                    StageLogger.logError("ERROR IN: " + moduleClass.getCanonicalName(), e.getCause());
-                e.printStackTrace();
+                    StageLogger.logError(this, "ERROR", e.getCause());
             }
         }
-
     }
 
     private void addInput( Access access, ModuleDescription module ) throws Exception {

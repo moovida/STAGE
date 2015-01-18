@@ -25,6 +25,7 @@ import org.eclipse.rap.rwt.SingletonUtil;
 import org.eclipse.rap.rwt.service.ApplicationContext;
 import org.eclipse.rap.rwt.service.SettingStore;
 
+import eu.hydrologis.stage.libs.StageLibsActivator;
 import eu.hydrologis.stage.libs.workspace.StageWorkspace;
 import eu.hydrologis.stage.modules.utils.StageConstants;
 
@@ -37,8 +38,6 @@ public class StageSessionPluginSingleton {
     public static final String STAGE_RAM_KEY = "STAGE_RAM_KEY"; //$NON-NLS-1$
 
     private File installationFolder;
-    private File modulesFolder;
-    private File libsFolder;
     private File configFolder;
     private File jreFolder;
     private boolean doIgnoreProcessingRegion = true;
@@ -48,8 +47,6 @@ public class StageSessionPluginSingleton {
     private StageSessionPluginSingleton() {
         installationFolder = new File("."); // TODO make this good
         
-        modulesFolder = new File(installationFolder, LIBS_MAIN_FOLDER_NAME + "/" + MODULES_SUBFOLDER_NAME);
-        libsFolder = new File(installationFolder, LIBS_MAIN_FOLDER_NAME + "/" + LIBS_SUBFOLDER_NAME);
         configFolder = new File(installationFolder, "stageconfig");
         jreFolder = new File(installationFolder, "jre");
         if (!configFolder.exists()) {
@@ -59,14 +56,6 @@ public class StageSessionPluginSingleton {
 
     public static StageSessionPluginSingleton getInstance() {
         return SingletonUtil.getSessionInstance(StageSessionPluginSingleton.class);
-    }
-
-    public File getModulesFolders() {
-        return modulesFolder;
-    }
-
-    public File getLibsFolders() {
-        return libsFolder;
     }
 
     public File getJreFolders() {
@@ -187,13 +176,13 @@ public class StageSessionPluginSingleton {
             }
 
             // add jars in the libs folder
-            File libsFolder = getLibsFolders();
+            File libsFolder = StageLibsActivator.getGeotoolsLibsFolder();
             if (libsFolder != null) {
                 sb.append(File.pathSeparator);
                 addPath(libsFolder.getAbsolutePath() + File.separator + "*", sb);
             }
             // add jars in the modules folder
-            File modulesFolder = getModulesFolders();
+            File modulesFolder = StageLibsActivator.getModulesLibsFolder();
             if (modulesFolder != null) {
                 sb.append(File.pathSeparator);
                 addPath(modulesFolder.getAbsolutePath() + File.separator + "*", sb);
@@ -315,7 +304,4 @@ public class StageSessionPluginSingleton {
         this.doIgnoreProcessingRegion = doIgnoreProcessingRegion;
     }
 
-    public void log( String string ) {
-        System.out.println(string);
-    }
 }

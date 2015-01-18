@@ -8,6 +8,9 @@
  */
 package eu.hydrologis.stage.libs.log;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 /**
  * A simple logger, to be properly implemented.
  * 
@@ -19,21 +22,41 @@ public class StageLogger {
     private static boolean LOG_DEBUG = false;
     private static boolean LOG_ERROR = true;
 
-    public static void logInfo( String msg ) {
-        if (LOG_INFO)
+    private static final String SEP = ":: ";
+
+    private static SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+    public static void logInfo( Object owner, String msg ) {
+        if (LOG_INFO) {
+            msg = toMessage(owner, msg);
             System.out.println(msg);
+        }
     }
 
-    public static void logDebug( String msg ) {
-        if (LOG_DEBUG)
+    public static void logDebug( Object owner, String msg ) {
+        if (LOG_DEBUG) {
+            msg = toMessage(owner, msg);
             System.out.println(msg);
+        }
     }
 
-    public static void logError( String msg, Throwable e ) {
+    public static void logError( Object owner, String msg, Throwable e ) {
         if (LOG_ERROR) {
+            msg = toMessage(owner, msg);
             System.err.println(msg);
             e.printStackTrace();
         }
+    }
+
+    private static String toMessage( Object owner, String msg ) {
+        String newMsg = f.format(new Date()) + SEP;
+        if (owner instanceof String) {
+            newMsg = newMsg + owner + SEP;
+        } else {
+            newMsg = newMsg + owner.getClass().getSimpleName() + SEP;
+        }
+        newMsg = newMsg + msg;
+        return newMsg;
     }
 
 }

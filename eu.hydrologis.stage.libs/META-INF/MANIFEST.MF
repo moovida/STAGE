@@ -180,6 +180,7 @@ Export-Package: antlr,
  com.vividsolutions.jtsexample.operation.polygonize,
  com.vividsolutions.jtsexample.precision,
  com.vividsolutions.jtsexample.technique,
+ eu.hydrologis.stage.libs,
  eu.hydrologis.stage.libs.log,
  eu.hydrologis.stage.libs.utils,
  eu.hydrologis.stage.libs.utilsrap,
@@ -1062,7 +1063,9 @@ Export-Package: antlr,
  org.scannotation.archiveiterator,
  org.sqlite
 Require-Bundle: org.eclipse.rap.rwt,
- org.eclipse.rap.jface
+ org.eclipse.rap.jface,
+ org.eclipse.core.runtime;bundle-version="3.10.0",
+ org.eclipse.osgi
 Import-Package: javax.imageio,
  javax.imageio.event,
  javax.imageio.metadata,
@@ -1084,3 +1087,4 @@ Import-Package: javax.imageio,
  javax.swing.event,
  javax.swing.tree
 Bundle-ActivationPolicy: lazy
+Bundle-Activator: eu.hydrologis.stage.libs.StageLibsActivator
