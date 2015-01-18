@@ -230,7 +230,8 @@ public class GuiTextField extends ModuleGuiElement implements ModifyListener, Fo
             browseButton.addSelectionListener(new SelectionAdapter(){
                 public void widgetSelected( SelectionEvent e ) {
                     File dataFolder = StageWorkspace.getInstance().getDataFolder(User.getCurrentUserName());
-                    FileSelectionDialog fileDialog = new FileSelectionDialog(browseButton.getShell(), dataFolder, null, null);
+                    FileSelectionDialog fileDialog = new FileSelectionDialog(browseButton.getShell(), dataFolder, null, null,
+                            null);
                     int returnCode = fileDialog.open();
                     if (returnCode == SWT.CANCEL) {
                         return;
@@ -272,7 +273,8 @@ public class GuiTextField extends ModuleGuiElement implements ModifyListener, Fo
             browseButton.addSelectionListener(new SelectionAdapter(){
                 public void widgetSelected( SelectionEvent e ) {
                     File dataFolder = StageWorkspace.getInstance().getDataFolder(User.getCurrentUserName());
-                    FileSelectionDialog fileDialog = new FileSelectionDialog(browseButton.getShell(), dataFolder, null, null);
+                    FileSelectionDialog fileDialog = new FileSelectionDialog(browseButton.getShell(), dataFolder, null, null,
+                            null);
                     int returnCode = fileDialog.open();
                     if (returnCode == SWT.CANCEL) {
                         return;

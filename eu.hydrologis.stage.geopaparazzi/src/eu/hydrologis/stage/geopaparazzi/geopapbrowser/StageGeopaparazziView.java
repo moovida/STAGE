@@ -28,6 +28,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.IMenuListener;
+import org.eclipse.jface.action.IMenuManager;
+import org.eclipse.jface.action.MenuManager;
+import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITreeContentProvider;
@@ -65,6 +70,7 @@ import eu.hydrologis.stage.geopaparazzi.stage.utils.GeopaparazziWorkspaceUtiliti
 import eu.hydrologis.stage.libs.utils.FileUtilities;
 import eu.hydrologis.stage.libs.utils.ImageCache;
 import eu.hydrologis.stage.libs.utils.StageUtils;
+import eu.hydrologis.stage.libs.utilsrap.DownloadUtils;
 import eu.hydrologis.stage.libs.utilsrap.ImageServiceHandler;
 import eu.hydrologis.stage.libs.utilsrap.ImageUtil;
 
@@ -444,9 +450,46 @@ public class StageGeopaparazziView {
 
         });
 
+        final ImageDescriptor exportImageDescr = ImageDescriptor.createFromImage(ImageCache.getInstance().getImage(display,
+                ImageCache.EXPORT));
+        MenuManager manager = new MenuManager();
+        modulesViewer.getControl().setMenu(manager.createContextMenu(modulesViewer.getControl()));
+        manager.addMenuListener(new IMenuListener(){
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public void menuAboutToShow( IMenuManager manager ) {
+                if (modulesViewer.getSelection() instanceof IStructuredSelection) {
+                    IStructuredSelection selection = (IStructuredSelection) modulesViewer.getSelection();
+                    final Object selectedItem = selection.getFirstElement();
+                    if (selectedItem == null || selection.isEmpty()) {
+                        return;
+                    }
+
+                    if (selectedItem instanceof ProjectInfo) {
+                        manager.add(new Action("Download", exportImageDescr){
+                            private static final long serialVersionUID = 1L;
+
+                            @Override
+                            public void run() {
+                                ProjectInfo selectedProject = (ProjectInfo) selectedItem;
+                                File dbFile = selectedProject.databaseFile;
+                                if (dbFile != null && dbFile.exists() && !dbFile.isDirectory()) {
+                                    try {
+                                        new DownloadUtils().sendDownload(modulesViewer.getControl().getShell(), dbFile);
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            }
+                        });
+                    }
+                }
+            }
+        });
+        manager.setRemoveAllWhenShown(true);
         return modulesViewer;
     }
-
     /**
      * Extract data from the db and add them to the map view.
      * 

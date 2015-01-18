@@ -45,7 +45,7 @@ import eu.hydrologis.stage.libs.workspace.User;
  * @author Andrea Antonello (www.hydrologis.com)
  */
 @SuppressWarnings("serial")
-public class StageFilemanagementView {
+public class GeopaparazziFilemanagementView {
 
     private FileUpload fileUpload;
     private Label fileNameLabel;
@@ -76,7 +76,7 @@ public class StageFilemanagementView {
         // fileDialogArea.setLayoutData(ExampleUtil.createHorzFillData());
         Control fileDownloadArea = createFileDownloadArea(parent);
         fileDownloadArea.setLayoutData(ExampleUtil.createHorzFillData());
-        
+
         Control geopapFileUploadArea = createGeopaparazziFileUploadArea(parent);
         geopapFileUploadArea.setLayoutData(ExampleUtil.createHorzFillData());
         return parent;
@@ -153,7 +153,7 @@ public class StageFilemanagementView {
         });
         return uploadGroup;
     }
-    
+
     private String startUploadReceiver() {
         DiskFileUploadReceiver receiver = new DiskFileUploadReceiver(){
             @Override
@@ -206,7 +206,7 @@ public class StageFilemanagementView {
         });
         return uploadHandler.getUploadUrl();
     }
-    
+
     private String startGpUploadReceiver() {
         DiskFileUploadReceiver receiver = new DiskFileUploadReceiver(){
             @Override
@@ -280,7 +280,8 @@ public class StageFilemanagementView {
             public void widgetSelected( SelectionEvent e ) {
                 try {
                     File userFolder = StageWorkspace.getInstance().getUserFolder(User.getCurrentUserName());
-                    FileSelectionDialog fileDialog = new FileSelectionDialog(parentShell, userFolder, null, null);
+                    FileSelectionDialog fileDialog = new FileSelectionDialog(parentShell, userFolder, null, null, new String[]{
+                            StageWorkspace.DATA_FOLDERNAME, StageWorkspace.SCRIPTS_FOLDERNAME});
                     int returnCode = fileDialog.open();
                     if (returnCode == SWT.CANCEL) {
                         return;

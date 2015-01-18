@@ -58,9 +58,11 @@ public class FileSelectionDialog extends Dialog {
     private String[] extentionsToHide;
     private String[] allowedExtentions;
     private Text filterText;
+    private String[] foldernamesToHide;
 
-    public FileSelectionDialog( Shell parent, File parentFile, String[] extentionsToHide, String[] allowedExtentions ) {
-        this(parent, SWT.APPLICATION_MODAL, parentFile, extentionsToHide, allowedExtentions);
+    public FileSelectionDialog( Shell parent, File parentFile, String[] extentionsToHide, String[] allowedExtentions,
+            String[] foldernamesToHide ) {
+        this(parent, SWT.APPLICATION_MODAL, parentFile, extentionsToHide, allowedExtentions, foldernamesToHide);
     }
 
     /**
@@ -72,13 +74,16 @@ public class FileSelectionDialog extends Dialog {
      * @param extentionsToHide the array of extensions to hide in the browser (i.e. 
      *          they are trimmed away from the end of the name).
      * @param allowedExtentions the array of allowed extensions to show.
+     * @param foldernamesToHide the array of folder names to hide in the browser (i.e. 
      */
-    public FileSelectionDialog( Shell parent, int style, File parentFile, String[] extentionsToHide, String[] allowedExtentions ) {
+    public FileSelectionDialog( Shell parent, int style, File parentFile, String[] extentionsToHide, String[] allowedExtentions,
+            String[] foldernamesToHide ) {
         super(parent, style);
         this.parent = parent;
         this.parentFile = parentFile;
         this.extentionsToHide = extentionsToHide;
         this.allowedExtentions = allowedExtentions;
+        this.foldernamesToHide = foldernamesToHide;
         checkSubclass();
         setText(SELECT_FILE);
     }
@@ -106,8 +111,6 @@ public class FileSelectionDialog extends Dialog {
         }
         return null;
     }
-
-
 
     @Override
     protected void prepareOpen() {
@@ -186,12 +189,19 @@ public class FileSelectionDialog extends Dialog {
                         File[] listFiles = parentFile.listFiles(new FileFilter(){
                             @Override
                             public boolean accept( File file ) {
+                                String name = file.getName();
                                 // allow folders
                                 if (file.isDirectory()) {
+                                    if (foldernamesToHide != null) {
+                                        for( String ext : foldernamesToHide ) {
+                                            if (name.endsWith(ext)) {
+                                                return false;
+                                            }
+                                        }
+                                    }
                                     return true;
                                 }
                                 // allowed if extension is allowed
-                                String name = file.getName();
                                 if (name.equals("content-type.tmp")) {
                                     return false;
                                 }
@@ -217,7 +227,7 @@ public class FileSelectionDialog extends Dialog {
                                 return isAllowed;
                             }
                         });
-                        
+
                         Arrays.sort(listFiles);
                         return listFiles;
                     }

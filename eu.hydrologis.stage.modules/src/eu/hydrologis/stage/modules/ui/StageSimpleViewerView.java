@@ -118,7 +118,7 @@ public class StageSimpleViewerView {
                 public void widgetSelected( SelectionEvent e ) {
                     try {
                         File userFolder = StageWorkspace.getInstance().getDataFolder(User.getCurrentUserName());
-                        FileSelectionDialog fileDialog = new FileSelectionDialog(parentShell, userFolder, null, null);
+                        FileSelectionDialog fileDialog = new FileSelectionDialog(parentShell, userFolder, null, null, null);
                         int returnCode = fileDialog.open();
                         if (returnCode == SWT.CANCEL) {
                             selectedFiles[index] = null;

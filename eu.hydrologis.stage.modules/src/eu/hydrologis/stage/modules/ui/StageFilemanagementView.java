@@ -184,7 +184,8 @@ public class StageFilemanagementView {
             public void widgetSelected( SelectionEvent e ) {
                 try {
                     File userFolder = StageWorkspace.getInstance().getUserFolder(User.getCurrentUserName());
-                    FileSelectionDialog fileDialog = new FileSelectionDialog(parentShell, userFolder, null, null);
+                    FileSelectionDialog fileDialog = new FileSelectionDialog(parentShell, userFolder, null, null,
+                            new String[]{StageWorkspace.GEOPAPARAZZI_FOLDERNAME});
                     int returnCode = fileDialog.open();
                     if (returnCode == SWT.CANCEL) {
                         return;

@@ -43,6 +43,8 @@ public class ImageCache {
 
     public static final String INFO = "information.png";
     public static final String PHOTO = "photo.png";
+
+    public static final String EXPORT = "export_wiz.gif";
     
 	private static ImageCache imageCache;
 

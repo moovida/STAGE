@@ -162,7 +162,7 @@ public class StageScriptingView {
             public void widgetSelected( SelectionEvent e ) {
                 File scriptsFolder = StageWorkspace.getInstance().getScriptsFolder(User.getCurrentUserName());
                 FileSelectionDialog fileDialog = new FileSelectionDialog(openButton.getShell(), scriptsFolder,
-                        new String[]{GROOVY}, new String[]{GROOVY});
+                        new String[]{GROOVY}, new String[]{GROOVY}, null);
                 int returnCode = fileDialog.open();
                 if (returnCode == SWT.CANCEL) {
                     return;

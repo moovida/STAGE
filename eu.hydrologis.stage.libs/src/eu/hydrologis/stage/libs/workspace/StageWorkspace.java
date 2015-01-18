@@ -17,7 +17,25 @@ import java.io.File;
  *
  */
 public class StageWorkspace {
-    public static String STAGE_DATA_FOLDER_SUBSTITUTION_NAME = "DATAFOLDER";
+    /**
+     * Name of the default geopaparazzi project folder.
+     */
+    public static final String GEOPAPARAZZI_FOLDERNAME = "geopaparazzi";
+    /**
+     * Name of the default data folder.
+     */
+    public static final String DATA_FOLDERNAME = "data";
+    /**
+     * Name of the default scripts folder.
+     */
+    public static final String SCRIPTS_FOLDERNAME = "scripts";
+
+    /**
+     * Name of the string to use in scripts to refer to the data folder.
+     * 
+     * <p>This will be substituted at runtime.
+     */
+    public static final String STAGE_DATA_FOLDER_SUBSTITUTION_NAME = "DATAFOLDER";
 
     private static final String COULD_NOT_CREATE_DATA_FOLDER = "Could not create data folder in workspace.";
     private static final String COULD_NOT_CREATE_GEOPAP_FOLDER = "Could not create geopaparazzi folder in workspace.";
@@ -60,7 +78,7 @@ public class StageWorkspace {
 
     public File getScriptsFolder( String user ) {
         File userFolder = getUserFolder(user);
-        File scriptsFolder = new File(userFolder, "scripts");
+        File scriptsFolder = new File(userFolder, SCRIPTS_FOLDERNAME);
         if (!scriptsFolder.exists() && !scriptsFolder.mkdirs()) {
             throw new RuntimeException(COULD_NOT_CREATE_SCRIPTS_FOLDER);
         }
@@ -69,7 +87,7 @@ public class StageWorkspace {
 
     public File getDataFolder( String user ) {
         File userFolder = getUserFolder(user);
-        File dataFolder = new File(userFolder, "data");
+        File dataFolder = new File(userFolder, DATA_FOLDERNAME);
         if (!dataFolder.exists() && !dataFolder.mkdirs()) {
             throw new RuntimeException(COULD_NOT_CREATE_DATA_FOLDER);
         }
@@ -78,7 +96,7 @@ public class StageWorkspace {
 
     public File getGeopaparazziFolder( String user ) {
         File userFolder = getUserFolder(user);
-        File geopaparazziFolder = new File(userFolder, "geopaparazzi");
+        File geopaparazziFolder = new File(userFolder, GEOPAPARAZZI_FOLDERNAME);
         if (!geopaparazziFolder.exists() && !geopaparazziFolder.mkdirs()) {
             throw new RuntimeException(COULD_NOT_CREATE_GEOPAP_FOLDER);
         }
