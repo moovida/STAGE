@@ -21,6 +21,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import eu.hydrologis.stage.geopaparazzi.geopapbrowser.utils.GeopaparazziWorkspaceUtilities;
 import eu.hydrologis.stage.libs.log.StageLogger;
+import eu.hydrologis.stage.libs.utils.StageUtils;
 import eu.hydrologis.stage.libs.workspace.LoginChecker;
 
 /**
@@ -46,7 +47,7 @@ public class QueryGeopaparazziProjectsServlet extends HttpServlet {
         String authHeader = req.getHeader("Authorization");
         PrintWriter out = resp.getWriter();
 
-        String[] userPwd = {"testuser", "t"};// StageUtils.getUserPwdWithBasicAuthentication(authHeader);
+        String[] userPwd = StageUtils.getUserPwdWithBasicAuthentication(authHeader);
         String user = "null";
         if (userPwd != null) {
             user = userPwd[0];
