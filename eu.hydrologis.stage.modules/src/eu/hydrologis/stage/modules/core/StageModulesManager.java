@@ -24,6 +24,7 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.logging.Logger;
 
 import oms3.Access;
 import oms3.ComponentAccess;
@@ -198,25 +199,6 @@ public class StageModulesManager {
             return;
         }
 
-//        // // add jai/imageio
-//        File jreFolder = StageSessionPluginSingleton.getInstance().getJreFolders();
-//        File extLibsFolder = new File(jreFolder.getAbsolutePath() + File.separator + "lib" + File.separator + "ext");
-//        if (extLibsFolder.exists()) {
-//            StageLogger.logDebug("ADDING JAI JARS FROM JRE");
-//            File[] jaiJarFiles = extLibsFolder.listFiles(new FilenameFilter(){
-//                public boolean accept( File dir, String name ) {
-//                    return name.contains("jai") || name.contains("jiio");
-//                }
-//            });
-//            for( File jaiJarFile : jaiJarFiles ) {
-//                String path = jaiJarFile.getAbsolutePath();
-//                if (!loadedJarsList.contains(path)) {
-//                    loadedJarsList.add(path);
-//                    StageLogger.logDebug("--> " + path);
-//                }
-//            }
-//        }
-
         List<URL> urlList = new ArrayList<URL>();
         StageLogger.logDebug("ADDED TO URL CLASSLOADER:");
         for( int i = 0; i < loadedJarsList.size(); i++ ) {
@@ -275,9 +257,9 @@ public class StageModulesManager {
         if (classesList.size() == 0) {
             // try the old and slow way
             try {
-                System.out.println("URLS TO LOAD:");
+                StageLogger.logDebug("URLS TO LOAD:");
                 for( URL url : urls ) {
-                    System.out.println(url.toExternalForm());
+                    StageLogger.logDebug(url.toExternalForm());
                 }
                 List<Class< ? >> allComponents = new ArrayList<Class< ? >>();
                 allComponents = Components.getComponentClasses(jarClassloader, urls);
@@ -362,7 +344,7 @@ public class StageModulesManager {
 
             } catch (NoClassDefFoundError e) {
                 if (moduleClass != null)
-                    System.out.println("ERROR IN: " + moduleClass.getCanonicalName());
+                    StageLogger.logError("ERROR IN: " + moduleClass.getCanonicalName(), e.getCause());
                 e.printStackTrace();
             }
         }

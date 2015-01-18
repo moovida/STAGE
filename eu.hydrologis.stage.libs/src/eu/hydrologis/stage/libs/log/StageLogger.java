@@ -15,17 +15,25 @@ package eu.hydrologis.stage.libs.log;
  */
 public class StageLogger {
 
+    private static boolean LOG_INFO = true;
+    private static boolean LOG_DEBUG = false;
+    private static boolean LOG_ERROR = true;
+
     public static void logInfo( String msg ) {
-        System.out.println(msg);
+        if (LOG_INFO)
+            System.out.println(msg);
     }
 
     public static void logDebug( String msg ) {
-        System.out.println(msg);
+        if (LOG_DEBUG)
+            System.out.println(msg);
     }
 
-    public static void logError( String msg, Exception e ) {
-        System.err.println(msg);
-        e.printStackTrace();
+    public static void logError( String msg, Throwable e ) {
+        if (LOG_ERROR) {
+            System.err.println(msg);
+            e.printStackTrace();
+        }
     }
 
 }
