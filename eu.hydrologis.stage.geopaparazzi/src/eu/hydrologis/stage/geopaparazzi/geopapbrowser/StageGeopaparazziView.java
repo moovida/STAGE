@@ -32,7 +32,7 @@ import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.MenuManager;
-import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITreeContentProvider;
@@ -40,15 +40,25 @@ import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.rap.addons.fileupload.DiskFileUploadReceiver;
+import org.eclipse.rap.addons.fileupload.FileDetails;
+import org.eclipse.rap.addons.fileupload.FileUploadEvent;
+import org.eclipse.rap.addons.fileupload.FileUploadHandler;
+import org.eclipse.rap.addons.fileupload.FileUploadListener;
 import org.eclipse.rap.rwt.RWT;
+import org.eclipse.rap.rwt.service.ServerPushSession;
+import org.eclipse.rap.rwt.widgets.FileUpload;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
@@ -71,8 +81,11 @@ import eu.hydrologis.stage.libs.utils.FileUtilities;
 import eu.hydrologis.stage.libs.utils.ImageCache;
 import eu.hydrologis.stage.libs.utils.StageUtils;
 import eu.hydrologis.stage.libs.utilsrap.DownloadUtils;
+import eu.hydrologis.stage.libs.utilsrap.ExampleUtil;
 import eu.hydrologis.stage.libs.utilsrap.ImageServiceHandler;
 import eu.hydrologis.stage.libs.utilsrap.ImageUtil;
+import eu.hydrologis.stage.libs.workspace.StageWorkspace;
+import eu.hydrologis.stage.libs.workspace.User;
 
 /**
  * The geopaparazzi view.
@@ -87,6 +100,7 @@ public class StageGeopaparazziView {
     private final static String IMAGE_KEY = "imageKey";
 
     private static final String PROJECTS = "Projects";
+    private static final String INFO = "Info";
 
     private Composite projectViewComposite;
     private TreeViewer modulesViewer;
@@ -102,6 +116,11 @@ public class StageGeopaparazziView {
     private boolean CACHE_HTML_TO_FILE;
 
     private Browser infoBrowser;
+
+    private FileUpload gpFileUpload;
+    private Label gpFileNameLabel;
+    private Button gpUploadButton;
+    private ServerPushSession gpPushSession;
 
     static {
         try {
@@ -152,12 +171,48 @@ public class StageGeopaparazziView {
         tree.setData(RWT.MARKUP_ENABLED, Boolean.TRUE);
         // tree.setData(RWT.CUSTOM_ITEM_HEIGHT, new Integer(150));
 
+        // THE UPLOAD GROUOP
+        Group uploadGroup = new Group(leftComposite, SWT.NONE);
+        GridData uploadGroupGD = new GridData(SWT.FILL, SWT.FILL, true, false);
+        uploadGroup.setLayoutData(uploadGroupGD);
+        uploadGroup.setLayout(new GridLayout(2, false));
+        uploadGroup.setText("Project Upload");
+
+        gpFileUpload = new FileUpload(uploadGroup, SWT.NONE);
+        gpFileUpload.setText("Select project to upload");
+        gpFileUpload.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
+        gpFileNameLabel = new Label(uploadGroup, SWT.NONE);
+        gpFileNameLabel.setText("no file selected");
+        gpFileNameLabel.setLayoutData(ExampleUtil.createHorzFillData());
+        gpFileNameLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+        gpUploadButton = new Button(uploadGroup, SWT.PUSH);
+        gpUploadButton.setText("Upload file");
+        gpUploadButton.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
+        new Label(uploadGroup, SWT.NONE);
+        gpFileUpload.addSelectionListener(new SelectionAdapter(){
+            @Override
+            public void widgetSelected( SelectionEvent e ) {
+                String fileName = gpFileUpload.getFileName();
+                gpFileNameLabel.setText(fileName == null ? "" : fileName);
+            }
+        });
+        final String url = startGpUploadReceiver();
+        gpPushSession = new ServerPushSession();
+        gpUploadButton.addSelectionListener(new SelectionAdapter(){
+            @Override
+            public void widgetSelected( SelectionEvent e ) {
+                gpPushSession.start();
+                gpFileUpload.submit(url);
+            }
+        });
+
+        // THE INFO GROUOP
         Group infoGroup = new Group(leftComposite, SWT.NONE);
         GridData infoGroupGD = new GridData(SWT.FILL, SWT.FILL, true, false);
         infoGroupGD.heightHint = 200;
         infoGroup.setLayoutData(infoGroupGD);
         infoGroup.setLayout(new GridLayout(1, false));
-        infoGroup.setText("Info");
+        infoGroup.setText(INFO);
 
         infoBrowser = new Browser(infoGroup, SWT.NONE);
         infoBrowser.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
@@ -450,8 +505,9 @@ public class StageGeopaparazziView {
 
         });
 
-        final ImageDescriptor exportImageDescr = ImageDescriptor.createFromImage(ImageCache.getInstance().getImage(display,
-                ImageCache.EXPORT));
+        // final ImageDescriptor exportImageDescr =
+        // ImageDescriptor.createFromImage(ImageCache.getInstance().getImage(display,
+        // ImageCache.EXPORT));
         MenuManager manager = new MenuManager();
         modulesViewer.getControl().setMenu(manager.createContextMenu(modulesViewer.getControl()));
         manager.addMenuListener(new IMenuListener(){
@@ -467,7 +523,7 @@ public class StageGeopaparazziView {
                     }
 
                     if (selectedItem instanceof ProjectInfo) {
-                        manager.add(new Action("Download", exportImageDescr){
+                        manager.add(new Action("Download", null){
                             private static final long serialVersionUID = 1L;
 
                             @Override
@@ -802,6 +858,66 @@ public class StageGeopaparazziView {
 
         }
         return notesDescriptionList;
+    }
+
+    private String startGpUploadReceiver() {
+        DiskFileUploadReceiver receiver = new DiskFileUploadReceiver(){
+            @Override
+            protected File createTargetFile( FileDetails details ) throws IOException {
+                String fileName = "upload.tmp";
+                if (details != null && details.getFileName() != null) {
+                    fileName = details.getFileName();
+                }
+
+                File dataFolder = StageWorkspace.getInstance().getGeopaparazziFolder(User.getCurrentUserName());
+                File result = new File(dataFolder, fileName);
+                result.createNewFile();
+                return result;
+            }
+        };
+        FileUploadHandler uploadHandler = new FileUploadHandler(receiver);
+        uploadHandler.addUploadListener(new FileUploadListener(){
+
+            public void uploadProgress( FileUploadEvent event ) {
+                // handle upload progress
+            }
+
+            public void uploadFailed( FileUploadEvent event ) {
+                final Exception ex = event.getException();
+                display.syncExec(new Runnable(){
+                    public void run() {
+                        MessageDialog.openWarning(gpFileNameLabel.getShell(), "ERROR",
+                                "File upload failed with error: " + ex.getLocalizedMessage());
+                    }
+                });
+
+                ex.printStackTrace();
+            }
+
+            public void uploadFinished( FileUploadEvent event ) {
+                if (gpPushSession != null)
+                    gpPushSession.stop();
+                StringBuilder sb = new StringBuilder();
+                for( FileDetails file : event.getFileDetails() ) {
+                    sb.append(",").append(file.getFileName());
+                }
+                final String filesStr = sb.substring(1);
+                display.syncExec(new Runnable(){
+                    public void run() {
+                        File[] projectFiles = GeopaparazziWorkspaceUtilities.getGeopaparazziProjectFiles(null);
+                        try {
+                            projectInfos = readProjectInfos(projectFiles);
+                            relayout(false, null);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        MessageDialog.openInformation(gpFileNameLabel.getShell(), "INFORMATION", "Successfully uploaded: "
+                                + filesStr);
+                    }
+                });
+            }
+        });
+        return uploadHandler.getUploadUrl();
     }
 
 }
