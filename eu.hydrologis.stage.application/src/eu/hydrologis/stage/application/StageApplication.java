@@ -41,7 +41,7 @@ public class StageApplication implements ApplicationConfiguration {
 
         Map<String, String> geopapBrowserProperties = new HashMap<String, String>();
         geopapBrowserProperties.put(WebClient.PAGE_TITLE, "Geopaparazzi Browser");
-        geopapBrowserProperties.put(WebClient.BODY_HTML, readTextFromResource("resources/body.html", "UTF-8"));
+        geopapBrowserProperties.put(WebClient.BODY_HTML, readTextFromResource("resources/body_geopapbrowser.html", "UTF-8"));
         geopapBrowserProperties.put(WebClient.HEAD_HTML, readTextFromResource("resources/head.html", "UTF-8"));
         geopapBrowserProperties.put(WebClient.FAVICON, "resources/favicon.png");
 
