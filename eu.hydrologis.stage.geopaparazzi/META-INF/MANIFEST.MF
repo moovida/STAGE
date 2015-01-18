@@ -34,6 +34,5 @@ Bundle-ClassPath: .
 Bundle-ActivationPolicy: lazy
 Export-Package: eu.hydrologis.stage.geopaparazzi.geopapbrowser,
  eu.hydrologis.stage.geopaparazzi.geopapbrowser.functions,
- eu.hydrologis.stage.geopaparazzi.servlets,
- eu.hydrologis.stage.geopaparazzi.stage.ui,
- eu.hydrologis.stage.geopaparazzi.stage.utils
+ eu.hydrologis.stage.geopaparazzi.geopapbrowser.utils,
+ eu.hydrologis.stage.geopaparazzi.servlets

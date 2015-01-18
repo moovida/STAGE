@@ -1,4 +1,4 @@
-package eu.hydrologis.stage.geopaparazzi.stage.utils;
+package eu.hydrologis.stage.geopaparazzi.geopapbrowser.utils;
 
 import java.io.File;
 

@@ -75,8 +75,8 @@ import org.jgrasstools.gears.io.geopaparazzi.geopap4.TableDescriptions.NotesTabl
 import org.jgrasstools.gears.io.geopaparazzi.geopap4.TimeUtilities;
 
 import eu.hydrologis.stage.geopaparazzi.geopapbrowser.functions.OpenImageFunction;
-import eu.hydrologis.stage.geopaparazzi.stage.utils.GeopaparazziImageUtils;
-import eu.hydrologis.stage.geopaparazzi.stage.utils.GeopaparazziWorkspaceUtilities;
+import eu.hydrologis.stage.geopaparazzi.geopapbrowser.utils.GeopaparazziImageUtils;
+import eu.hydrologis.stage.geopaparazzi.geopapbrowser.utils.GeopaparazziWorkspaceUtilities;
 import eu.hydrologis.stage.libs.utils.FileUtilities;
 import eu.hydrologis.stage.libs.utils.ImageCache;
 import eu.hydrologis.stage.libs.utils.StageUtils;

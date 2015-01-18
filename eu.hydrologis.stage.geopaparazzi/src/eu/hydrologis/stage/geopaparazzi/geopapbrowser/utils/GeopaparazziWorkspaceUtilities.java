@@ -6,7 +6,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * (http://www.eclipse.org/legal/epl-v10.html).
  */
-package eu.hydrologis.stage.geopaparazzi.stage.utils;
+package eu.hydrologis.stage.geopaparazzi.geopapbrowser.utils;
 
 import static org.jgrasstools.gears.io.geopaparazzi.geopap4.TableDescriptions.TABLE_METADATA;
 

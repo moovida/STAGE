@@ -13,7 +13,7 @@ import java.io.File;
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.browser.BrowserFunction;
 
-import eu.hydrologis.stage.geopaparazzi.stage.utils.ImageDialog;
+import eu.hydrologis.stage.geopaparazzi.geopapbrowser.utils.ImageDialog;
 
 public class OpenImageFunction extends BrowserFunction {
     private Browser browser;
