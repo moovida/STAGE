@@ -16,12 +16,36 @@ public class StageLibsActivator implements BundleActivator {
 
     private static File bundleFile;
 
+    /**
+     * The java -D commandline property that defines the workspace.
+     */
+    private static final String STAGE_JAVAEXEC_JAVA_PROPERTIES_KEY = "stage.javaexec";
+
+    private static File geotoolsLibsFolder;
+
+    private static File spatialToolboxFolder;
+
+    private static File stageJavaExecFile;
+
     @Override
     public void start( BundleContext context ) throws Exception {
         Bundle bundle = context.getBundle();
 
         bundleFile = FileLocator.getBundleFile(bundle);
         StageLogger.logInfo(this, "Libs bundle file: " + bundleFile.getAbsolutePath());
+
+        geotoolsLibsFolder = new File(bundleFile, "libs-geotools");
+        spatialToolboxFolder = new File(bundleFile, "spatialtoolbox");
+
+        String stageJavaExecPath = System.getProperty(STAGE_JAVAEXEC_JAVA_PROPERTIES_KEY);
+        if (stageJavaExecPath == null) {
+            stageJavaExecFile = new File(stageJavaExecPath);
+            if (!stageJavaExecFile.exists()) {
+                throw new RuntimeException("No java executable for STAGE modules execution found.");
+            }
+            StageLogger.logInfo(this, "Java executable: " + stageJavaExecFile.getAbsolutePath());
+        }
+
     }
 
     public static File getBundleFile() {
@@ -29,11 +53,15 @@ public class StageLibsActivator implements BundleActivator {
     }
 
     public static File getGeotoolsLibsFolder() {
-        return new File(bundleFile, "libs-geotools");
+        return geotoolsLibsFolder;
     }
 
     public static File getModulesLibsFolder() {
-        return new File(bundleFile, "spatialtoolbox");
+        return spatialToolboxFolder;
+    }
+
+    public static File getStageJavaExec() {
+        return stageJavaExecFile;
     }
 
     @Override

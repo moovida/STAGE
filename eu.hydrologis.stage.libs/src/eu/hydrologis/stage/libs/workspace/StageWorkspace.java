@@ -42,6 +42,10 @@ public class StageWorkspace {
     private static final String COULD_NOT_CREATE_SCRIPTS_FOLDER = "Could not create scripts folder in workspace.";
     private static final String COULD_NOT_CREATE_USER_FOLDER = "Could not create user folder in workspace.";
     private static final String NO_WORKSPACE_DEFINED = "No workspace defined for the current installation.";
+    
+    /**
+     * The java -D commandline property that defines the workspace.
+     */
     private static final String STAGE_WORKSPACE_JAVA_PROPERTIES_KEY = "stage.workspace";
 
     private static StageWorkspace stageWorkspace;
