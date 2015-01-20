@@ -6,6 +6,7 @@ Bundle-Version: 1.0.0
 Bundle-Vendor: HydroloGIS S.r.l.
 Require-Bundle: org.eclipse.rap.rwt,
  org.eclipse.rap.jface,
+ org.eclipse.rap.ui,
  org.eclipse.rap.addons.fileupload,
  org.eclipse.rap.addons.filedialog,
  org.eclipse.equinox.http.registry;resolution:=optional,

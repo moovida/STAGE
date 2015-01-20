@@ -11,6 +11,8 @@ package eu.hydrologis.stage.libs.log;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import org.eclipse.core.runtime.Platform;
+
 /**
  * A simple logger, to be properly implemented.
  * 

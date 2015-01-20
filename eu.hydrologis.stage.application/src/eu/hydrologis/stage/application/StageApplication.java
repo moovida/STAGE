@@ -15,12 +15,18 @@ import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IConfigurationElement;
+import org.eclipse.core.runtime.IExtensionPoint;
+import org.eclipse.core.runtime.IExtensionRegistry;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.rap.rwt.RWT;
 import org.eclipse.rap.rwt.application.Application;
 import org.eclipse.rap.rwt.application.Application.OperationMode;
 import org.eclipse.rap.rwt.application.ApplicationConfiguration;
 import org.eclipse.rap.rwt.client.WebClient;
 import org.eclipse.rap.rwt.service.ResourceLoader;
+import org.eclipse.rap.rwt.service.ServiceHandler;
 
 import eu.hydrologis.stage.geopaparazzi.geopapbrowser.GeopapBrowserEntryPoint;
 import eu.hydrologis.stage.modules.StageEntryPoint;
@@ -28,6 +34,8 @@ import eu.hydrologis.stage.modules.StageEntryPoint;
 public class StageApplication implements ApplicationConfiguration {
 
     public static final String ID = "eu.hydrologis.stage.application.StageApplication";
+
+    private static final String ID_SERVICE_HANDLER = "org.eclipse.rap.ui.serviceHandler";
 
     public void configure( Application application ) {
 
@@ -51,6 +59,29 @@ public class StageApplication implements ApplicationConfiguration {
         application.addStyleSheet(RWT.DEFAULT_THEME_ID, "theme/theme.css");
         application.addResource("resources/favicon.png", createResourceLoader("resources/favicon.png"));
         application.addResource("resources/loading.gif", createResourceLoader("resources/loading.gif"));
+
+        registerCustomServiceHandlers(application);
+
+    }
+
+    private void registerCustomServiceHandlers( Application application ) {
+        IExtensionRegistry registry = Platform.getExtensionRegistry();
+        IExtensionPoint point = registry.getExtensionPoint(ID_SERVICE_HANDLER);
+        IConfigurationElement[] elements = point.getConfigurationElements();
+        for( int i = 0; i < elements.length; i++ ) {
+            try {
+                String id = elements[i].getAttribute("id");
+                if (id != null) {
+                    Object extObject = elements[i].createExecutableExtension("class");
+                    ServiceHandler handler = (ServiceHandler) extObject;
+                    application.addServiceHandler(id, handler);
+                }
+            } catch (final CoreException ce) {
+                ce.printStackTrace();
+            }
+
+        }
+
     }
 
     private static ResourceLoader createResourceLoader( final String resourceName ) {

@@ -8,9 +8,16 @@
             class="eu.hydrologis.stage.geopaparazzi.servlets.QueryGeopaparazziProjectsServlet">
       </servlet>
       <servlet
-            alias="/stage_gpproject_download"
+            alias="/stage_gpproject_download2"
             class="eu.hydrologis.stage.geopaparazzi.servlets.DownloadGeopaparazziProjectServlet">
       </servlet>
+   </extension>
+   <extension
+         point="org.eclipse.rap.ui.serviceHandler">
+      <serviceHandler
+            class="eu.hydrologis.stage.geopaparazzi.servlets.ProjectDownloadServiceHandler"
+            id="stage_gpproject_download">
+      </serviceHandler>
    </extension>
 
 </plugin>
