@@ -76,7 +76,6 @@
 	<classpathentry exported="true" kind="lib" path="libs-geotools/jfreechart-experimental-1.0.13.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs-geotools/jfreechart-swt-1.0.13.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs-geotools/jgridshift-1.0.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs-geotools/jgt-oms3-0.7.9-SNAPSHOT.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs-geotools/jline-0.9.94.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs-geotools/jna-3.0.9.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs-geotools/joda-time-1.6.jar"/>
