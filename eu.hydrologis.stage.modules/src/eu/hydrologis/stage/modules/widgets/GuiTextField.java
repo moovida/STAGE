@@ -435,7 +435,7 @@ public class GuiTextField extends ModuleGuiElement implements ModifyListener, Fo
         // text.addModifyListener(this);
         // }
         if (isFileOrFolder && tmpTextStr.length() > 0) {
-            File file = StageWorkspace.makeRelativeDataPathToFile(tmpTextStr);
+            File file = StageWorkspace.makeRelativeDataPathToFile(tmpTextStr, isOutFile);
             data.fieldValue = file.getAbsolutePath();
         } else {
             data.fieldValue = textStr;
@@ -724,7 +724,7 @@ public class GuiTextField extends ModuleGuiElement implements ModifyListener, Fo
                 // first try absolute path, if it is used locally
                 if (!file.exists()) {
                     // try to remote way with relative path
-                    file = StageWorkspace.makeRelativeDataPathToFile(textStr);
+                    file = StageWorkspace.makeRelativeDataPathToFile(textStr, isOutFile);
                     if (!file.exists()) {
                         sb.append(MessageFormat.format("File {0} dosen''t exist.\n", textStr));
                     }
@@ -737,7 +737,7 @@ public class GuiTextField extends ModuleGuiElement implements ModifyListener, Fo
             }
         }
         if (isGrassfile) {
-            File file = StageWorkspace.makeRelativeDataPathToFile(textStr);
+            File file = StageWorkspace.makeRelativeDataPathToFile(textStr, isOutFile);
             if (length != 0 && !StageModulesUtils.isGrass(file.getAbsolutePath())) {
                 sb.append("Grass modules currently work only with data contained in a GRASS mapset (which doesn't seem to be the case for: "
                         + file.getName() + ").\n");

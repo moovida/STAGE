@@ -42,7 +42,7 @@ public class StageWorkspace {
     private static final String COULD_NOT_CREATE_SCRIPTS_FOLDER = "Could not create scripts folder in workspace.";
     private static final String COULD_NOT_CREATE_USER_FOLDER = "Could not create user folder in workspace.";
     private static final String NO_WORKSPACE_DEFINED = "No workspace defined for the current installation.";
-    
+
     /**
      * The java -D commandline property that defines the workspace.
      */
@@ -130,9 +130,24 @@ public class StageWorkspace {
      * Add to the relative file path the data folder. 
      * 
      * @param relativePath the relative path.
+     * @param isOutFile <code>true</code>, if the path is supposed to be an outfile, in which
+     *          case the file doesn't exist, but the folder has to. 
      * @return the complete absolute path.
      */
-    public static File makeRelativeDataPathToFile( String relativePath ) {
+    public static File makeRelativeDataPathToFile( String relativePath, boolean isOutFile ) {
+        File possibleRelativePathFile = new File(relativePath);
+        if (!isOutFile) {
+            if (possibleRelativePathFile.exists()) {
+                // it is an absolute path to an existing file, leave it as is
+                return possibleRelativePathFile;
+            }
+        } else {
+            if (possibleRelativePathFile.getParentFile() != null && possibleRelativePathFile.getParentFile().exists()) {
+                // it is an absolute path to a file to be created,
+                // leave it if the folder exists
+                return possibleRelativePathFile;
+            }
+        }
         File dataFolder = getInstance().getDataFolder(User.getCurrentUserName());
         File file = new File(dataFolder, relativePath);
         return file;
