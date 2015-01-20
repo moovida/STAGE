@@ -1,11 +1,8 @@
 package eu.hydrologis.stage.libs;
 
 import java.io.File;
-import java.net.URL;
 
 import org.eclipse.core.runtime.FileLocator;
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Path;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
@@ -38,13 +35,19 @@ public class StageLibsActivator implements BundleActivator {
         spatialToolboxFolder = new File(bundleFile, "spatialtoolbox");
 
         String stageJavaExecPath = System.getProperty(STAGE_JAVAEXEC_JAVA_PROPERTIES_KEY);
-        if (stageJavaExecPath == null) {
+        boolean javaMissing = false;
+        if (stageJavaExecPath != null) {
             stageJavaExecFile = new File(stageJavaExecPath);
-            if (!stageJavaExecFile.exists()) {
-                throw new RuntimeException("No java executable for STAGE modules execution found.");
+            if (stageJavaExecFile.exists()) {
+                StageLogger.logInfo(this, "Java executable: " + stageJavaExecFile.getAbsolutePath());
+            } else {
+                javaMissing = true;
             }
-            StageLogger.logInfo(this, "Java executable: " + stageJavaExecFile.getAbsolutePath());
+        } else {
+            javaMissing = true;
         }
+        if (javaMissing)
+            throw new RuntimeException("No java executable for STAGE modules execution found.");
 
     }
 
