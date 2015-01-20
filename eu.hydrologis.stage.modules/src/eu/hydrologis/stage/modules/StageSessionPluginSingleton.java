@@ -46,7 +46,7 @@ public class StageSessionPluginSingleton {
 
     private StageSessionPluginSingleton() {
         installationFolder = new File("."); // TODO make this good
-        
+
         configFolder = new File(installationFolder, "stageconfig");
         jreFolder = new File(installationFolder, "jre");
         if (!configFolder.exists()) {
@@ -207,32 +207,6 @@ public class StageSessionPluginSingleton {
     private void addPath( String path, StringBuilder sb ) throws IOException {
         sb.append("\"").append(path).append("\"");
         // sb.append(path);
-    }
-
-    public String getApplicationJava() {
-        String[] possibleJava = {"javaw.exe", "java.exe", "java"};
-        if (installationFolder != null && installationFolder.exists()) {
-            File jreFolder = new File(installationFolder, "jre/bin");
-            if (jreFolder.exists()) {
-                for( String pJava : possibleJava ) {
-                    File java = new File(jreFolder, pJava);
-                    if (java.exists()) {
-                        return java.getAbsolutePath();
-                    }
-                }
-            }
-        }
-        String jreDirectory = System.getProperty("java.home");
-        File javaFolder = new File(jreDirectory, "jre/bin");
-        if (javaFolder.exists()) {
-            for( String pJava : possibleJava ) {
-                File java = new File(javaFolder, pJava);
-                if (java.exists()) {
-                    return java.getAbsolutePath();
-                }
-            }
-        }
-        return "java";
     }
 
     public void addProcess( Process process, String id ) {

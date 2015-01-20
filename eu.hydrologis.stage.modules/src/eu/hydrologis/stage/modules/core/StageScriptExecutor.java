@@ -21,18 +21,14 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
-import org.eclipse.rap.rwt.RWT;
 
 import oms3.CLI;
+import eu.hydrologis.stage.libs.StageLibsActivator;
 import eu.hydrologis.stage.modules.StageSessionPluginSingleton;
 import eu.hydrologis.stage.modules.utils.FileUtilities;
 import eu.hydrologis.stage.modules.utils.OsCheck;
-import eu.hydrologis.stage.modules.utils.StageConstants;
 import eu.hydrologis.stage.modules.utils.OsCheck.OSType;
+import eu.hydrologis.stage.modules.utils.StageConstants;
 
 /**
  * Executor of OMS scripts.
@@ -48,7 +44,7 @@ public class StageScriptExecutor {
 
     List<IProcessListener> listeners = new ArrayList<IProcessListener>();
 
-    private String javaFile;
+    private String javaExec;
 
     private static String nl = "\n";
 
@@ -58,9 +54,11 @@ public class StageScriptExecutor {
         /*
          * get java exec
          */
-        javaFile = StageSessionPluginSingleton.getInstance().getApplicationJava();
-        if (!javaFile.equals("java")) {
-            javaFile = "\"" + javaFile + "\"";
+        File javaFile = StageLibsActivator.getStageJavaExec();
+        if (!javaFile.getAbsolutePath().equals("java")) {
+            javaExec = "\"" + javaFile.getAbsolutePath() + "\"";
+        } else {
+            javaExec = javaFile.getName();
         }
         /*
          * get libraries
@@ -124,7 +122,7 @@ public class StageScriptExecutor {
             omsTmp.mkdirs();
 
         List<String> arguments = new ArrayList<String>();
-        arguments.add(javaFile);
+        arguments.add(javaExec);
 
         // ram usage
         String ramExpr = "-Xmx" + ramLevel + "m";
@@ -179,7 +177,7 @@ public class StageScriptExecutor {
         // processBuilder.directory(homeFile);
 
         // environment
-        Map<String, String> environment = processBuilder.environment();
+        // Map<String, String> environment = processBuilder.environment();
         // environment.put("CLASSPATH", classPath);
 
         final Process process = processBuilder.start();
@@ -193,17 +191,19 @@ public class StageScriptExecutor {
         if (loggerLevelGui.equals(StageConstants.LOGLEVEL_GUI_ON)) {
 
             preCommentsBuilder.append("------------------------------>8----------------------------" + nl);
-            preCommentsBuilder.append("Launching command: " + nl);
-            preCommentsBuilder.append("------------------" + nl);
-            List<String> command = processBuilder.command();
-            for( String arg : command ) {
-                preCommentsBuilder.append(arg);
-                preCommentsBuilder.append(" ");
-            }
-            preCommentsBuilder.append("" + nl);
-            preCommentsBuilder.append("(you can run the above from command line, customizing the content)" + nl);
-            preCommentsBuilder.append("----------------------------------->8---------------------------------" + nl);
-            preCommentsBuilder.append("" + nl);
+            // preCommentsBuilder.append("Launching command: " + nl);
+            // preCommentsBuilder.append("------------------" + nl);
+            // List<String> command = processBuilder.command();
+            // for( String arg : command ) {
+            // preCommentsBuilder.append(arg);
+            // preCommentsBuilder.append(" ");
+            // }
+            // preCommentsBuilder.append("" + nl);
+            // preCommentsBuilder.append("(you can run the above from command line, customizing the content)"
+            // + nl);
+            // preCommentsBuilder.append("----------------------------------->8---------------------------------"
+            // + nl);
+            // preCommentsBuilder.append("" + nl);
             // script run
             preCommentsBuilder.append("Script run: " + nl);
             preCommentsBuilder.append("-----------" + nl);
@@ -211,18 +211,19 @@ public class StageScriptExecutor {
             preCommentsBuilder.append("" + nl);
             preCommentsBuilder.append("------------------------------>8----------------------------" + nl);
             preCommentsBuilder.append("" + nl);
-            // environment used
-            preCommentsBuilder.append("Environment used: " + nl);
-            preCommentsBuilder.append("-----------------" + nl);
-
-            Set<Entry<String, String>> entrySet = environment.entrySet();
-            for( Entry<String, String> entry : entrySet ) {
-                preCommentsBuilder.append(entry.getKey());
-                preCommentsBuilder.append(" =\t");
-                preCommentsBuilder.append(entry.getValue()).append("" + nl);
-            }
-            preCommentsBuilder.append("------------------------------>8----------------------------" + nl);
-            preCommentsBuilder.append("");
+            // // environment used
+            // preCommentsBuilder.append("Environment used: " + nl);
+            // preCommentsBuilder.append("-----------------" + nl);
+            //
+            // Set<Entry<String, String>> entrySet = environment.entrySet();
+            // for( Entry<String, String> entry : entrySet ) {
+            // preCommentsBuilder.append(entry.getKey());
+            // preCommentsBuilder.append(" =\t");
+            // preCommentsBuilder.append(entry.getValue()).append("" + nl);
+            // }
+            // preCommentsBuilder.append("------------------------------>8----------------------------"
+            // + nl);
+            // preCommentsBuilder.append("");
         }
         printMessage(preCommentsBuilder.toString(), LogStyle.COMMENT);
         isRunning = true;

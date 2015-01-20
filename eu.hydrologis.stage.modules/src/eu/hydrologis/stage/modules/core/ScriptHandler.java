@@ -37,8 +37,6 @@ public class ScriptHandler {
 
     private static final String QUOTE = "'";
 
-    private AtomicInteger counter = new AtomicInteger();
-
     /**
      * Map of variables bound to their {@link ModuleDescription}.
      */
