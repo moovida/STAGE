@@ -29,6 +29,5 @@ STAGEJAVAEXEC=$JRE/bin/java
 echo "INSTALLDIR = $INSTALLDIR"
 echo "WORKSPACE = $WORKSPACE"
 echo "JAVA = $STAGEJAVA"
-echo "./$STAGEJAVAEXEC -vm $JRE/bin/java $ARGS -vmargs $VMARGS -Dorg.osgi.service.http.port=$PORT -Dstage.javaexec=$STAGEJAVAEXEC -Dstage.workspace=$WORKSPACE $LOGARGS"
+echo "./$EXEC -vm $STAGEJAVAEXEC $ARGS -vmargs $VMARGS -Dorg.osgi.service.http.port=$PORT -Dstage.javaexec=$STAGEJAVAEXEC -Dstage.workspace=$WORKSPACE $LOGARGS"
 ./$EXEC -vm "$STAGEJAVAEXEC" $ARGS -vmargs $VMARGS -Dorg.osgi.service.http.port=$PORT -Dstage.javaexec="$STAGEJAVAEXEC" -Dstage.workspace="$WORKSPACE" $LOGARGS
-
