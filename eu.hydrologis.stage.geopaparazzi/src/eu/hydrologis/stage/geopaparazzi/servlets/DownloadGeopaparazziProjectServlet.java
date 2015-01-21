@@ -32,9 +32,8 @@ public class DownloadGeopaparazziProjectServlet extends HttpServlet {
             String newUrl = "geopapbrowser?servicehandler=stage_gpproject_download&id=" + projectIdObj.toString();
             response.sendRedirect(response.encodeRedirectURL(newUrl));
         } else {
-            ServletUtils.throwError(req, response, "No project id provided.", null);
+            throw new ServletException("No project id provided.");
         }
-
     }
 
 }

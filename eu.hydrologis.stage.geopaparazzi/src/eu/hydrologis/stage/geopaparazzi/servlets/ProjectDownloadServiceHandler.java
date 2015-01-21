@@ -40,8 +40,7 @@ public class ProjectDownloadServiceHandler implements ServiceHandler {
 
         String[] userPwd = StageUtils.getUserPwdWithBasicAuthentication(authHeader);
         if (userPwd == null || !LoginChecker.isLoginOk(userPwd[0], userPwd[1])) {
-            ServletUtils.throwError(req, resp, "No permission!", null);
-            return;
+            throw new ServletException("No permission!");
         }
 
         // userPwd = new String[]{"testuser"};
@@ -56,7 +55,7 @@ public class ProjectDownloadServiceHandler implements ServiceHandler {
             service.register();
             resp.sendRedirect(resp.encodeRedirectURL(service.getURL()));
         } else {
-            ServletUtils.throwError(req, resp, "No project id provided.", null);
+            throw new ServletException("No project id provided.");
         }
 
     }

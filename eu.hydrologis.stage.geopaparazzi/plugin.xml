@@ -11,6 +11,10 @@
             alias="/stage_gpproject_download"
             class="eu.hydrologis.stage.geopaparazzi.servlets.DownloadGeopaparazziProjectServlet">
       </servlet>
+      <servlet
+            alias="/stage_gpproject_upload"
+            class="eu.hydrologis.stage.geopaparazzi.servlets.UploadGeopaparazziProjectServlet">
+      </servlet>
    </extension>
    <extension
          point="org.eclipse.rap.ui.serviceHandler">

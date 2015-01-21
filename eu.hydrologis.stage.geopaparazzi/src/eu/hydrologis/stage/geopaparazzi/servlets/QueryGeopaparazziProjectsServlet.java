@@ -10,11 +10,11 @@ package eu.hydrologis.stage.geopaparazzi.servlets;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.List;
 
 import javax.servlet.ServletException;
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -45,20 +45,13 @@ public class QueryGeopaparazziProjectsServlet extends HttpServlet {
         resp.setContentType("application/json");
 
         String authHeader = req.getHeader("Authorization");
-        PrintWriter out = resp.getWriter();
 
         String[] userPwd = StageUtils.getUserPwdWithBasicAuthentication(authHeader);
-        String user = "null";
-        if (userPwd != null) {
-            user = userPwd[0];
-        }
-        StageLogger.logDebug(this, "Project query incoming with user: " + user);
-
         if (userPwd == null || !LoginChecker.isLoginOk(userPwd[0], userPwd[1])) {
-            out.print("<b>No permission!</b>");
-            out.flush();
-            return;
+            throw new ServletException("No permission!");
         }
+        
+        StageLogger.logDebug(this, "Project query incoming with user: " + userPwd[0]);
 
         try {
             File[] geopaparazziProjectFiles = GeopaparazziWorkspaceUtilities.getGeopaparazziProjectFiles(userPwd[0]);
@@ -87,10 +80,11 @@ public class QueryGeopaparazziProjectsServlet extends HttpServlet {
             sb.append("]");
             sb.append("}");
 
+            ServletOutputStream out = resp.getOutputStream();
             out.print(sb.toString());
             out.flush();
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new ServletException(e);
         }
     }
 }
