@@ -8,7 +8,7 @@
             class="eu.hydrologis.stage.geopaparazzi.servlets.QueryGeopaparazziProjectsServlet">
       </servlet>
       <servlet
-            alias="/stage_gpproject_download2"
+            alias="/stage_gpproject_download"
             class="eu.hydrologis.stage.geopaparazzi.servlets.DownloadGeopaparazziProjectServlet">
       </servlet>
    </extension>
