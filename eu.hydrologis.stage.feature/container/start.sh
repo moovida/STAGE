@@ -28,6 +28,12 @@ STAGEJAVAEXEC=$JRE/bin/java
 
 echo "INSTALLDIR = $INSTALLDIR"
 echo "WORKSPACE = $WORKSPACE"
-echo "JAVA = $STAGEJAVA"
+echo "JAVA = $STAGEJAVAEXEC"
+
+# PATH TWEAKS
+# -Dstage.geopaparazzifolder="geopaparazzi projects folder"  **Path to a custom geopaparazzi folder**
+# -Dstage.datafolder="data folder" **Path to a custom data folder**
+# -Dstage.scriptsfolder="scripts folder" **Path to a custom scripts folder**
+
 echo "./$EXEC -vm $STAGEJAVAEXEC $ARGS -vmargs $VMARGS -Dorg.osgi.service.http.port=$PORT -Dstage.javaexec=$STAGEJAVAEXEC -Dstage.workspace=$WORKSPACE $LOGARGS"
 ./$EXEC -vm "$STAGEJAVAEXEC" $ARGS -vmargs $VMARGS -Dorg.osgi.service.http.port=$PORT -Dstage.javaexec="$STAGEJAVAEXEC" -Dstage.workspace="$WORKSPACE" $LOGARGS

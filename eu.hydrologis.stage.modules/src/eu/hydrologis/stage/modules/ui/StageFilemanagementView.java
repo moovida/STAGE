@@ -167,23 +167,52 @@ public class StageFilemanagementView {
     private Composite createFileDownloadArea( Composite parent ) {
         Group downloadGroup = new Group(parent, SWT.NONE);
         downloadGroup.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
-        downloadGroup.setLayout(new GridLayout(2, false));
+        downloadGroup.setLayout(new GridLayout(2, true));
         downloadGroup.setText("Files Download");
-        createDownloadButton(downloadGroup);
+        createDataDownloadButton(downloadGroup);
+        createScriptDownloadButton(downloadGroup);
         return downloadGroup;
     }
 
-    private void createDownloadButton( Composite parent ) {
+    private void createDataDownloadButton( Composite parent ) {
         Button button = new Button(parent, SWT.PUSH);
-        button.setLayoutData(new GridData(SWT.LEAD, SWT.CENTER, false, false));
-        button.setText("File Download");
-        button.setToolTipText("Download a file");
+        button.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, false));
+        button.setText("Data");
+        button.setToolTipText("Download data files");
         final Shell parentShell = parent.getShell();
         button.addSelectionListener(new SelectionAdapter(){
             @Override
             public void widgetSelected( SelectionEvent e ) {
                 try {
-                    File userFolder = StageWorkspace.getInstance().getUserFolder(User.getCurrentUserName());
+                    File userFolder = StageWorkspace.getInstance().getDataFolder(User.getCurrentUserName());
+                    FileSelectionDialog fileDialog = new FileSelectionDialog(parentShell, userFolder, null, null,
+                            new String[]{StageWorkspace.GEOPAPARAZZI_FOLDERNAME});
+                    int returnCode = fileDialog.open();
+                    if (returnCode == SWT.CANCEL) {
+                        return;
+                    }
+                    File selectedFile = fileDialog.getSelectedFile();
+                    if (selectedFile != null && selectedFile.exists() && !selectedFile.isDirectory()) {
+                        new DownloadUtils().sendDownload(parentShell, selectedFile);
+                    }
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+            }
+        });
+    }
+
+    private void createScriptDownloadButton( Composite parent ) {
+        Button button = new Button(parent, SWT.PUSH);
+        button.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, false));
+        button.setText("Scripts");
+        button.setToolTipText("Download a script");
+        final Shell parentShell = parent.getShell();
+        button.addSelectionListener(new SelectionAdapter(){
+            @Override
+            public void widgetSelected( SelectionEvent e ) {
+                try {
+                    File userFolder = StageWorkspace.getInstance().getScriptsFolder(User.getCurrentUserName());
                     FileSelectionDialog fileDialog = new FileSelectionDialog(parentShell, userFolder, null, null,
                             new String[]{StageWorkspace.GEOPAPARAZZI_FOLDERNAME});
                     int returnCode = fileDialog.open();

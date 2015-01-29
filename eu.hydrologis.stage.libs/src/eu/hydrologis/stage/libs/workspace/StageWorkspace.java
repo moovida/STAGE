@@ -10,6 +10,8 @@ package eu.hydrologis.stage.libs.workspace;
 
 import java.io.File;
 
+import eu.hydrologis.stage.libs.log.StageLogger;
+
 /**
  * The main workspace class.
  * 
@@ -47,9 +49,15 @@ public class StageWorkspace {
      * The java -D commandline property that defines the workspace.
      */
     private static final String STAGE_WORKSPACE_JAVA_PROPERTIES_KEY = "stage.workspace";
+    private static final String STAGE_DATAFOLDER_JAVA_PROPERTIES_KEY = "stage.datafolder";
+    private static final String STAGE_SCRIPTSFOLDER_JAVA_PROPERTIES_KEY = "stage.scriptsfolder";
+    private static final String STAGE_GEOPAPARAZZIFOLDER_JAVA_PROPERTIES_KEY = "stage.geopaparazzifolder";
 
     private static StageWorkspace stageWorkspace;
     private File stageWorkspaceFolder;
+    private File customDataFolder;
+    private File customScriptsFolder;
+    private File customGeopaparazziFolder;
 
     public static StageWorkspace getInstance() {
         if (stageWorkspace == null) {
@@ -63,14 +71,26 @@ public class StageWorkspace {
         if (stageWorkspacepath == null || !new File(stageWorkspacepath).exists()) {
             throw new RuntimeException(NO_WORKSPACE_DEFINED);
         }
+
+        String dataFolderPath = System.getProperty(STAGE_DATAFOLDER_JAVA_PROPERTIES_KEY);
+        if (dataFolderPath != null && new File(dataFolderPath).exists()) {
+            customDataFolder = new File(dataFolderPath);
+            StageLogger.logInfo(this, "Custom data folder in use: " + customDataFolder);
+        }
+        String scriptsFolderPath = System.getProperty(STAGE_SCRIPTSFOLDER_JAVA_PROPERTIES_KEY);
+        if (scriptsFolderPath != null && new File(scriptsFolderPath).exists()) {
+            customScriptsFolder = new File(scriptsFolderPath);
+            StageLogger.logInfo(this, "Custom scripts folder in use: " + customScriptsFolder);
+        }
+        String geopaparazziFolderPath = System.getProperty(STAGE_GEOPAPARAZZIFOLDER_JAVA_PROPERTIES_KEY);
+        if (geopaparazziFolderPath != null && new File(geopaparazziFolderPath).exists()) {
+            customGeopaparazziFolder = new File(geopaparazziFolderPath);
+            StageLogger.logInfo(this, "Custom geopaparazzi folder in use: " + customGeopaparazziFolder);
+        }
         stageWorkspaceFolder = new File(stageWorkspacepath);
     }
 
-    public File getStageWorkspaceFolder() {
-        return stageWorkspaceFolder;
-    }
-
-    public File getUserFolder( String user ) {
+    private File getUserFolder( String user ) {
         File userFolder = new File(stageWorkspaceFolder, user);
         if (!userFolder.exists()) {
             if (!userFolder.mkdirs()) {
@@ -81,6 +101,9 @@ public class StageWorkspace {
     }
 
     public File getScriptsFolder( String user ) {
+        if (customScriptsFolder != null) {
+            return customScriptsFolder;
+        }
         File userFolder = getUserFolder(user);
         File scriptsFolder = new File(userFolder, SCRIPTS_FOLDERNAME);
         if (!scriptsFolder.exists() && !scriptsFolder.mkdirs()) {
@@ -90,6 +113,9 @@ public class StageWorkspace {
     }
 
     public File getDataFolder( String user ) {
+        if (customDataFolder != null) {
+            return customDataFolder;
+        }
         File userFolder = getUserFolder(user);
         File dataFolder = new File(userFolder, DATA_FOLDERNAME);
         if (!dataFolder.exists() && !dataFolder.mkdirs()) {
@@ -99,6 +125,9 @@ public class StageWorkspace {
     }
 
     public File getGeopaparazziFolder( String user ) {
+        if (customGeopaparazziFolder != null) {
+            return customGeopaparazziFolder;
+        }
         File userFolder = getUserFolder(user);
         File geopaparazziFolder = new File(userFolder, GEOPAPARAZZI_FOLDERNAME);
         if (!geopaparazziFolder.exists() && !geopaparazziFolder.mkdirs()) {
@@ -117,13 +146,22 @@ public class StageWorkspace {
         File dataFolder = getInstance().getDataFolder(User.getCurrentUserName());
 
         String dataFolderPath = dataFolder.getAbsolutePath();
+        dataFolderPath = checkBackSlash(dataFolderPath);
         String filePath = currentFile.getAbsolutePath();
+        filePath = checkBackSlash(filePath);
 
         String relativePath = filePath.replaceFirst(dataFolderPath, "");
         if (relativePath.startsWith("/") && !new File(relativePath).exists()) {
             relativePath = relativePath.substring(1);
         }
         return relativePath;
+    }
+
+    private static String checkBackSlash( String path ) {
+        if (path != null) {
+            path = path.replaceAll("\\\\", "/");
+        }
+        return path;
     }
 
     /**
