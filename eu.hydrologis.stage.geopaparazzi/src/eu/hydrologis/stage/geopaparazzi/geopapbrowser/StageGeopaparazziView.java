@@ -64,6 +64,7 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
 import org.jgrasstools.gears.io.geopaparazzi.geopap4.DaoImages;
@@ -77,6 +78,7 @@ import org.jgrasstools.gears.io.geopaparazzi.geopap4.TimeUtilities;
 import eu.hydrologis.stage.geopaparazzi.geopapbrowser.functions.OpenImageFunction;
 import eu.hydrologis.stage.geopaparazzi.geopapbrowser.utils.GeopaparazziImageUtils;
 import eu.hydrologis.stage.geopaparazzi.geopapbrowser.utils.GeopaparazziWorkspaceUtilities;
+import eu.hydrologis.stage.geopaparazzi.geopapbrowser.utils.MetadataEditDialog;
 import eu.hydrologis.stage.libs.utils.FileUtilities;
 import eu.hydrologis.stage.libs.utils.ImageCache;
 import eu.hydrologis.stage.libs.utils.StageUtils;
@@ -122,6 +124,8 @@ public class StageGeopaparazziView {
     private Button gpUploadButton;
     private ServerPushSession gpPushSession;
 
+    private Shell parentShell;
+
     static {
         try {
             // make sure sqlite driver are there
@@ -141,6 +145,8 @@ public class StageGeopaparazziView {
     public void createGeopaparazziTab( Display display, Composite parent ) throws Exception {
         this.display = display;
 
+        parentShell = parent.getShell();
+        
         if (!hasDriver) {
             throw new Exception("No SQLite drivers available to read geopaparazzi projects.");
         }
@@ -249,7 +255,7 @@ public class StageGeopaparazziView {
         List<ProjectInfo> infoList = new ArrayList<ProjectInfo>();
         for( File geopapDatabaseFile : projectFiles ) {
             try (Connection connection = DriverManager.getConnection("jdbc:sqlite:" + geopapDatabaseFile.getAbsolutePath())) {
-                String projectInfo = getProjectInfo(connection);
+                String projectInfo = GeopaparazziWorkspaceUtilities.getProjectInfo(connection);
                 ProjectInfo info = new ProjectInfo();
                 info.databaseFile = geopapDatabaseFile;
                 info.fileName = geopapDatabaseFile.getName();
@@ -263,35 +269,7 @@ public class StageGeopaparazziView {
         return infoList;
     }
 
-    private String getProjectInfo( Connection connection ) throws Exception {
-        StringBuilder sb = new StringBuilder();
-        try (Statement statement = connection.createStatement()) {
-            statement.setQueryTimeout(30); // set timeout to 30 sec.
 
-            String sql = "select " + MetadataTableFields.COLUMN_KEY.getFieldName() + ", " + //
-                    MetadataTableFields.COLUMN_VALUE.getFieldName() + " from " + TABLE_METADATA;
-
-            ResultSet rs = statement.executeQuery(sql);
-            while( rs.next() ) {
-                String key = rs.getString(MetadataTableFields.COLUMN_KEY.getFieldName());
-                String value = rs.getString(MetadataTableFields.COLUMN_VALUE.getFieldName());
-
-                if (!key.endsWith("ts")) {
-                    sb.append("<b>").append(key).append(":</b> ").append(StageUtils.escapeHTML(value)).append("<br/>");
-                } else {
-                    try {
-                        long ts = Long.parseLong(value);
-                        String dateTimeString = TimeUtilities.INSTANCE.TIME_FORMATTER_LOCAL.format(new Date(ts));
-                        sb.append("<b>").append(key).append(":</b> ").append(dateTimeString).append("<br/>");
-                    } catch (Exception e) {
-                        sb.append("<b>").append(key).append(":</b> ").append(StageUtils.escapeHTML(value)).append("<br/>");
-                    }
-                }
-            }
-
-        }
-        return sb.toString();
-    }
 
     private void setNoProjectLabel() {
         dataBrowser.setText("<h1>No project selected</h1>");
@@ -537,6 +515,27 @@ public class StageGeopaparazziView {
                                         e.printStackTrace();
                                     }
                                 }
+                            }
+                        });
+                        manager.add(new Action("Edit info", null){
+                            private static final long serialVersionUID = 1L;
+                            
+                            @Override
+                            public void run() {
+                                ProjectInfo selectedProject = (ProjectInfo) selectedItem;
+                                
+                                try {
+                                    MetadataEditDialog editDialog = new MetadataEditDialog(parentShell, "Edit project info", selectedProject);
+                                    editDialog.open();
+                                    String titleName = currentSelectedProject.fileName;
+                                    titleName = titleName.replace('_', ' ').replaceFirst("\\.gpap", "");
+                                    String text = titleName + "<br/><br/>" + currentSelectedProject.metadata;
+                                    
+                                    infoBrowser.setText(text);
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                                
                             }
                         });
                     }

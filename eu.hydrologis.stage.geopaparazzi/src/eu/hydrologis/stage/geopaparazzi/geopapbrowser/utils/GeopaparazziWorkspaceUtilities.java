@@ -21,11 +21,13 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 import org.jgrasstools.gears.io.geopaparazzi.geopap4.TableDescriptions.MetadataTableFields;
 import org.jgrasstools.gears.io.geopaparazzi.geopap4.TimeUtilities;
 
+import eu.hydrologis.stage.libs.utils.StageUtils;
 import eu.hydrologis.stage.libs.workspace.StageWorkspace;
 import eu.hydrologis.stage.libs.workspace.User;
 
@@ -63,8 +65,8 @@ public class GeopaparazziWorkspaceUtilities {
         return infoList;
     }
 
-    private static HashMap<String, String> getProjectMetadata( Connection connection ) throws Exception {
-        HashMap<String, String> infoMap = new HashMap<String, String>();
+    private static LinkedHashMap<String, String> getProjectMetadata( Connection connection ) throws Exception {
+        LinkedHashMap<String, String> infoMap = new LinkedHashMap<String, String>();
         try (Statement statement = connection.createStatement()) {
             statement.setQueryTimeout(30); // set timeout to 30 sec.
 
@@ -91,6 +93,36 @@ public class GeopaparazziWorkspaceUtilities {
 
         }
         return infoMap;
+    }
+    
+    public static String getProjectInfo( Connection connection ) throws Exception {
+        StringBuilder sb = new StringBuilder();
+        try (Statement statement = connection.createStatement()) {
+            statement.setQueryTimeout(30); // set timeout to 30 sec.
+
+            String sql = "select " + MetadataTableFields.COLUMN_KEY.getFieldName() + ", " + //
+                    MetadataTableFields.COLUMN_VALUE.getFieldName() + " from " + TABLE_METADATA;
+
+            ResultSet rs = statement.executeQuery(sql);
+            while( rs.next() ) {
+                String key = rs.getString(MetadataTableFields.COLUMN_KEY.getFieldName());
+                String value = rs.getString(MetadataTableFields.COLUMN_VALUE.getFieldName());
+
+                if (!key.endsWith("ts")) {
+                    sb.append("<b>").append(key).append(":</b> ").append(StageUtils.escapeHTML(value)).append("<br/>");
+                } else {
+                    try {
+                        long ts = Long.parseLong(value);
+                        String dateTimeString = TimeUtilities.INSTANCE.TIME_FORMATTER_LOCAL.format(new Date(ts));
+                        sb.append("<b>").append(key).append(":</b> ").append(dateTimeString).append("<br/>");
+                    } catch (Exception e) {
+                        sb.append("<b>").append(key).append(":</b> ").append(StageUtils.escapeHTML(value)).append("<br/>");
+                    }
+                }
+            }
+
+        }
+        return sb.toString();
     }
 
 }
