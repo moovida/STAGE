@@ -16,7 +16,11 @@ import java.util.Set;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.ScrolledComposite;
+import org.eclipse.swt.events.ControlAdapter;
+import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
@@ -89,12 +93,21 @@ public class MetadataEditDialog extends Dialog {
         Composite composite = (Composite) super.createDialogArea(parent);
         composite.setLayout(new GridLayout(1, false));
 
+        final ScrolledComposite scrolledComposite = new ScrolledComposite(composite, SWT.V_SCROLL);
+        scrolledComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+        scrolledComposite.setExpandVertical(true);
+        scrolledComposite.setExpandHorizontal(true);
+
+        final Composite main = new Composite(scrolledComposite, SWT.NONE);
+        main.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+        main.setLayout(new GridLayout(1, false));
+
         Set<Entry<String, String>> entrySet = metadataMap.entrySet();
         for( Entry<String, String> entry : entrySet ) {
             String key = entry.getKey();
             String value = entry.getValue();
 
-            Group group = new Group(composite, SWT.NONE);
+            Group group = new Group(main, SWT.NONE);
             group.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
             group.setLayout(new GridLayout(1, false));
             group.setText(key);
@@ -106,9 +119,8 @@ public class MetadataEditDialog extends Dialog {
             if (lines <= 1) {
                 text = new Text(group, SWT.SINGLE | SWT.LEAD | SWT.BORDER);
             } else {
-                text = new Text(group, SWT.MULTI | SWT.WRAP | SWT.LEAD | SWT.BORDER | SWT.V_SCROLL);
+                text = new Text(group, SWT.MULTI | SWT.WRAP | SWT.BORDER);
                 textGD.verticalSpan = lines;
-                textGD.horizontalSpan = 2;
             }
             text.setLayoutData(textGD);
             text.setText(value);
@@ -116,6 +128,18 @@ public class MetadataEditDialog extends Dialog {
 
             textWidgets.add(text);
         }
+
+        scrolledComposite.setContent(main);
+        Point point = main.computeSize(SWT.DEFAULT, SWT.DEFAULT);
+        main.setSize(point);
+        scrolledComposite.setMinSize(point);
+        scrolledComposite.addControlListener(new ControlAdapter(){
+            @Override
+            public void controlResized( ControlEvent e ) {
+                Rectangle r = scrolledComposite.getClientArea();
+                scrolledComposite.setMinSize(main.computeSize(r.width, SWT.DEFAULT));
+            }
+        });
 
         return composite;
     }
@@ -158,7 +182,7 @@ public class MetadataEditDialog extends Dialog {
 
     @Override
     protected Point getInitialSize() {
-        return new Point(800, 800);
+        return new Point(600, 600);
     }
 
     @Override
