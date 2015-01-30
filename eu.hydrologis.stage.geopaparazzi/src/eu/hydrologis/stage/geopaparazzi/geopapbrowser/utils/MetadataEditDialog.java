@@ -134,6 +134,8 @@ public class MetadataEditDialog extends Dialog {
         main.setSize(point);
         scrolledComposite.setMinSize(point);
         scrolledComposite.addControlListener(new ControlAdapter(){
+            private static final long serialVersionUID = 1L;
+
             @Override
             public void controlResized( ControlEvent e ) {
                 Rectangle r = scrolledComposite.getClientArea();

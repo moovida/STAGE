@@ -11,7 +11,6 @@ package eu.hydrologis.stage.geopaparazzi.geopapbrowser;
 import static org.jgrasstools.gears.io.geopaparazzi.geopap4.TableDescriptions.TABLE_GPSLOGS;
 import static org.jgrasstools.gears.io.geopaparazzi.geopap4.TableDescriptions.TABLE_GPSLOG_DATA;
 import static org.jgrasstools.gears.io.geopaparazzi.geopap4.TableDescriptions.TABLE_GPSLOG_PROPERTIES;
-import static org.jgrasstools.gears.io.geopaparazzi.geopap4.TableDescriptions.TABLE_METADATA;
 import static org.jgrasstools.gears.io.geopaparazzi.geopap4.TableDescriptions.TABLE_NOTES;
 
 import java.io.BufferedReader;
@@ -71,7 +70,6 @@ import org.jgrasstools.gears.io.geopaparazzi.geopap4.DaoImages;
 import org.jgrasstools.gears.io.geopaparazzi.geopap4.TableDescriptions.GpsLogsDataTableFields;
 import org.jgrasstools.gears.io.geopaparazzi.geopap4.TableDescriptions.GpsLogsPropertiesTableFields;
 import org.jgrasstools.gears.io.geopaparazzi.geopap4.TableDescriptions.GpsLogsTableFields;
-import org.jgrasstools.gears.io.geopaparazzi.geopap4.TableDescriptions.MetadataTableFields;
 import org.jgrasstools.gears.io.geopaparazzi.geopap4.TableDescriptions.NotesTableFields;
 import org.jgrasstools.gears.io.geopaparazzi.geopap4.TimeUtilities;
 
@@ -146,7 +144,7 @@ public class StageGeopaparazziView {
         this.display = display;
 
         parentShell = parent.getShell();
-        
+
         if (!hasDriver) {
             throw new Exception("No SQLite drivers available to read geopaparazzi projects.");
         }
@@ -268,8 +266,6 @@ public class StageGeopaparazziView {
         }
         return infoList;
     }
-
-
 
     private void setNoProjectLabel() {
         dataBrowser.setText("<h1>No project selected</h1>");
@@ -501,46 +497,12 @@ public class StageGeopaparazziView {
                     }
 
                     if (selectedItem instanceof ProjectInfo) {
-                        manager.add(new Action("Download", null){
-                            private static final long serialVersionUID = 1L;
-
-                            @Override
-                            public void run() {
-                                ProjectInfo selectedProject = (ProjectInfo) selectedItem;
-                                File dbFile = selectedProject.databaseFile;
-                                if (dbFile != null && dbFile.exists() && !dbFile.isDirectory()) {
-                                    try {
-                                        new DownloadUtils().sendDownload(modulesViewer.getControl().getShell(), dbFile);
-                                    } catch (IOException e) {
-                                        e.printStackTrace();
-                                    }
-                                }
-                            }
-                        });
-                        manager.add(new Action("Edit info", null){
-                            private static final long serialVersionUID = 1L;
-                            
-                            @Override
-                            public void run() {
-                                ProjectInfo selectedProject = (ProjectInfo) selectedItem;
-                                
-                                try {
-                                    MetadataEditDialog editDialog = new MetadataEditDialog(parentShell, "Edit project info", selectedProject);
-                                    editDialog.open();
-                                    String titleName = currentSelectedProject.fileName;
-                                    titleName = titleName.replace('_', ' ').replaceFirst("\\.gpap", "");
-                                    String text = titleName + "<br/><br/>" + currentSelectedProject.metadata;
-                                    
-                                    infoBrowser.setText(text);
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
-                                
-                            }
-                        });
+                        manager.add(makeProjectDownloadAction(modulesViewer, selectedItem));
+                        manager.add(makeMetadataEditAction(selectedItem));
                     }
                 }
             }
+
         });
         manager.setRemoveAllWhenShown(true);
         return modulesViewer;
@@ -919,4 +881,46 @@ public class StageGeopaparazziView {
         return uploadHandler.getUploadUrl();
     }
 
+    private Action makeProjectDownloadAction( final TreeViewer modulesViewer, final Object selectedItem ) {
+        return new Action("Download", null){
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public void run() {
+                ProjectInfo selectedProject = (ProjectInfo) selectedItem;
+                File dbFile = selectedProject.databaseFile;
+                if (dbFile != null && dbFile.exists() && !dbFile.isDirectory()) {
+                    try {
+                        new DownloadUtils().sendDownload(modulesViewer.getControl().getShell(), dbFile);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        };
+    }
+
+    private Action makeMetadataEditAction( final Object selectedItem ) {
+        return new Action("Edit info", null){
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public void run() {
+                ProjectInfo selectedProject = (ProjectInfo) selectedItem;
+
+                try {
+                    MetadataEditDialog editDialog = new MetadataEditDialog(parentShell, "Edit project info", selectedProject);
+                    editDialog.open();
+                    String titleName = currentSelectedProject.fileName;
+                    titleName = titleName.replace('_', ' ').replaceFirst("\\.gpap", "");
+                    String text = titleName + "<br/><br/>" + currentSelectedProject.metadata;
+
+                    infoBrowser.setText(text);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+            }
+        };
+    }
 }
