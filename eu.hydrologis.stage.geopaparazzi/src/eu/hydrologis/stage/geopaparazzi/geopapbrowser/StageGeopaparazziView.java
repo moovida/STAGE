@@ -77,7 +77,7 @@ import org.jgrasstools.gears.io.geopaparazzi.geopap4.TableDescriptions.NotesTabl
 import org.jgrasstools.gears.io.geopaparazzi.geopap4.TimeUtilities;
 
 import eu.hydrologis.stage.geopaparazzi.geopapbrowser.functions.OpenImageFunction;
-import eu.hydrologis.stage.geopaparazzi.geopapbrowser.utils.GeopaparazziImageUtils;
+import eu.hydrologis.stage.geopaparazzi.geopapbrowser.utils.GeopaparazziUtilities;
 import eu.hydrologis.stage.geopaparazzi.geopapbrowser.utils.GeopaparazziWorkspaceUtilities;
 import eu.hydrologis.stage.geopaparazzi.geopapbrowser.utils.MetadataEditDialog;
 import eu.hydrologis.stage.libs.utils.FileUtilities;
@@ -418,79 +418,11 @@ public class StageGeopaparazziView {
                 }
 
                 if (selectedItem instanceof ProjectInfo) {
-                    currentSelectedProject = (ProjectInfo) selectedItem;
-                    try {
-                        /*
-                         * set the info view
-                         */
-                        String titleName = currentSelectedProject.fileName;
-                        titleName = titleName.replace('_', ' ').replaceFirst("\\.gpap", "");
-                        String text = titleName + "<br/><br/>" + currentSelectedProject.metadata;
-
-                        infoBrowser.setText(text);
-
-                        /*
-                         * set the project view
-                         */
-                        String projectTemplate = getProjectTemplate();
-                        // substitute the notes info
-                        String projectHtml = setData(projectTemplate, currentSelectedProject);
-                        if (CACHE_HTML_TO_FILE) {
-                            projectHtml = FileUtilities.readFile(projectHtml);
-                        }
-                        // infoBrowser.setUrl("file:" + projectHtmlFile);
-                        dataBrowser.setText(projectHtml);
-
-                        if (projectHtml.contains("openGpImage")) {
-                            new OpenImageFunction(dataBrowser, "openGpImage", currentSelectedProject.databaseFile);
-                            // infoBrowser.addProgressListener(new ProgressListener(){
-                            // @Override
-                            // public void completed( ProgressEvent event ) {
-                            // infoBrowser.addLocationListener(new LocationAdapter(){
-                            // @Override
-                            // public void changed( LocationEvent event ) {
-                            // infoBrowser.removeLocationListener(this);
-                            // System.out.println("left java function-aware page, so disposed CustomFunction");
-                            // openImageFunction.dispose();
-                            // }
-                            // });
-                            // }
-                            // @Override
-                            // public void changed( ProgressEvent event ) {
-                            // }
-                            // });
-                        }
-
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                    // projectViewStackLayout.topControl = control;
-                    // projectViewComposite.layout(true);
+                    selectProjectInfo(selectedItem);
                 } else if (selectedItem instanceof org.jgrasstools.gears.io.geopaparazzi.geopap4.Image) {
-                    org.jgrasstools.gears.io.geopaparazzi.geopap4.Image selectedImage = (org.jgrasstools.gears.io.geopaparazzi.geopap4.Image) selectedItem;
-                    for( ProjectInfo projectInfo : projectInfos ) {
-                        for( org.jgrasstools.gears.io.geopaparazzi.geopap4.Image tmpImage : projectInfo.images ) {
-                            if (tmpImage.equals(selectedImage)) {
-                                currentSelectedProject = projectInfo;
-                                break;
-                            }
-                        }
-                    }
-
-                    try {
-                        String dateTimeString = TimeUtilities.INSTANCE.TIME_FORMATTER_LOCAL.format(new Date(selectedImage.getTs()));
-                        String picInfo = "<b>Image:</b> " + StageUtils.escapeHTML(selectedImage.getName()) + "<br/>" //
-                                + "<b>Timestamp:</b> " + dateTimeString + "<br/>" //
-                                + "<b>Azimuth:</b> " + (int) selectedImage.getAzim() + " deg<br/>" //
-                                + "<b>Altim:</b> " + (int) selectedImage.getAltim() + " m<br/>";
-                        infoBrowser.setText(picInfo);
-
-                        GeopaparazziImageUtils.setImageInBrowser(dataBrowser, selectedImage.getId(), selectedImage.getName(),
-                                currentSelectedProject.databaseFile, IMAGE_KEY, SERVICE_HANDLER);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        setNoProjectLabel();
-                    }
+                    selectImage(selectedItem);
+                } else if (selectedItem instanceof GpsLog) {
+                    selectGpsLog(selectedItem);
                 } else {
                     setNoProjectLabel();
                 }
@@ -498,9 +430,6 @@ public class StageGeopaparazziView {
 
         });
 
-        // final ImageDescriptor exportImageDescr =
-        // ImageDescriptor.createFromImage(ImageCache.getInstance().getImage(display,
-        // ImageCache.EXPORT));
         MenuManager manager = new MenuManager();
         modulesViewer.getControl().setMenu(manager.createContextMenu(modulesViewer.getControl()));
         manager.addMenuListener(new IMenuListener(){
@@ -941,5 +870,90 @@ public class StageGeopaparazziView {
 
             }
         };
+    }
+
+    private void selectProjectInfo( Object selectedItem ) {
+        currentSelectedProject = (ProjectInfo) selectedItem;
+        try {
+            /*
+             * set the info view
+             */
+            String titleName = currentSelectedProject.fileName;
+            titleName = titleName.replace('_', ' ').replaceFirst("\\.gpap", "");
+            String text = titleName + "<br/><br/>" + currentSelectedProject.metadata;
+
+            infoBrowser.setText(text);
+
+            /*
+             * set the project view
+             */
+            String projectTemplate = getProjectTemplate();
+            // substitute the notes info
+            String projectHtml = setData(projectTemplate, currentSelectedProject);
+            if (CACHE_HTML_TO_FILE) {
+                projectHtml = FileUtilities.readFile(projectHtml);
+            }
+            dataBrowser.setText(projectHtml);
+
+            if (projectHtml.contains("openGpImage")) {
+                new OpenImageFunction(dataBrowser, "openGpImage", currentSelectedProject.databaseFile);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void selectImage( Object selectedItem ) {
+        org.jgrasstools.gears.io.geopaparazzi.geopap4.Image selectedImage = (org.jgrasstools.gears.io.geopaparazzi.geopap4.Image) selectedItem;
+        for( ProjectInfo projectInfo : projectInfos ) {
+            for( org.jgrasstools.gears.io.geopaparazzi.geopap4.Image tmpImage : projectInfo.images ) {
+                if (tmpImage.equals(selectedImage)) {
+                    currentSelectedProject = projectInfo;
+                    break;
+                }
+            }
+        }
+
+        try {
+            String dateTimeString = TimeUtilities.INSTANCE.TIME_FORMATTER_LOCAL.format(new Date(selectedImage.getTs()));
+            String picInfo = "<b>Image:</b> " + StageUtils.escapeHTML(selectedImage.getName()) + "<br/>" //
+                    + "<b>Timestamp:</b> " + dateTimeString + "<br/>" //
+                    + "<b>Azimuth:</b> " + (int) selectedImage.getAzim() + " deg<br/>" //
+                    + "<b>Altim:</b> " + (int) selectedImage.getAltim() + " m<br/>";
+            infoBrowser.setText(picInfo);
+
+            GeopaparazziUtilities.setImageInBrowser(dataBrowser, selectedImage.getId(), selectedImage.getName(),
+                    currentSelectedProject.databaseFile, IMAGE_KEY, SERVICE_HANDLER);
+        } catch (Exception e) {
+            e.printStackTrace();
+            setNoProjectLabel();
+        }
+    }
+
+    private void selectGpsLog( Object selectedItem ) {
+        GpsLog selectedLog = (GpsLog) selectedItem;
+
+        for( ProjectInfo projectInfo : projectInfos ) {
+            if (projectInfo.logs.contains(selectedLog)) {
+                currentSelectedProject = projectInfo;
+                break;
+            }
+        }
+
+        try {
+            String startDateTimeString = TimeUtilities.INSTANCE.TIME_FORMATTER_LOCAL.format(new Date(selectedLog.startTime));
+            String endDateTimeString = TimeUtilities.INSTANCE.TIME_FORMATTER_LOCAL.format(new Date(selectedLog.endTime));
+            String picInfo = "<b>Gps log:</b> " + StageUtils.escapeHTML(selectedLog.text) + "<br/>" //
+                    + "<b>Start time:</b> " + startDateTimeString + "<br/>" //
+                    + "<b>End time:</b> " + endDateTimeString + "<br/>";
+            infoBrowser.setText(picInfo);
+
+            GeopaparazziUtilities.setLogChartInBrowser(dataBrowser, selectedLog, currentSelectedProject.databaseFile, IMAGE_KEY,
+                    SERVICE_HANDLER);
+        } catch (Exception e) {
+            e.printStackTrace();
+            setNoProjectLabel();
+        }
     }
 }

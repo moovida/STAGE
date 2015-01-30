@@ -69,7 +69,7 @@ public class ImageDialog extends Dialog {
         imageBrowser.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
         try {
-            GeopaparazziImageUtils.setImageInBrowser(imageBrowser, imageId, imageName, dbFile, IMAGE_KEY, SERVICE_HANDLER);
+            GeopaparazziUtilities.setImageInBrowser(imageBrowser, imageId, imageName, dbFile, IMAGE_KEY, SERVICE_HANDLER);
         } catch (Exception e) {
             e.printStackTrace();
         }

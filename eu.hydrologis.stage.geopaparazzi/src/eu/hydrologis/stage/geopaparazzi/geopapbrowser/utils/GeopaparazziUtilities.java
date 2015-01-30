@@ -20,7 +20,13 @@ import javax.imageio.ImageIO;
 
 import org.eclipse.rap.rwt.RWT;
 import org.eclipse.swt.browser.Browser;
+import org.geotools.referencing.GeodeticCalculator;
+import org.geotools.referencing.crs.DefaultGeographicCRS;
+import org.jgrasstools.gears.io.geopaparazzi.geopap4.DaoGpsLog.GpsLog;
+import org.jgrasstools.gears.io.geopaparazzi.geopap4.DaoGpsLog.GpsPoint;
+import org.jgrasstools.gears.io.geopaparazzi.geopap4.DaoGpsLog;
 import org.jgrasstools.gears.io.geopaparazzi.geopap4.DaoImages;
+import org.jgrasstools.gears.utils.chart.Scatter;
 
 /**
  * Utilities for image handling.
@@ -28,7 +34,9 @@ import org.jgrasstools.gears.io.geopaparazzi.geopap4.DaoImages;
  * @author hydrologis
  *
  */
-public class GeopaparazziImageUtils {
+public class GeopaparazziUtilities {
+
+    private static final int MAX_IMAGE_SIZE = 800;
 
     /**
      * Set an image as browser content.
@@ -62,9 +70,9 @@ public class GeopaparazziImageUtils {
                 // }
                 e.printStackTrace();
             }
-
         }
     }
+
     private static BufferedImage createImage( InputStream inputStream ) throws Exception {
         BufferedImage image = ImageIO.read(inputStream);
 
@@ -73,10 +81,10 @@ public class GeopaparazziImageUtils {
         int width;
         int height;
         if (imageWidth > imageHeight) {
-            width = 800;
+            width = MAX_IMAGE_SIZE;
             height = imageHeight * width / imageWidth;
         } else {
-            height = 800;
+            height = MAX_IMAGE_SIZE;
             width = height * imageWidth / imageHeight;
         }
 
@@ -106,5 +114,52 @@ public class GeopaparazziImageUtils {
         url.append("&nocache=");
         url.append(System.currentTimeMillis());
         return url.toString();
+    }
+
+    public static void setLogChartInBrowser( Browser browser, GpsLog log, File dbFile, String IMAGE_KEY, String SERVICE_HANDLER )
+            throws Exception {
+        try (Connection connection = DriverManager.getConnection("jdbc:sqlite:" + dbFile.getAbsolutePath())) {
+            DaoGpsLog.collectDataForLog(connection, log);
+
+            String logName = log.text;
+            GeodeticCalculator gc = new GeodeticCalculator(DefaultGeographicCRS.WGS84);
+            int size = log.points.size();
+            double[] xProfile = new double[size];
+            double[] yProfile = new double[size];
+            double runningDistance = 0;
+            for( int i = 0; i < size - 1; i++ ) {
+                GpsPoint p1 = log.points.get(i);
+                GpsPoint p2 = log.points.get(i + 1);
+                double lon1 = p1.lon;
+                double lat1 = p1.lat;
+                double altim1 = p1.altim;
+                double lon2 = p2.lon;
+                double lat2 = p2.lat;
+                double altim2 = p2.altim;
+
+                gc.setStartingGeographicPoint(lon1, lat1);
+                gc.setDestinationGeographicPoint(lon2, lat2);
+                double distance = gc.getOrthodromicDistance();
+                runningDistance += distance;
+
+                if (i == 0) {
+                    xProfile[i] = 0.0;
+                    yProfile[i] = altim1;
+                }
+                xProfile[i + 1] = runningDistance;
+                yProfile[i + 1] = altim2;
+            }
+
+            log.points.clear();
+
+            Scatter scatterProfile = new Scatter("Profile " + logName);
+            scatterProfile.addSeries("profile", xProfile, yProfile);
+            scatterProfile.setShowLines(true);
+            scatterProfile.setXLabel("progressive distance [m]");
+            scatterProfile.setYLabel("elevation [m]");
+            BufferedImage imageProfile = scatterProfile.getImage(800, 600);
+            RWT.getUISession().setAttribute(IMAGE_KEY, imageProfile);
+            browser.setText(createHtml(IMAGE_KEY, SERVICE_HANDLER));
+        }
     }
 }
