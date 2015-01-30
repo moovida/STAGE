@@ -9,7 +9,9 @@
 package eu.hydrologis.stage.geopaparazzi.geopapbrowser;
 
 import java.io.File;
+import java.util.List;
 
+import org.jgrasstools.gears.io.geopaparazzi.geopap4.DaoGpsLog.GpsLog;
 import org.jgrasstools.gears.io.geopaparazzi.geopap4.Image;
 
 /**
@@ -24,4 +26,5 @@ public class ProjectInfo {
     public String metadata;
 
     public Image[] images;
+    public List<GpsLog> logs;
 }

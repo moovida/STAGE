@@ -66,7 +66,10 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
+import org.jgrasstools.gears.io.geopaparazzi.geopap4.DaoGpsLog;
+import org.jgrasstools.gears.io.geopaparazzi.geopap4.DaoGpsLog.GpsLog;
 import org.jgrasstools.gears.io.geopaparazzi.geopap4.DaoImages;
+import org.jgrasstools.gears.io.geopaparazzi.geopap4.DaoLog;
 import org.jgrasstools.gears.io.geopaparazzi.geopap4.TableDescriptions.GpsLogsDataTableFields;
 import org.jgrasstools.gears.io.geopaparazzi.geopap4.TableDescriptions.GpsLogsPropertiesTableFields;
 import org.jgrasstools.gears.io.geopaparazzi.geopap4.TableDescriptions.GpsLogsTableFields;
@@ -261,6 +264,9 @@ public class StageGeopaparazziView {
 
                 List<org.jgrasstools.gears.io.geopaparazzi.geopap4.Image> imagesList = DaoImages.getImagesList(connection);
                 info.images = imagesList.toArray(new org.jgrasstools.gears.io.geopaparazzi.geopap4.Image[0]);
+
+                List<GpsLog> logsList = DaoGpsLog.getLogsList(connection);
+                info.logs = logsList;
                 infoList.add(info);
             }
         }
@@ -332,7 +338,16 @@ public class StageGeopaparazziView {
                 }
                 if (parentElement instanceof ProjectInfo) {
                     ProjectInfo info = (ProjectInfo) parentElement;
-                    return info.images;
+                    int imgSize = info.images != null ? info.images.length : 0;
+                    int logSize = info.logs != null ? info.logs.size() : 0;
+                    Object[] childs = new Object[imgSize + logSize];
+                    for( int i = 0; i < logSize; i++ ) {
+                        childs[i] = info.logs.get(i);
+                    }
+                    for( int i = logSize; i < imgSize + logSize; i++ ) {
+                        childs[i] = info.images[i - logSize];
+                    }
+                    return childs;
                 }
                 return new Object[0];
             }
@@ -359,9 +374,10 @@ public class StageGeopaparazziView {
             public Image getImage( Object element ) {
                 if (element instanceof ProjectInfo) {
                     return ImageCache.getInstance().getImage(display, ImageCache.DATABASE);
-                }
-                if (element instanceof org.jgrasstools.gears.io.geopaparazzi.geopap4.Image) {
+                } else if (element instanceof org.jgrasstools.gears.io.geopaparazzi.geopap4.Image) {
                     return ImageCache.getInstance().getImage(display, ImageCache.DBIMAGE);
+                } else if (element instanceof GpsLog) {
+                    return ImageCache.getInstance().getImage(display, ImageCache.LOG);
                 }
                 return null;
             }
@@ -373,11 +389,14 @@ public class StageGeopaparazziView {
                     fileName = fileName.replace('_', ' ').replaceFirst("\\.gpap", "");
                     String name = "<big>" + fileName + "</big><br/>";
                     return name;
-                }
-                if (element instanceof org.jgrasstools.gears.io.geopaparazzi.geopap4.Image) {
+                } else if (element instanceof org.jgrasstools.gears.io.geopaparazzi.geopap4.Image) {
                     org.jgrasstools.gears.io.geopaparazzi.geopap4.Image image = (org.jgrasstools.gears.io.geopaparazzi.geopap4.Image) element;
                     String imageName = image.getName();
                     return imageName;
+                } else if (element instanceof GpsLog) {
+                    GpsLog log = (GpsLog) element;
+                    String logName = log.text;
+                    return logName;
                 }
                 return ""; //$NON-NLS-1$
             }

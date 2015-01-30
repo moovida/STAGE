@@ -40,11 +40,13 @@ public class ImageCache {
 
     public static final String DATABASE = "database.gif";
     public static final String DBIMAGE = "db_image.gif";
+    public static final String LOG = "log.gif";
 
     public static final String INFO = "information.png";
     public static final String PHOTO = "photo.png";
 
     public static final String EXPORT = "export_wiz.gif";
+    
     
 	private static ImageCache imageCache;
 
