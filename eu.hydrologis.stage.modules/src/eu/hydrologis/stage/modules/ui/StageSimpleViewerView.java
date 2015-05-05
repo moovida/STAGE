@@ -33,6 +33,7 @@ import org.jgrasstools.gears.utils.images.ImageGenerator;
 import eu.hydrologis.stage.libs.utilsrap.FileSelectionDialog;
 import eu.hydrologis.stage.libs.workspace.StageWorkspace;
 import eu.hydrologis.stage.libs.workspace.User;
+import eu.hydrologis.stage.modules.treesslicer.TreeSlicerDialog;
 import eu.hydrologis.stage.modules.utils.FileUtilities;
 
 /**
@@ -45,12 +46,21 @@ public class StageSimpleViewerView {
 
     private static final int DEFAULT_HEIGHT = 600;
     private static final int DEFAULT_WIDTH = 800;
-    private final static String SERVICE_HANDLER = "imageServiceHandler";
+    private final static String SERVICE_HANDLER = "viewerImageServiceHandler";
     private final static String IMAGE_KEY = "imageKey";
     private Browser browser;
     private File[] selectedFiles = new File[5];
     private Text heightText;
     private Text widthText;
+
+    static {
+        // register the service handler
+        try {
+            RWT.getServiceManager().registerServiceHandler(SERVICE_HANDLER, new ImageServiceHandler());
+        } catch (Exception e1) {
+            // TODO
+        }
+    }
 
     public void createStageSimpleViewerTab( Display display, Composite parent, CTabItem stageTab ) throws IOException {
 
@@ -89,12 +99,6 @@ public class StageSimpleViewerView {
         viewerGroup.setLayout(new GridLayout(1, false));
         viewerGroup.setText("Viewer");
 
-        // register the service handler
-        try {
-            RWT.getServiceManager().registerServiceHandler(SERVICE_HANDLER, new ImageServiceHandler());
-        } catch (Exception e1) {
-            // TODO
-        }
         browser = new Browser(viewerGroup, SWT.NONE);;
         browser.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
@@ -143,11 +147,14 @@ public class StageSimpleViewerView {
         drawButton.addSelectionListener(new SelectionAdapter(){
             @Override
             public void widgetSelected( SelectionEvent e ) {
-                try {
-                    setImage(browser, selectedFiles);
-                } catch (Exception e1) {
-                    e1.printStackTrace();
-                }
+                TreeSlicerDialog d = new TreeSlicerDialog(browser.getShell());
+                d.open();
+                
+//                try {
+//                    setImage(browser, selectedFiles);
+//                } catch (Exception e1) {
+//                    e1.printStackTrace();
+//                }
             }
         });
 

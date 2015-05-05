@@ -4,6 +4,7 @@ import java.io.File;
 
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.rap.rwt.RWT;
+import org.eclipse.rap.rwt.service.ServiceManager;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.graphics.Point;
@@ -45,11 +46,6 @@ public class ImageDialog extends Dialog {
         this.imageId = imageId;
         this.imageName = imageName;
 
-        try {
-            RWT.getServiceManager().registerServiceHandler(SERVICE_HANDLER, new ImageServiceHandler());
-        } catch (Exception e1) {
-            // TODO
-        }
     }
 
     @Override

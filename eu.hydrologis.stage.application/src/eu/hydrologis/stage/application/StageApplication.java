@@ -44,16 +44,22 @@ public class StageApplication implements ApplicationConfiguration {
         stageProperties.put(WebClient.BODY_HTML, readTextFromResource("resources/body.html", "UTF-8"));
         stageProperties.put(WebClient.HEAD_HTML, readTextFromResource("resources/head.html", "UTF-8"));
         stageProperties.put(WebClient.FAVICON, "resources/favicon.png");
-
         application.addEntryPoint("/stage", StageEntryPoint.class, stageProperties);
 
+        
         Map<String, String> geopapBrowserProperties = new HashMap<String, String>();
         geopapBrowserProperties.put(WebClient.PAGE_TITLE, "Geopaparazzi Browser");
         geopapBrowserProperties.put(WebClient.BODY_HTML, readTextFromResource("resources/body_geopapbrowser.html", "UTF-8"));
         geopapBrowserProperties.put(WebClient.HEAD_HTML, readTextFromResource("resources/head.html", "UTF-8"));
         geopapBrowserProperties.put(WebClient.FAVICON, "resources/favicon.png");
-
         application.addEntryPoint("/geopapbrowser", GeopapBrowserEntryPoint.class, geopapBrowserProperties);
+
+//        Map<String, String> chartProperties = new HashMap<String, String>();
+//        chartProperties.put(WebClient.PAGE_TITLE, "Geopaparazzi Browser");
+//        chartProperties.put(WebClient.BODY_HTML, readTextFromResource("resources/body_geopapbrowser.html", "UTF-8"));
+//        chartProperties.put(WebClient.HEAD_HTML, readTextFromResource("resources/head.html", "UTF-8"));
+//        chartProperties.put(WebClient.FAVICON, "resources/favicon.png");
+//        application.addEntryPoint("/chart", ChartDemo.class, chartProperties);
 
         application.setOperationMode(OperationMode.SWT_COMPATIBILITY);
         application.addStyleSheet(RWT.DEFAULT_THEME_ID, "theme/theme.css");

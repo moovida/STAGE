@@ -46,6 +46,7 @@ import org.eclipse.rap.addons.fileupload.FileUploadHandler;
 import org.eclipse.rap.addons.fileupload.FileUploadListener;
 import org.eclipse.rap.rwt.RWT;
 import org.eclipse.rap.rwt.service.ServerPushSession;
+import org.eclipse.rap.rwt.service.ServiceManager;
 import org.eclipse.rap.rwt.widgets.FileUpload;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.browser.Browser;
@@ -136,7 +137,8 @@ public class StageGeopaparazziView {
 
         // register the service handler
         try {
-            RWT.getServiceManager().registerServiceHandler(SERVICE_HANDLER, new ImageServiceHandler());
+            ServiceManager serviceManager = RWT.getServiceManager();
+            serviceManager.registerServiceHandler(SERVICE_HANDLER, new ImageServiceHandler());
         } catch (Exception e1) {
             e1.printStackTrace();
         }

@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<!--
+Andrea Antonello
+-->
+<html>
+    <head>
+        <title>Trees info</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script type="text/javascript" src="libs/d3.min.js"></script>
+        <script type="text/javascript" src="tree_profiles_scatterchart.js"></script>
+        <script type="text/javascript" src="libs/hylib.js"></script>
+        <script type="text/javascript" src="libs/leaflet.js"></script>
+        <link rel="stylesheet" href="libs/leaflet.css" />
+        <script type='text/javascript' src='libs/jquery.min.js'></script>
+        <style>
+            .control-group {
+                padding-top: 10px;
+                margin: 10px;
+            }
+            svg .line{
+                stroke: red;
+                stroke-width: 1;
+                fill: none;
+            }
+            .dot {
+                fill: #fff;
+                stroke: steelblue;
+            }
+            .axis path, .axis line {
+                fill: none;
+                stroke: #000;
+                shape-rendering: crispEdges;
+            }
+
+            .axis text {
+                font: 10px sans-serif;
+            }
+
+            .axis .grid-line{
+                stroke: #000;
+                shape-rendering: crispEdges;
+            }
+            body {
+                font-family: "helvetica";
+            }
+            #maintable{
+                width: 100%;
+                margin-left:0%; 
+                margin-right:0%;
+            }
+            #maincolumn{
+            }
+            #chartscolumn{
+            }
+            /*            #plotstitle, #loading, #plotselect{
+                            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+                            font-size: 24px;
+                            font-weight: bold;
+                            float: left;
+            
+                            margin: 15px;
+                        }*/
+            .leftfloat{
+                float: left;
+            }
+            .roundedbox {
+                background-color: rgba(70,130,180,0.3);
+                border: 2px solid steelblue;
+                padding: 5px;
+                margin: 5px;
+                border-radius: 5px 15px;
+            }
+            .whitebox{
+                background-color: white;
+                border: 2px solid steelblue;
+                padding: 5px;
+            }
+        </style>
+        <script type="text/javascript">
+
+            // GLOBAL VARS START
+            var clickedTreeId;
+            var mmX = 60;
+            var mmY = 50;
+            var _chartMargins = {top: mmY, left: mmX, right: mmX, bottom: mmY};
+
+            var doMajor175 = true;
+            var chartWidth;
+            var chartHeight;
+            var mainColumnWidth;
+
+            var plots;
+            var plot;
+            var trees;
+            var heightScale;
+            var profColorMap = d3.map();
+            profColorMap.set("SN", "red");
+            profColorMap.set("SWNE", "blue");
+            profColorMap.set("WE", "green");
+            profColorMap.set("WNES", "orange");
+
+            var _mapP;
+            var mapPlotG;
+            var mapLinesG;
+            var mapTreesG;
+            var leafletMap;
+
+            var _folder = "./treeslices_aurina/";
+            //var _folder = "./treeslices_fem/";
+            var filesCsv = _folder + "files.csv";
+
+            // GLOBAL VARS END
+
+            $(document).ready(function () {
+                //loadScript();
+            });
+
+            function loadScript() {
+                var body = d3.select("body");
+                var _height = maximumDocumentSizes(_chartMargins).height;
+                var _width = maximumDocumentSizes(_chartMargins).width;
+                var mainColumnPerc = 0.3;
+                var chartsColumnPerc = 0.7;
+                chartWidth = _width * chartsColumnPerc / 2;
+                chartHeight = _height / 2;
+                mainColumnWidth = Math.round(_width * mainColumnPerc);
+
+                var maincolumn = body.select("#maincolumn");
+                maincolumn.style("width", (mainColumnPerc * 100) + "%")
+                var chartscolumn = body.select("#chartscolumn");
+                chartscolumn.style("width", (chartsColumnPerc * 100) + "%")
+
+                d3.select("#diamCheckbox").on("change", function () {
+                    doMajor175 = this.checked;
+                    readData();
+                });
+
+                d3.select("#chartstable").style("height", _height + "px");
+                if (typeof getPlotFiles === 'function') {
+                    var plotFiles = getPlotFiles();
+                    var files = JSON.parse(plotFiles);
+                    maincolumn.select("#plotselect").selectAll("option").data(files).enter().append("option")
+                            .attr("value", function (d) {
+                                return d.name;
+                            })
+                            .attr("name", function (d) {
+                                return d.name;
+                            })
+                            .attr("selected", "false")
+                            .text(function (d) {
+                                return d.name;
+                            });
+                } else {
+                    d3.csv(filesCsv, function (files) {
+                        maincolumn.select("#plotselect").selectAll("option").data(files).enter().append("option")
+                                .attr("value", function (d) {
+                                    return d.name;
+                                })
+                                .attr("name", function (d) {
+                                    return d.name;
+                                })
+                                .attr("selected", "false")
+                                .text(function (d) {
+                                    return d.name;
+                                });
+                    });
+                }
+                _mapP = maincolumn.select("#map")
+                        .style("width", mainColumnWidth + "px")
+                        .style("height", mainColumnWidth + "px");
+                leafletMap = L.map('map');
+                var mapnik = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+                    maxZoom: 25,
+                    maxNativeZoom: 18
+                });
+                var esri_world = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                    attribution: 'Tiles &copy; Esri',
+                    maxZoom: 25,
+                    maxNativeZoom: 18
+                }).addTo(leafletMap);
+                var baseMaps = {
+                    "mapnik": mapnik,
+                    "esri_world": esri_world,
+                };
+                L.control.layers(baseMaps).addTo(leafletMap);
+                leafletMap.setView([0.0, 0.0], 2);
+                leafletMap._initPathRoot();
+
+                var mapSvg = d3.select("#map").select("svg");
+                mapPlotG = mapSvg.append("g");
+                mapLinesG = mapSvg.append("g");
+                mapTreesG = mapSvg.append("g");
+            }
+
+            function updateData(fileName) {
+                if (fileName === " - ") {
+                    mapTreesG.selectAll("circle").remove();
+                    mapPlotG.selectAll("circle").remove();
+                }
+
+                clearInfoAndChart();
+
+                var jsonFile = _folder + fileName;
+                var fileSize;
+                var request;
+                request = $.ajax({
+                    type: "HEAD",
+                    url: jsonFile, //$("#url").val(),
+                    success: function () {
+                        fileSize = request.getResponseHeader("Content-Length");
+                    }
+                });
+
+                var progressRect = d3.select("#progressbar").append("svg")
+                        .attr("width", mainColumnWidth)
+                        .attr("height", "10px")
+                        .append("g")
+                        .append("rect")
+                        .attr("x", 0)
+                        .attr("y", 0)
+                        .attr("width", 0)
+                        .attr("height", 10)
+                        .style("fill", "red")
+                        .style("stroke", "red")
+                        .style("fill-opacity", 0.5);
+                var progress = 0;
+                d3.json(jsonFile)
+                        .on("progress", function () {
+                            var i = d3.interpolate(progress, d3.event.loaded / fileSize);
+                            d3.transition().tween("progress", function () {
+                                return function (t) {
+                                    progress = i(t);
+                                    progressRect.attr("width", mainColumnWidth * progress);
+                                };
+                            });
+                        })
+                        .get(function (error, data) {
+                            plots = data.plotData.plots;
+                            plot = plots[0];
+                            readData();
+                            setTimeout(function () {
+                                // just to make the bar visible
+                                d3.select("#progressbar").selectAll("svg").remove();
+                            }, 1000);
+
+                        });
+            }
+
+            function project(x, y) {
+                var point = leafletMap.latLngToLayerPoint(new L.LatLng(y, x));
+                return point;
+            }
+
+            function clearInfoAndChart() {
+                d3.select("#infotable").selectAll("tr").remove();
+                d3.select("#sn-cell").selectAll("svg").remove();
+                d3.select("#swne-cell").selectAll("svg").remove();
+                d3.select("#we-cell").selectAll("svg").remove();
+                d3.select("#wnes-cell").selectAll("svg").remove();
+                mapPlotG.selectAll("polygon").remove();
+            }
+
+            function readData() {
+                if (doMajor175) {
+                    trees = plot.trees.filter(function (d) {
+                        if (!d.diam) { // we take all false positives, they have no diam
+                            return true;
+                        }
+                        return d.diam > 17.5;
+                    });
+                } else {
+                    trees = plot.trees;
+                }
+                var maxDiam = d3.max(trees, function (d) {
+                    return d.diam;
+                });
+                var minDiam = d3.min(trees, function (d) {
+                    return d.diam;
+                });
+                var maxHeight = d3.max(trees, function (d) {
+                    return d.height;
+                });
+                var minHeight = d3.min(trees, function (d) {
+                    return d.height;
+                });
+                var de = (maxHeight - minHeight) / 6;
+                heightScale = d3.scale.linear()
+                        .domain([minHeight, minHeight + 2 * de, minHeight + 3 * de, minHeight + 4 * de, minHeight + 5 * de, maxHeight])
+                        .range(["#00BFBF", "#00FF00", "#FFFF00", "#FF7F00", "#BF7F3F", "#141514"]);
+                leafletMap.setView([plot.centerlat, plot.centerlon], 20);
+                mapTreesG.selectAll("circle")
+                        .data(trees).exit().remove();
+                mapTreesG.selectAll("circle")
+                        .data(trees)
+                        .enter().append("circle");
+                mapPlotG.selectAll("circle")
+                        .data(plots).exit().remove();
+                mapPlotG.selectAll("circle")
+                        .data(plots)
+                        .enter().append("circle");
+                leafletMap.on("viewreset", reset);
+                reset();
+            }
+            // Reposition the SVG to cover the features.
+            function reset() {
+                mapTreesG.selectAll("circle")
+                        .data(trees)
+                        .attr("cx", function (d) {
+                            return project(d.lon, d.lat).x;
+                        })
+                        .attr("cy", function (d) {
+                            return project(d.lon, d.lat).y;
+                        })
+                        .attr("r", function (d) {
+                            var dd;
+                            if (d.diamdeg) {
+                                dd = project(d.lon, d.lat).x - project(d.lon - d.diamdeg / 100 / 2, d.lat).x;
+                            } else {
+                                dd = project(d.lon, d.lat).x - project(d.lon - 0.0005 / 100, d.lat).x;
+                            }
+                            if (dd < 2) {
+                                dd = 2;
+                            }
+                            return dd;
+                        })
+                        .style("fill", function (d) {
+                            return heightScale(d.height);
+                        })
+                        .style("stroke", function (d) {
+                            if (d.diamdeg) {
+                                if (d.idMatched) {
+                                    // matched
+                                    return "white";
+                                } else {
+                                    // false negative
+                                    return "red";
+                                }
+                            } else {
+                                return "cyan"
+                            }
+                        })
+                        .style("fill-opacity", function (d) {
+                            if (d.diamdeg) {
+                                return 1.0;
+                            } else {
+                                return 0.0;
+                            }
+                        })
+                        .on("click", clickTree);
+                mapPlotG.selectAll("circle")
+                        .data(plots)
+                        .attr("cx", function (d) {
+                            return project(d.centerlon, d.centerlat).x;
+                        })
+                        .attr("cy", function (d) {
+                            return project(d.centerlon, d.centerlat).y;
+                        })
+                        .attr("r", function (d) {
+                            var r = project(d.centerlon, d.centerlat).x - project(d.centerlon - d.radiusdeg, d.centerlat).x;
+                            return r;
+                        })
+                        .style("fill-opacity", 0.0)
+                        .style("stroke", "steelblue");
+
+                var selTree = trees.filter(function (d) {
+                    return clickedTreeId === d.id;
+                });
+
+                if (selTree.length === 1) {
+                    mapPlotG.selectAll("polygon")
+                            .data([
+                                [selTree[0].sliceareas.SN, profColorMap.get("SN")],
+                                [selTree[0].sliceareas.SWNE, profColorMap.get("SWNE")],
+                                [selTree[0].sliceareas.WE, profColorMap.get("WE")],
+                                [selTree[0].sliceareas.WNES, profColorMap.get("WNES")]
+                            ])
+                            .attr("points", function (d) {
+                                var ps = "";
+                                d[0].forEach(function (p) {
+                                    var tmp = project(p.x, p.y);
+                                    ps = ps + " " + tmp.x + "," + tmp.y
+                                });
+                                return ps.substr(1);
+                            })
+                            .style("stroke", function (d) {
+                                return d[1];
+                            })
+                            .style("fill", function (d) {
+                                return d[1];
+                            })
+                            .style("fill-opacity", 0.2);
+                }
+
+            }
+
+            var clickTree = function (d) {
+                clickedTreeId = d.id;
+                clearInfoAndChart();
+                var infoTable = d3.select("#infotable");
+                if (d.diam && d.idMatched) {
+                    infoTable.append("tr").append("td").append("b").text("Mapped tree");
+                    infoTable.append("tr").append("td").text("Id = " + d.id);
+                    infoTable.append("tr").append("td").text("Height = " + d.height);
+                    infoTable.append("tr").append("td").text("Diameter = " + d.diam);
+                    infoTable.append("tr").append("td").text("Type = " + d.type);
+                    infoTable.append("tr").append("td").append("b").text("Matched tree");
+                    infoTable.append("tr").append("td").text("Id = " + d.idMatched);
+                    infoTable.append("tr").append("td").text("Height = " + d.heightMatched);
+                } else if (d.diam) {
+                    infoTable.append("tr").append("td").append("b").text("False negative");
+                    infoTable.append("tr").append("td").text("Id = " + d.id);
+                    infoTable.append("tr").append("td").text("Height = " + d.height);
+                    infoTable.append("tr").append("td").text("Diameter = " + d.diam);
+                    infoTable.append("tr").append("td").text("Type = " + d.type);
+                } else {
+                    infoTable.append("tr").append("td").append("b").text("False positive");
+                    infoTable.append("tr").append("td").text("Id = " + d.id);
+                    infoTable.append("tr").append("td").text("Height = " + d.height);
+                }
+                doMapTreeLines(d);
+
+                doTreeCharts(d);
+            };
+
+            function doMapTreeLines(tree) {
+                mapPlotG.selectAll("polygon").remove();
+                mapPlotG.selectAll("polygon")
+                        .data([
+                            [tree.sliceareas.SN, profColorMap.get("SN")],
+                            [tree.sliceareas.SWNE, profColorMap.get("SWNE")],
+                            [tree.sliceareas.WE, profColorMap.get("WE")],
+                            [tree.sliceareas.WNES, profColorMap.get("WNES")]
+                        ])
+                        .enter()
+                        .append("polygon")
+                        .attr("points", function (d) {
+                            var ps = "";
+                            d[0].forEach(function (p) {
+                                var tmp = project(p.x, p.y);
+                                ps = ps + " " + tmp.x + "," + tmp.y;
+                            });
+                            return ps.substr(1);
+                        })
+                        .style("stroke", function (d) {
+                            return d[1];
+                        })
+                        .style("fill", function (d) {
+                            return d[1];
+                        })
+                        .style("fill-opacity", 0.2);
+
+            }
+
+            function doTreeCharts(tree) {
+                var slices = tree.slices;
+                var chartMap = [
+                    [slices.SN, profColorMap.get("SN"), "sn-cell", tree.progressiveMatchedSN],
+                    [slices.SWNE, profColorMap.get("SWNE"), "swne-cell", tree.progressiveMatchedSWNE],
+                    [slices.WE, profColorMap.get("WE"), "we-cell", tree.progressiveMatchedWE],
+                    [slices.WNES, profColorMap.get("WNES"), "wnes-cell", tree.progressiveMatchedWNES]
+                ];
+                var margins = {top: 10, left: 20, right: 10, bottom: 20};
+                var maximumH = 0;
+                for (var i = 0; i < chartMap.length; i++) {
+                    var item = chartMap[i];
+                    var profilePoints = item[0];
+                    var maxHeight = d3.max(profilePoints, function (d) {
+                        return d.h;
+                    });
+                    if (maxHeight > maximumH) {
+                        maximumH = maxHeight;
+                    }
+                }
+                maximumH = maximumH + 1;
+                for (var i = 0; i < chartMap.length; i++) {
+                    var item = chartMap[i];
+                    var profilePoints = item[0];
+                    //console.log(item);
+                    var chart = treeProfileScatterChart()
+                            .x(d3.scale.linear().domain([tree.minP, tree.maxP]))
+                            .y(d3.scale.linear().domain([0, maximumH]));
+                    if (tree.diam && tree.idMatched) {
+                        chart.centerTreeProg(tree.progressive, tree.height);
+                        chart.centerMatchedTreeProg(item[3], tree.heightMatched);
+                    } else if (tree.diam) {
+                        chart.centerTreeProg(tree.progressive, tree.height);
+                    } else {
+                        chart.centerMatchedTreeProg(tree.progressive, tree.height);
+                    }
+                    chart.width(chartWidth);
+                    chart.height(chartHeight);
+                    chart.margins(margins);
+                    chart.color(item[1]);
+                    chart.dotsize(2);
+                    chart.setData(profilePoints);
+                    chart.render(item[2]);
+                }
+            }
+
+        </script>
+    </head>
+    <body>
+        <table id="maintable">
+            <tr>
+                <td id="maincolumn" class="roundedbox" style='vertical-align: top;' >
+                    <table style='vertical-align: top; width: 100%'>
+                        <tr style='font-size: 24px; font-weight: bold; vertical-align: middle;'>
+                            <td class="whitebox" id='loading' style='width: 30%; text-align: left; vertical-align: middle'>Plot: </td>
+                            <td style='width: 70%;  vertical-align: middle'>
+                                <select id="plotselect" type='select' onchange='updateData(value);' 
+                                        style='font-size: 22px; padding-left: 10px; width:100%; height: 100%;'>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr >
+                            <td class="whitebox" colspan="2">
+                                <input id="diamCheckbox" type="checkbox" checked="checked"> Only diameters > 17.5cm</input>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" id='progressbar' style='width: 100%; height: 10px'>
+                            </td>
+                        </tr>
+                        <tr >
+                            <td class="whitebox" colspan="2">
+                                <div  id="map"></div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2">
+                                <table id="infotable" style='width: 100%;'>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                </td> 
+                <td id="chartscolumn" class="roundedbox" style='width:100%'>
+                    <table id="chartstable" style='width:100%'>
+                        <tr>
+                            <td class="whitebox" id="sn-cell" style='width:50%'>
+                            </td>    
+                            <td class="whitebox" id="swne-cell" style='width:50%'>
+                            </td>    
+                        </tr>
+                        <tr>
+                            <td class="whitebox" id="we-cell">
+                            </td>    
+                            <td class="whitebox" id="wnes-cell">
+                            </td>    
+                        </tr>
+                    </table>
+                </td> 
+            </tr>
+        </table>
+
+
+
+
+    </body>
+</html>
