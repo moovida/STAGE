@@ -31,7 +31,6 @@ import org.eclipse.rap.rwt.service.ServiceHandler;
 import eu.hydrologis.stage.geopaparazzi.geopapbrowser.GeopapBrowserEntryPoint;
 import eu.hydrologis.stage.modules.SpatialToolboxEntryPoint;
 import eu.hydrologis.stage.treeslicesviewer.TreeSlicesViewerEntryPoint;
-import eu.hydrologis.stage.treeslicesviewer.TreeSlicesViewerView;
 
 public class StageApplication implements ApplicationConfiguration {
 
@@ -50,21 +49,21 @@ public class StageApplication implements ApplicationConfiguration {
 
         Map<String, String> jgrasstoolsProperties = new HashMap<String, String>();
         jgrasstoolsProperties.put(WebClient.PAGE_TITLE, "Spatial Toolbox");
-        jgrasstoolsProperties.put(WebClient.BODY_HTML, readTextFromResource("resources/body.html", "UTF-8"));
+        jgrasstoolsProperties.put(WebClient.BODY_HTML, readTextFromResource("resources/body_loading.html", "UTF-8"));
         jgrasstoolsProperties.put(WebClient.HEAD_HTML, readTextFromResource("resources/head.html", "UTF-8"));
         jgrasstoolsProperties.put(WebClient.FAVICON, "resources/favicon.png");
         application.addEntryPoint("/spatialtoolbox", SpatialToolboxEntryPoint.class, jgrasstoolsProperties);
 
         Map<String, String> geopapBrowserProperties = new HashMap<String, String>();
         geopapBrowserProperties.put(WebClient.PAGE_TITLE, "Geopaparazzi Browser");
-        geopapBrowserProperties.put(WebClient.BODY_HTML, readTextFromResource("resources/body_geopapbrowser.html", "UTF-8"));
+        geopapBrowserProperties.put(WebClient.BODY_HTML, readTextFromResource("resources/body_loading.html", "UTF-8"));
         geopapBrowserProperties.put(WebClient.HEAD_HTML, readTextFromResource("resources/head.html", "UTF-8"));
         geopapBrowserProperties.put(WebClient.FAVICON, "resources/favicon.png");
         application.addEntryPoint("/geopapbrowser", GeopapBrowserEntryPoint.class, geopapBrowserProperties);
 
         Map<String, String> treeSlicesProperties = new HashMap<String, String>();
         treeSlicesProperties.put(WebClient.PAGE_TITLE, "Tree SLices Viewer");
-        treeSlicesProperties.put(WebClient.BODY_HTML, readTextFromResource("resources/body_geopapbrowser.html", "UTF-8"));
+        treeSlicesProperties.put(WebClient.BODY_HTML, readTextFromResource("resources/body_loading.html", "UTF-8"));
         treeSlicesProperties.put(WebClient.HEAD_HTML, readTextFromResource("resources/head.html", "UTF-8"));
         treeSlicesProperties.put(WebClient.FAVICON, "resources/favicon.png");
         application.addEntryPoint("/treeslicesviewer", TreeSlicesViewerEntryPoint.class, treeSlicesProperties);

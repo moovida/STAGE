@@ -341,7 +341,7 @@ Andrea Antonello
                         var ps = "";
                         d[0].forEach(function(p) {
                             var tmp = project(p.x, p.y);
-                            ps = ps + " " + tmp.x + "," + tmp.y
+                            ps = ps + " " + tmp.x + "," + tmp.y;
                         });
                         return ps.substr(1);
                     }).style("stroke", function(d) {
@@ -358,14 +358,19 @@ Andrea Antonello
                 clearInfoAndChart();
                 var infoTable = d3.select("#infotable");
                 if (d.diam && d.idMatched) {
-                    infoTable.append("tr").append("td").append("b").text("Mapped tree");
-                    infoTable.append("tr").append("td").text("Id = " + d.id);
-                    infoTable.append("tr").append("td").text("Height = " + d.height);
+                	var tr1 = infoTable.append("tr");
+                    tr1.append("td").append("b").text("Mapped tree");
+                    var tr2 = infoTable.append("tr");
+                    tr2.append("td").text("Id = " + d.id);
+                    var tr3 = infoTable.append("tr");
+                    tr3.append("td").text("Height = " + d.height);
+                    
                     infoTable.append("tr").append("td").text("Diameter = " + d.diam);
                     infoTable.append("tr").append("td").text("Type = " + d.type);
-                    infoTable.append("tr").append("td").append("b").text("Matched tree");
-                    infoTable.append("tr").append("td").text("Id = " + d.idMatched);
-                    infoTable.append("tr").append("td").text("Height = " + d.heightMatched);
+                    
+                    tr1.append("td").append("b").text("Matched tree");
+                    tr2.append("td").text("Id = " + d.idMatched);
+                    tr3.append("td").text("Height = " + d.heightMatched);
                 } else if (d.diam) {
                     infoTable.append("tr").append("td").append("b").text("False negative");
                     infoTable.append("tr").append("td").text("Id = " + d.id);

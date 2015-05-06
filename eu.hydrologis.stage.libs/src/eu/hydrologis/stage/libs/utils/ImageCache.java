@@ -47,6 +47,7 @@ public class ImageCache {
 
     public static final String EXPORT = "export_wiz.gif";
     
+    public static final String GLOBE = "globe.gif";
     
 	private static ImageCache imageCache;
 
