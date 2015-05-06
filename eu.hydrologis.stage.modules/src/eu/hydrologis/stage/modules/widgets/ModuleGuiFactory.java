@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import eu.hydrologis.stage.modules.core.FieldData;
-import eu.hydrologis.stage.modules.utils.StageConstants;
+import eu.hydrologis.stage.modules.utils.SpatialToolboxConstants;
 
 /**
  * A factory for guis.
@@ -36,9 +36,9 @@ public class ModuleGuiFactory {
         List<ModuleGuiElement> guiElements = new ArrayList<ModuleGuiElement>();
         if (inputData != null)
             if (isAtLeastOneAssignable(inputData.fieldType, String.class)) {
-                if (inputData.guiHints != null && inputData.guiHints.startsWith(StageConstants.MULTILINE_UI_HINT)) {
+                if (inputData.guiHints != null && inputData.guiHints.startsWith(SpatialToolboxConstants.MULTILINE_UI_HINT)) {
                     handleTextArea(inputData, row, guiElements);
-                } else if (inputData.guiHints != null && inputData.guiHints.startsWith(StageConstants.COMBO_UI_HINT)) {
+                } else if (inputData.guiHints != null && inputData.guiHints.startsWith(SpatialToolboxConstants.COMBO_UI_HINT)) {
                     handleComboField(inputData, row, guiElements);
                 } else {
                     handleTextField(inputData, row, guiElements);
@@ -158,7 +158,7 @@ public class ModuleGuiFactory {
         boolean isBold = false;
         String guiHints = data.guiHints;
         if (guiHints != null) {
-            if (guiHints.contains(StageConstants.FILEOUT_UI_HINT) || guiHints.contains(StageConstants.FOLDEROUT_UI_HINT)) {
+            if (guiHints.contains(SpatialToolboxConstants.FILEOUT_UI_HINT) || guiHints.contains(SpatialToolboxConstants.FOLDEROUT_UI_HINT)) {
                 isBold = true;
             }
         }
@@ -198,8 +198,8 @@ public class ModuleGuiFactory {
         GuiLabel label = new GuiLabel(data, labelConstraint, false);
         guiElements.add(label);
 
-        String hint = extractSingleGuiHint(StageConstants.MULTILINE_UI_HINT, data.guiHints);
-        String rowsStr = hint.replaceFirst(StageConstants.MULTILINE_UI_HINT, "");
+        String hint = extractSingleGuiHint(SpatialToolboxConstants.MULTILINE_UI_HINT, data.guiHints);
+        String rowsStr = hint.replaceFirst(SpatialToolboxConstants.MULTILINE_UI_HINT, "");
         row[0] = row[0] + 1;
         sb = new StringBuilder();
         sb.append("cell ");

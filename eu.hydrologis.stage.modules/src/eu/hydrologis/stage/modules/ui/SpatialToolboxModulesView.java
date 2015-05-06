@@ -49,12 +49,12 @@ import org.eclipse.swt.widgets.Text;
 
 import eu.hydrologis.stage.libs.utils.ImageCache;
 import eu.hydrologis.stage.libs.utilsrap.MessageDialogUtil;
-import eu.hydrologis.stage.modules.StageSessionPluginSingleton;
+import eu.hydrologis.stage.modules.SpatialToolboxSessionPluginSingleton;
 import eu.hydrologis.stage.modules.core.ModuleDescription;
 import eu.hydrologis.stage.modules.core.ModuleDescription.Status;
 import eu.hydrologis.stage.modules.core.ScriptHandler;
 import eu.hydrologis.stage.modules.core.StageModulesManager;
-import eu.hydrologis.stage.modules.utils.StageConstants;
+import eu.hydrologis.stage.modules.utils.SpatialToolboxConstants;
 import eu.hydrologis.stage.modules.utils.ViewerFolder;
 import eu.hydrologis.stage.modules.utils.ViewerModule;
 import eu.hydrologis.stage.modules.widgets.ModuleGui;
@@ -64,7 +64,7 @@ import eu.hydrologis.stage.modules.widgets.ModuleGui;
  * 
  * @author Andrea Antonello (www.hydrologis.com)
  */
-public class StageModulesView {
+public class SpatialToolboxModulesView {
 
     private static final String PARAMETERS = "Parameters";
     private static final String EXECUTION_TOOLS = "Execution";
@@ -348,10 +348,10 @@ public class StageModulesView {
         heapLabel.setText(MEMORY_MB);
         final Combo heapCombo = new Combo(quickSettingsGroup, SWT.DROP_DOWN);
         heapCombo.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-        heapCombo.setItems(StageConstants.HEAPLEVELS);
-        int savedHeapLevel = StageSessionPluginSingleton.getInstance().retrieveSavedHeap();
-        for( int i = 0; i < StageConstants.HEAPLEVELS.length; i++ ) {
-            if (StageConstants.HEAPLEVELS[i].equals(String.valueOf(savedHeapLevel))) {
+        heapCombo.setItems(SpatialToolboxConstants.HEAPLEVELS);
+        int savedHeapLevel = SpatialToolboxSessionPluginSingleton.getInstance().retrieveSavedHeap();
+        for( int i = 0; i < SpatialToolboxConstants.HEAPLEVELS.length; i++ ) {
+            if (SpatialToolboxConstants.HEAPLEVELS[i].equals(String.valueOf(savedHeapLevel))) {
                 heapCombo.select(i);
                 break;
             }
@@ -362,7 +362,7 @@ public class StageModulesView {
             public void widgetSelected( SelectionEvent e ) {
                 String item = heapCombo.getText();
                 try {
-                    StageSessionPluginSingleton.getInstance().saveHeap(Integer.parseInt(item));
+                    SpatialToolboxSessionPluginSingleton.getInstance().saveHeap(Integer.parseInt(item));
                 } catch (NumberFormatException | IOException e1) {
                     e1.printStackTrace();
                 }
@@ -380,7 +380,7 @@ public class StageModulesView {
                 }
                 if (item.length() > 0) {
                     try {
-                        StageSessionPluginSingleton.getInstance().saveHeap(Integer.parseInt(item));
+                        SpatialToolboxSessionPluginSingleton.getInstance().saveHeap(Integer.parseInt(item));
                     } catch (NumberFormatException | IOException e1) {
                         // TODO Auto-generated catch block
                         e1.printStackTrace();
@@ -394,10 +394,10 @@ public class StageModulesView {
         logLabel.setText(DEBUG_INFO);
         final Combo logCombo = new Combo(quickSettingsGroup, SWT.DROP_DOWN | SWT.READ_ONLY);
         logCombo.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-        logCombo.setItems(StageConstants.LOGLEVELS_GUI);
-        String savedLogLevel = StageSessionPluginSingleton.getInstance().retrieveSavedLogLevel();
-        for( int i = 0; i < StageConstants.LOGLEVELS_GUI.length; i++ ) {
-            if (StageConstants.LOGLEVELS_GUI[i].equals(savedLogLevel)) {
+        logCombo.setItems(SpatialToolboxConstants.LOGLEVELS_GUI);
+        String savedLogLevel = SpatialToolboxSessionPluginSingleton.getInstance().retrieveSavedLogLevel();
+        for( int i = 0; i < SpatialToolboxConstants.LOGLEVELS_GUI.length; i++ ) {
+            if (SpatialToolboxConstants.LOGLEVELS_GUI[i].equals(savedLogLevel)) {
                 logCombo.select(i);
                 break;
             }
@@ -408,7 +408,7 @@ public class StageModulesView {
             public void widgetSelected( SelectionEvent e ) {
                 String item = logCombo.getText();
                 try {
-                    StageSessionPluginSingleton.getInstance().saveLogLevel(item);
+                    SpatialToolboxSessionPluginSingleton.getInstance().saveLogLevel(item);
                 } catch (IOException e1) {
                     e1.printStackTrace();
                 }
@@ -429,7 +429,7 @@ public class StageModulesView {
         final Combo encodingCombo = new Combo(quickSettingsGroup, SWT.DROP_DOWN | SWT.READ_ONLY);
         encodingCombo.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
         encodingCombo.setItems(charsetArray);
-        String savedEncoding = StageSessionPluginSingleton.getInstance().retrieveSavedEncoding();
+        String savedEncoding = SpatialToolboxSessionPluginSingleton.getInstance().retrieveSavedEncoding();
         for( int i = 0; i < charsetArray.length; i++ ) {
             if (charsetArray[i].equals(savedEncoding)) {
                 encodingCombo.select(i);
@@ -442,7 +442,7 @@ public class StageModulesView {
             public void widgetSelected( SelectionEvent e ) {
                 String item = encodingCombo.getText();
                 try {
-                    StageSessionPluginSingleton.getInstance().saveEncoding(item);
+                    SpatialToolboxSessionPluginSingleton.getInstance().saveEncoding(item);
                 } catch (IOException e1) {
                     e1.printStackTrace();
                 }
@@ -550,7 +550,7 @@ public class StageModulesView {
         }
 
         String scriptID = currentSelectedModuleGui.getModuleDescription().getName() + " "
-                + StageConstants.dateTimeFormatterYYYYMMDDHHMMSS.format(new Date());
+                + SpatialToolboxConstants.dateTimeFormatterYYYYMMDDHHMMSS.format(new Date());
         logList.removeAll();
         scriptHandler.runModule(scriptID, script, logList);
     }

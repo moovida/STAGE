@@ -16,9 +16,9 @@ import org.eclipse.rap.rwt.widgets.DialogCallback;
 import org.eclipse.swt.widgets.Shell;
 
 import eu.hydrologis.stage.libs.utilsrap.MessageDialogUtil;
-import eu.hydrologis.stage.modules.StageSessionPluginSingleton;
-import eu.hydrologis.stage.modules.utils.StageConstants;
-import eu.hydrologis.stage.modules.utils.StageModulesUtils;
+import eu.hydrologis.stage.modules.SpatialToolboxSessionPluginSingleton;
+import eu.hydrologis.stage.modules.utils.SpatialToolboxConstants;
+import eu.hydrologis.stage.modules.utils.SpatialToolboxUtils;
 import eu.hydrologis.stage.modules.widgets.ModuleGui;
 import eu.hydrologis.stage.modules.widgets.ModuleGuiElement;
 
@@ -89,9 +89,9 @@ public class ScriptHandlerOms {
 			return null;
 		}
 
-		String loggerLevelGui = StageSessionPluginSingleton.getInstance()
+		String loggerLevelGui = SpatialToolboxSessionPluginSingleton.getInstance()
 				.retrieveSavedLogLevel();
-		String loggerLevelOms = StageConstants.LOGLEVELS_MAP
+		String loggerLevelOms = SpatialToolboxConstants.LOGLEVELS_MAP
 				.get(loggerLevelGui);
 		StringBuilder scriptSb = new StringBuilder();
 		scriptSb.append("def simulation = new oms3.SimBuilder(logging:'"
@@ -496,12 +496,12 @@ public class ScriptHandlerOms {
 		if (field.otherModule == null && field.fieldValue != null
 				&& field.fieldValue.length() > 0) {
 			String TMPQUOTE = QUOTE;
-			if (StageModulesUtils.isFieldExceptional(field)) {
+			if (SpatialToolboxUtils.isFieldExceptional(field)) {
 				TMPQUOTE = "";
 			}
 			if (field.guiHints != null
 					&& field.guiHints
-							.contains(StageConstants.MULTILINE_UI_HINT)) {
+							.contains(SpatialToolboxConstants.MULTILINE_UI_HINT)) {
 				TMPQUOTE = "\"\"\"";
 			}
 			sb.append("\t");
@@ -522,7 +522,7 @@ public class ScriptHandlerOms {
 			for (FieldData fieldData : inputsList) {
 				if (fieldData.isSimpleType()) {
 					field2ParameterDescription(fieldData, otherModule, sb);
-				} else if (StageModulesUtils.isFieldExceptional(fieldData)) {
+				} else if (SpatialToolboxUtils.isFieldExceptional(fieldData)) {
 					field2ParameterDescription(fieldData, otherModule, sb);
 				}
 			}

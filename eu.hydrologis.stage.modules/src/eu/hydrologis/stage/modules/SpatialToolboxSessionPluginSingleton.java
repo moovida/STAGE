@@ -8,9 +8,9 @@
  */
 package eu.hydrologis.stage.modules;
 
-import static eu.hydrologis.stage.modules.utils.StageConstants.LIBS_MAIN_FOLDER_NAME;
-import static eu.hydrologis.stage.modules.utils.StageConstants.LIBS_SUBFOLDER_NAME;
-import static eu.hydrologis.stage.modules.utils.StageConstants.MODULES_SUBFOLDER_NAME;
+import static eu.hydrologis.stage.modules.utils.SpatialToolboxConstants.LIBS_MAIN_FOLDER_NAME;
+import static eu.hydrologis.stage.modules.utils.SpatialToolboxConstants.LIBS_SUBFOLDER_NAME;
+import static eu.hydrologis.stage.modules.utils.SpatialToolboxConstants.MODULES_SUBFOLDER_NAME;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,9 +27,9 @@ import org.eclipse.rap.rwt.service.SettingStore;
 
 import eu.hydrologis.stage.libs.StageLibsActivator;
 import eu.hydrologis.stage.libs.workspace.StageWorkspace;
-import eu.hydrologis.stage.modules.utils.StageConstants;
+import eu.hydrologis.stage.modules.utils.SpatialToolboxConstants;
 
-public class StageSessionPluginSingleton {
+public class SpatialToolboxSessionPluginSingleton {
 
     public static final String JARPATH_SPLITTER = "@@@"; //$NON-NLS-1$
     public static final String STAGE_LOADED_JARS_KEY = "STAGE_LOADED_JARS_KEY"; //$NON-NLS-1$
@@ -44,7 +44,7 @@ public class StageSessionPluginSingleton {
 
     private HashMap<String, Process> runningProcessesMap = new HashMap<String, Process>();
 
-    private StageSessionPluginSingleton() {
+    private SpatialToolboxSessionPluginSingleton() {
         installationFolder = new File("."); // TODO make this good
 
         configFolder = new File(installationFolder, "stageconfig");
@@ -54,8 +54,8 @@ public class StageSessionPluginSingleton {
         }
     }
 
-    public static StageSessionPluginSingleton getInstance() {
-        return SingletonUtil.getSessionInstance(StageSessionPluginSingleton.class);
+    public static SpatialToolboxSessionPluginSingleton getInstance() {
+        return SingletonUtil.getSessionInstance(SpatialToolboxSessionPluginSingleton.class);
     }
 
     public File getJreFolders() {
@@ -258,7 +258,7 @@ public class StageSessionPluginSingleton {
 
     public String getWorkingFolder() {
         SettingStore settingStore = RWT.getSettingStore();
-        String workingFolder = settingStore.getAttribute(StageConstants.WORKINGFOLDER);
+        String workingFolder = settingStore.getAttribute(SpatialToolboxConstants.WORKINGFOLDER);
         if (workingFolder == null || workingFolder.length() == 0) {
             return null;
         }
@@ -267,7 +267,7 @@ public class StageSessionPluginSingleton {
 
     public void setWorkingFolder( String path ) throws IOException {
         SettingStore settingStore = RWT.getSettingStore();
-        settingStore.setAttribute(StageConstants.WORKINGFOLDER, path);
+        settingStore.setAttribute(SpatialToolboxConstants.WORKINGFOLDER, path);
     }
 
     public boolean doIgnoreProcessingRegion() {

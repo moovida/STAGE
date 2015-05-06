@@ -29,7 +29,7 @@ import oms3.annotations.License;
 import oms3.annotations.Name;
 import oms3.annotations.Status;
 import oms3.annotations.Unit;
-import eu.hydrologis.stage.modules.StageSessionPluginSingleton;
+import eu.hydrologis.stage.modules.SpatialToolboxSessionPluginSingleton;
 import eu.hydrologis.stage.modules.core.FieldData;
 import eu.hydrologis.stage.modules.core.StageModulesManager;
 
@@ -38,7 +38,7 @@ import eu.hydrologis.stage.modules.core.StageModulesManager;
  * 
  * @author Andrea Antonello (www.hydrologis.com)
  */
-public class StageModulesUtils {
+public class SpatialToolboxUtils {
     private static final String NO_DOCUMENTATION_AVAILABLE = "<b>NO DOCUMENTATION AVAILABLE</b>";
     private static final String STAGEHTMLDOCS = "stagehtmldocs";
     private static final String NEWLINE = "\n";
@@ -83,7 +83,7 @@ public class StageModulesUtils {
     // }
 
     public static boolean isFieldExceptional( FieldData inputData ) {
-        if (inputData.guiHints != null && inputData.guiHints.equals(StageConstants.FILESPATHLIST_UI_HINT)) {
+        if (inputData.guiHints != null && inputData.guiHints.equals(SpatialToolboxConstants.FILESPATHLIST_UI_HINT)) {
             return true;
         }
         return false;
@@ -97,7 +97,7 @@ public class StageModulesUtils {
      * @throws Exception
      */
     public static String getModuleDocumentationPath( String moduleClassName ) throws Exception {
-        File configurationsFolder = StageSessionPluginSingleton.getInstance().getConfigurationsFolder();
+        File configurationsFolder = SpatialToolboxSessionPluginSingleton.getInstance().getConfigurationsFolder();
         File htmlDocsFolder = new File(configurationsFolder, STAGEHTMLDOCS);
         File htmlDocs = new File(htmlDocsFolder, moduleClassName + ".html");
         if (!htmlDocs.exists()) {
@@ -115,7 +115,7 @@ public class StageModulesUtils {
      * @throws Exception
      */
     public static void cleanModuleDocumentation() throws Exception {
-        File configurationsFolder = StageSessionPluginSingleton.getInstance().getConfigurationsFolder();
+        File configurationsFolder = SpatialToolboxSessionPluginSingleton.getInstance().getConfigurationsFolder();
         File htmlDocsFolder = new File(configurationsFolder, STAGEHTMLDOCS);
         if (htmlDocsFolder.exists()) {
             FileUtilities.deleteFileOrDir(htmlDocsFolder);
@@ -292,7 +292,7 @@ public class StageModulesUtils {
 
         sb.append("</body></html>");
 
-        File configurationsFolder = StageSessionPluginSingleton.getInstance().getConfigurationsFolder();
+        File configurationsFolder = SpatialToolboxSessionPluginSingleton.getInstance().getConfigurationsFolder();
         File htmlDocsFolder = new File(configurationsFolder, STAGEHTMLDOCS);
         if (!htmlDocsFolder.exists()) {
             if (!htmlDocsFolder.mkdir()) {

@@ -42,7 +42,7 @@ import eu.hydrologis.stage.modules.utils.FileUtilities;
  * @author Andrea Antonello (www.hydrologis.com)
  */
 @SuppressWarnings("serial")
-public class StageSimpleViewerView {
+public class SpatialToolboxSimpleViewerView {
 
     private static final int DEFAULT_HEIGHT = 600;
     private static final int DEFAULT_WIDTH = 800;

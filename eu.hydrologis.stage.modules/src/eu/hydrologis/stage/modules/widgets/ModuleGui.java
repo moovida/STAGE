@@ -34,12 +34,12 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
 
-import eu.hydrologis.stage.modules.StageSessionPluginSingleton;
+import eu.hydrologis.stage.modules.SpatialToolboxSessionPluginSingleton;
 import eu.hydrologis.stage.modules.core.FieldData;
 import eu.hydrologis.stage.modules.core.ModuleDescription;
 import eu.hydrologis.stage.modules.utils.FileUtilities;
-import eu.hydrologis.stage.modules.utils.StageConstants;
-import eu.hydrologis.stage.modules.utils.StageModulesUtils;
+import eu.hydrologis.stage.modules.utils.SpatialToolboxConstants;
+import eu.hydrologis.stage.modules.utils.SpatialToolboxUtils;
 
 /**
  * A class representing the main tabbed component gui.
@@ -96,7 +96,7 @@ public class ModuleGui {
             browser.setLayoutData(layoutData);
 
             String className = mainModuleDescription.getClassName();
-            String moduleDocumentationPath = StageModulesUtils.getModuleDocumentationPath(className);
+            String moduleDocumentationPath = SpatialToolboxUtils.getModuleDocumentationPath(className);
 
             File docFile = new File(moduleDocumentationPath);
             if (docFile.exists()) {
@@ -165,12 +165,12 @@ public class ModuleGui {
         int[] row = new int[]{0};
         for( int j = 0; j < inputsList.size(); j++ ) {
             FieldData inputData = inputsList.get(j);
-            if (hideComplex && !inputData.isSimpleType() && !StageModulesUtils.isFieldExceptional(inputData)) {
+            if (hideComplex && !inputData.isSimpleType() && !SpatialToolboxUtils.isFieldExceptional(inputData)) {
                 continue;
             }
 
             // remove region related widgets, if the user chose to not have them.
-            if (inputData.isProcessingRegionRelated() && StageSessionPluginSingleton.getInstance().doIgnoreProcessingRegion()) {
+            if (inputData.isProcessingRegionRelated() && SpatialToolboxSessionPluginSingleton.getInstance().doIgnoreProcessingRegion()) {
                 continue;
             }
 
@@ -201,7 +201,7 @@ public class ModuleGui {
             String guiHints = fieldData.guiHints;
 
             if (guiHints != null
-                    && (guiHints.contains(StageConstants.FILEOUT_UI_HINT) || guiHints.contains(StageConstants.FOLDEROUT_UI_HINT))) {
+                    && (guiHints.contains(SpatialToolboxConstants.FILEOUT_UI_HINT) || guiHints.contains(SpatialToolboxConstants.FOLDEROUT_UI_HINT))) {
                 tmpOutputsList.add(fieldData);
             } else {
                 tmpInputsList.add(fieldData);
@@ -277,7 +277,7 @@ public class ModuleGui {
             }
 
             // remove region related widgets, if the user chose to not have them.
-            if (outputData.isProcessingRegionRelated() && StageSessionPluginSingleton.getInstance().doIgnoreProcessingRegion()) {
+            if (outputData.isProcessingRegionRelated() && SpatialToolboxSessionPluginSingleton.getInstance().doIgnoreProcessingRegion()) {
                 continue;
             }
 

@@ -37,11 +37,11 @@ import oms3.annotations.Unit;
 import oms3.util.Components;
 import eu.hydrologis.stage.libs.StageLibsActivator;
 import eu.hydrologis.stage.libs.log.StageLogger;
-import eu.hydrologis.stage.modules.StageSessionPluginSingleton;
+import eu.hydrologis.stage.modules.SpatialToolboxSessionPluginSingleton;
 import eu.hydrologis.stage.modules.utils.AnnotationUtilities;
 import eu.hydrologis.stage.modules.utils.ResourceFinder;
-import eu.hydrologis.stage.modules.utils.StageConstants;
-import eu.hydrologis.stage.modules.utils.StageModulesUtils;
+import eu.hydrologis.stage.modules.utils.SpatialToolboxConstants;
+import eu.hydrologis.stage.modules.utils.SpatialToolboxUtils;
 
 /**
  * Singleton in which the modules discovery and load/unload occurrs.
@@ -65,7 +65,7 @@ public class StageModulesManager {
     public List<String> getModulesJars( boolean onlyModules ) {
         List<String> jarsPathList = new ArrayList<String>();
         // add jars from preferences
-        String[] retrieveSavedJars = StageSessionPluginSingleton.getInstance().retrieveSavedJars();
+        String[] retrieveSavedJars = SpatialToolboxSessionPluginSingleton.getInstance().retrieveSavedJars();
         for( String jar : retrieveSavedJars ) {
             addJar(jar);
             jarsPathList.add(jar);
@@ -270,7 +270,7 @@ public class StageModulesManager {
         }
 
         // clean up html docs in config area, it will be redone
-        StageModulesUtils.cleanModuleDocumentation();
+        SpatialToolboxUtils.cleanModuleDocumentation();
 
         for( Class< ? > moduleClass : classesList ) {
             try {
@@ -279,13 +279,13 @@ public class StageModulesManager {
                 UI uiHints = moduleClass.getAnnotation(UI.class);
                 if (uiHints != null) {
                     String uiHintStr = uiHints.value();
-                    if (uiHintStr.contains(StageConstants.HIDE_UI_HINT)) {
+                    if (uiHintStr.contains(SpatialToolboxConstants.HIDE_UI_HINT)) {
                         continue;
                     }
                 }
 
                 Label category = moduleClass.getAnnotation(Label.class);
-                String categoryStr = StageConstants.CATEGORY_OTHERS;
+                String categoryStr = SpatialToolboxConstants.CATEGORY_OTHERS;
                 if (category != null && categoryStr.trim().length() > 1) {
                     categoryStr = category.value();
                 }
@@ -309,7 +309,7 @@ public class StageModulesManager {
                 try {
                     // generate the html docs
                     String className = module.getClassName();
-                    StageModulesUtils.generateModuleDocumentation(className);
+                    SpatialToolboxUtils.generateModuleDocumentation(className);
                 } catch (Exception e) {
                     // ignore doc if it breaks
                 }
@@ -326,12 +326,12 @@ public class StageModulesManager {
                     addOutput(access, module);
                 }
 
-                if (categoryStr.equals(StageConstants.GRIDGEOMETRYREADER) || categoryStr.equals(StageConstants.RASTERREADER)
-                        || categoryStr.equals(StageConstants.RASTERWRITER) || categoryStr.equals(StageConstants.VECTORREADER)
-                        || categoryStr.equals(StageConstants.VECTORWRITER) || categoryStr.equals(StageConstants.GENERICREADER)
-                        || categoryStr.equals(StageConstants.GENERICWRITER) || categoryStr.equals(StageConstants.HASHMAP_READER)
-                        || categoryStr.equals(StageConstants.HASHMAP_WRITER) || categoryStr.equals(StageConstants.LIST_READER)
-                        || categoryStr.equals(StageConstants.LIST_WRITER)) {
+                if (categoryStr.equals(SpatialToolboxConstants.GRIDGEOMETRYREADER) || categoryStr.equals(SpatialToolboxConstants.RASTERREADER)
+                        || categoryStr.equals(SpatialToolboxConstants.RASTERWRITER) || categoryStr.equals(SpatialToolboxConstants.VECTORREADER)
+                        || categoryStr.equals(SpatialToolboxConstants.VECTORWRITER) || categoryStr.equals(SpatialToolboxConstants.GENERICREADER)
+                        || categoryStr.equals(SpatialToolboxConstants.GENERICWRITER) || categoryStr.equals(SpatialToolboxConstants.HASHMAP_READER)
+                        || categoryStr.equals(SpatialToolboxConstants.HASHMAP_WRITER) || categoryStr.equals(SpatialToolboxConstants.LIST_READER)
+                        || categoryStr.equals(SpatialToolboxConstants.LIST_WRITER)) {
                     // ignore for now
                 } else {
                     List<ModuleDescription> modulesList4Category = modulesMap.get(categoryStr);

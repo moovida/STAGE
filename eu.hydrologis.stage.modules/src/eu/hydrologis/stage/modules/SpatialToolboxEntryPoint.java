@@ -19,13 +19,13 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 
 import eu.hydrologis.stage.libs.utilsrap.LoginDialog;
-import eu.hydrologis.stage.modules.ui.StageView;
+import eu.hydrologis.stage.modules.ui.SpatialToolboxView;
 
 /**
  * @author Andrea Antonello (www.hydrologis.com)
  *
  */
-public class StageEntryPoint extends AbstractEntryPoint {
+public class SpatialToolboxEntryPoint extends AbstractEntryPoint {
 
     @Override
     protected void createContents( final Composite parent ) {
@@ -40,7 +40,7 @@ public class StageEntryPoint extends AbstractEntryPoint {
         }
 
         try {
-            StageView view = new StageView();
+            SpatialToolboxView view = new SpatialToolboxView();
             view.createPartControl(Display.getCurrent(), parent);
         } catch (IOException e) {
             e.printStackTrace();

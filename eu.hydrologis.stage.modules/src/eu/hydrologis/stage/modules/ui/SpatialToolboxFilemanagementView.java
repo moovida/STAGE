@@ -45,7 +45,7 @@ import eu.hydrologis.stage.libs.workspace.User;
  * @author Andrea Antonello (www.hydrologis.com)
  */
 @SuppressWarnings("serial")
-public class StageFilemanagementView {
+public class SpatialToolboxFilemanagementView {
 
     private FileUpload fileUpload;
     private Label fileNameLabel;

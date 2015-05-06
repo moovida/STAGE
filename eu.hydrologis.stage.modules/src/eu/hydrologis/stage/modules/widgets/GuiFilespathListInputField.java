@@ -39,9 +39,9 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 
-import eu.hydrologis.stage.modules.StageSessionPluginSingleton;
+import eu.hydrologis.stage.modules.SpatialToolboxSessionPluginSingleton;
 import eu.hydrologis.stage.modules.core.FieldData;
-import eu.hydrologis.stage.modules.utils.StageConstants;
+import eu.hydrologis.stage.modules.utils.SpatialToolboxConstants;
 
 /**
  * Class representing an swt files input list.
@@ -74,7 +74,7 @@ public class GuiFilespathListInputField extends ModuleGuiElement implements Modi
 
         Table table = tableViewer.getTable();
         GridData controlGD = new GridData(SWT.FILL, SWT.FILL, true, true);
-        controlGD.verticalSpan = StageConstants.LISTHEIGHT;
+        controlGD.verticalSpan = SpatialToolboxConstants.LISTHEIGHT;
         table.setLayoutData(controlGD);
 
         tableViewer.setContentProvider(new ArrayContentProvider());
@@ -83,7 +83,7 @@ public class GuiFilespathListInputField extends ModuleGuiElement implements Modi
         table.setLinesVisible(true);
         tableViewer.setInput(Arrays.asList("")); //$NON-NLS-1$
 
-        for( int i = 0; i < StageConstants.LISTHEIGHT; i++ ) {
+        for( int i = 0; i < SpatialToolboxConstants.LISTHEIGHT; i++ ) {
             Label dummyLabel = new Label(parent, SWT.NONE);
             dummyLabel.setLayoutData(new GridData(SWT.END, SWT.CENTER, false, true));
         }
@@ -183,7 +183,7 @@ public class GuiFilespathListInputField extends ModuleGuiElement implements Modi
                         File file = new File(files[0]);
                         if (file.exists()) {
                             addFileToViewer(file);
-                            StageSessionPluginSingleton.getInstance().setLastFolderChosen(file.getParentFile().getAbsolutePath());
+                            SpatialToolboxSessionPluginSingleton.getInstance().setLastFolderChosen(file.getParentFile().getAbsolutePath());
                         }
                     }
                 }

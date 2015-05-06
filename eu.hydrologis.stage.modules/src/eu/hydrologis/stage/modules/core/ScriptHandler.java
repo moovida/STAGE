@@ -20,9 +20,9 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
 import eu.hydrologis.stage.libs.utilsrap.MessageDialogUtil;
-import eu.hydrologis.stage.modules.StageSessionPluginSingleton;
-import eu.hydrologis.stage.modules.utils.StageConstants;
-import eu.hydrologis.stage.modules.utils.StageModulesUtils;
+import eu.hydrologis.stage.modules.SpatialToolboxSessionPluginSingleton;
+import eu.hydrologis.stage.modules.utils.SpatialToolboxConstants;
+import eu.hydrologis.stage.modules.utils.SpatialToolboxUtils;
 import eu.hydrologis.stage.modules.widgets.ModuleGui;
 import eu.hydrologis.stage.modules.widgets.ModuleGuiElement;
 
@@ -88,8 +88,8 @@ public class ScriptHandler {
             return null;
         }
 
-        String loggerLevelGui = StageSessionPluginSingleton.getInstance().retrieveSavedLogLevel();
-        String loggerLevelOms = StageConstants.LOGLEVELS_MAP.get(loggerLevelGui);
+        String loggerLevelGui = SpatialToolboxSessionPluginSingleton.getInstance().retrieveSavedLogLevel();
+        String loggerLevelOms = SpatialToolboxConstants.LOGLEVELS_MAP.get(loggerLevelGui);
         StringBuilder scriptSb = new StringBuilder();
         scriptSb.append("import " + ORG_JGRASSTOOLS_MODULES + ".*\n\n");
 
@@ -184,7 +184,7 @@ public class ScriptHandler {
                     UISession uiSession = RWT.getUISession(display);
                     uiSession.exec(new Runnable(){
                         public void run() {
-                            StageSessionPluginSingleton.getInstance().cleanProcess(scriptId);
+                            SpatialToolboxSessionPluginSingleton.getInstance().cleanProcess(scriptId);
                             // loadOutputMaps();
                             logPushSession.stop();
 
@@ -206,15 +206,15 @@ public class ScriptHandler {
                 }
 
             });
-            String loggerLevelGui = StageSessionPluginSingleton.getInstance().retrieveSavedLogLevel();
+            String loggerLevelGui = SpatialToolboxSessionPluginSingleton.getInstance().retrieveSavedLogLevel();
             if (loggerLevelGui == null)
-                loggerLevelGui = StageConstants.LOGLEVEL_GUI_OFF;
-            String ramLevel = String.valueOf(StageSessionPluginSingleton.getInstance().retrieveSavedHeap());
-            String encoding = StageSessionPluginSingleton.getInstance().retrieveSavedEncoding();
+                loggerLevelGui = SpatialToolboxConstants.LOGLEVEL_GUI_OFF;
+            String ramLevel = String.valueOf(SpatialToolboxSessionPluginSingleton.getInstance().retrieveSavedHeap());
+            String encoding = SpatialToolboxSessionPluginSingleton.getInstance().retrieveSavedEncoding();
             Process process = executor.exec(sessionId, script, loggerLevelGui, ramLevel, encoding);
             logPushSession.start();
 
-            StageSessionPluginSingleton.getInstance().addProcess(process, scriptId);
+            SpatialToolboxSessionPluginSingleton.getInstance().addProcess(process, scriptId);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -488,10 +488,10 @@ public class ScriptHandler {
         if (field.otherModule == null && field.fieldValue != null && field.fieldValue.length() > 0) {
             boolean isString = field.fieldType.endsWith("String");
             String TMPQUOTE = QUOTE;
-            if (StageModulesUtils.isFieldExceptional(field)) {
+            if (SpatialToolboxUtils.isFieldExceptional(field)) {
                 TMPQUOTE = "";
             }
-            if (field.guiHints != null && field.guiHints.contains(StageConstants.MULTILINE_UI_HINT)) {
+            if (field.guiHints != null && field.guiHints.contains(SpatialToolboxConstants.MULTILINE_UI_HINT)) {
                 TMPQUOTE = "\"\"\"";
             }
             sb.append(variableNamesMap.get(mainModuleDescription));
@@ -511,7 +511,7 @@ public class ScriptHandler {
             for( FieldData fieldData : inputsList ) {
                 if (fieldData.isSimpleType()) {
                     field2ParameterDescription(fieldData, otherModule, sb);
-                } else if (StageModulesUtils.isFieldExceptional(fieldData)) {
+                } else if (SpatialToolboxUtils.isFieldExceptional(fieldData)) {
                     field2ParameterDescription(fieldData, otherModule, sb);
                 }
             }

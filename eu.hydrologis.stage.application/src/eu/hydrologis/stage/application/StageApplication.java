@@ -29,7 +29,7 @@ import org.eclipse.rap.rwt.service.ResourceLoader;
 import org.eclipse.rap.rwt.service.ServiceHandler;
 
 import eu.hydrologis.stage.geopaparazzi.geopapbrowser.GeopapBrowserEntryPoint;
-import eu.hydrologis.stage.modules.StageEntryPoint;
+import eu.hydrologis.stage.modules.SpatialToolboxEntryPoint;
 
 public class StageApplication implements ApplicationConfiguration {
 
@@ -44,9 +44,15 @@ public class StageApplication implements ApplicationConfiguration {
         stageProperties.put(WebClient.BODY_HTML, readTextFromResource("resources/body.html", "UTF-8"));
         stageProperties.put(WebClient.HEAD_HTML, readTextFromResource("resources/head.html", "UTF-8"));
         stageProperties.put(WebClient.FAVICON, "resources/favicon.png");
-        application.addEntryPoint("/stage", StageEntryPoint.class, stageProperties);
+        application.addEntryPoint("/", StageEntryPoint.class, stageProperties);
 
-        
+        Map<String, String> jgrasstoolsProperties = new HashMap<String, String>();
+        jgrasstoolsProperties.put(WebClient.PAGE_TITLE, "Spatial Toolbox");
+        jgrasstoolsProperties.put(WebClient.BODY_HTML, readTextFromResource("resources/body.html", "UTF-8"));
+        jgrasstoolsProperties.put(WebClient.HEAD_HTML, readTextFromResource("resources/head.html", "UTF-8"));
+        jgrasstoolsProperties.put(WebClient.FAVICON, "resources/favicon.png");
+        application.addEntryPoint("/spatialtoolbox", SpatialToolboxEntryPoint.class, jgrasstoolsProperties);
+
         Map<String, String> geopapBrowserProperties = new HashMap<String, String>();
         geopapBrowserProperties.put(WebClient.PAGE_TITLE, "Geopaparazzi Browser");
         geopapBrowserProperties.put(WebClient.BODY_HTML, readTextFromResource("resources/body_geopapbrowser.html", "UTF-8"));
@@ -54,12 +60,14 @@ public class StageApplication implements ApplicationConfiguration {
         geopapBrowserProperties.put(WebClient.FAVICON, "resources/favicon.png");
         application.addEntryPoint("/geopapbrowser", GeopapBrowserEntryPoint.class, geopapBrowserProperties);
 
-//        Map<String, String> chartProperties = new HashMap<String, String>();
-//        chartProperties.put(WebClient.PAGE_TITLE, "Geopaparazzi Browser");
-//        chartProperties.put(WebClient.BODY_HTML, readTextFromResource("resources/body_geopapbrowser.html", "UTF-8"));
-//        chartProperties.put(WebClient.HEAD_HTML, readTextFromResource("resources/head.html", "UTF-8"));
-//        chartProperties.put(WebClient.FAVICON, "resources/favicon.png");
-//        application.addEntryPoint("/chart", ChartDemo.class, chartProperties);
+        // Map<String, String> chartProperties = new HashMap<String, String>();
+        // chartProperties.put(WebClient.PAGE_TITLE, "Geopaparazzi Browser");
+        // chartProperties.put(WebClient.BODY_HTML,
+        // readTextFromResource("resources/body_geopapbrowser.html", "UTF-8"));
+        // chartProperties.put(WebClient.HEAD_HTML, readTextFromResource("resources/head.html",
+        // "UTF-8"));
+        // chartProperties.put(WebClient.FAVICON, "resources/favicon.png");
+        // application.addEntryPoint("/chart", ChartDemo.class, chartProperties);
 
         application.setOperationMode(OperationMode.SWT_COMPATIBILITY);
         application.addStyleSheet(RWT.DEFAULT_THEME_ID, "theme/theme.css");

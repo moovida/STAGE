@@ -24,11 +24,11 @@ import java.util.List;
 
 import oms3.CLI;
 import eu.hydrologis.stage.libs.StageLibsActivator;
-import eu.hydrologis.stage.modules.StageSessionPluginSingleton;
+import eu.hydrologis.stage.modules.SpatialToolboxSessionPluginSingleton;
 import eu.hydrologis.stage.modules.utils.FileUtilities;
 import eu.hydrologis.stage.modules.utils.OsCheck;
 import eu.hydrologis.stage.modules.utils.OsCheck.OSType;
-import eu.hydrologis.stage.modules.utils.StageConstants;
+import eu.hydrologis.stage.modules.utils.SpatialToolboxConstants;
 
 /**
  * Executor of OMS scripts.
@@ -63,7 +63,7 @@ public class StageScriptExecutor {
         /*
          * get libraries
          */
-        String classpathJars = StageSessionPluginSingleton.getInstance().getClasspathJars();
+        String classpathJars = SpatialToolboxSessionPluginSingleton.getInstance().getClasspathJars();
         classPath = classpathJars;
     }
 
@@ -77,7 +77,7 @@ public class StageScriptExecutor {
      * @param loggerLevelGui
      *            the log level as presented in the GUI, can be OFF|ON. This is
      *            not the OMS logger level, which in stead has to be picked from
-     *            the {@link StageConstants#LOGLEVELS_MAP}.
+     *            the {@link SpatialToolboxConstants#LOGLEVELS_MAP}.
      * @param ramLevel
      *            the heap size to use in megabytes.
      * @param encoding
@@ -184,11 +184,11 @@ public class StageScriptExecutor {
         logBuilder.setLength(0);
 
         StringBuilder preCommentsBuilder = new StringBuilder();
-        preCommentsBuilder.append("Process started: " + StageConstants.dateTimeFormatterYYYYMMDDHHMMSS.format(new Date()));
+        preCommentsBuilder.append("Process started: " + SpatialToolboxConstants.dateTimeFormatterYYYYMMDDHHMMSS.format(new Date()));
         preCommentsBuilder.append(nl);
 
         // command launched
-        if (loggerLevelGui.equals(StageConstants.LOGLEVEL_GUI_ON)) {
+        if (loggerLevelGui.equals(SpatialToolboxConstants.LOGLEVEL_GUI_ON)) {
 
             preCommentsBuilder.append("------------------------------>8----------------------------" + nl);
             // preCommentsBuilder.append("Launching command: " + nl);
@@ -249,7 +249,7 @@ public class StageScriptExecutor {
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
-                    printMessage("Process finished: " + StageConstants.dateTimeFormatterYYYYMMDDHHMMSS.format(new Date()),
+                    printMessage("Process finished: " + SpatialToolboxConstants.dateTimeFormatterYYYYMMDDHHMMSS.format(new Date()),
                             LogStyle.COMMENT);
                     isRunning = false;
                     updateListenersForModuleStop();
@@ -338,7 +338,7 @@ public class StageScriptExecutor {
     }
 
     private void printException( final String loggerLevelGui, Exception e ) {
-        if (loggerLevelGui.equals(StageConstants.LOGLEVEL_GUI_ON)) {
+        if (loggerLevelGui.equals(SpatialToolboxConstants.LOGLEVEL_GUI_ON)) {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
             e.printStackTrace(pw);

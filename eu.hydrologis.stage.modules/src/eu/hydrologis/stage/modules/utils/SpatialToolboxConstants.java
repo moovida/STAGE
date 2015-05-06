@@ -12,7 +12,7 @@ import java.text.SimpleDateFormat;
 import java.util.HashMap;
 
 
-public class StageConstants {
+public class SpatialToolboxConstants {
 	public static String LIBS_MAIN_FOLDER_NAME = "spatialtoolbox";
 	public static String LIBS_SUBFOLDER_NAME = "libs";
 	public static String MODULES_SUBFOLDER_NAME = "modules";

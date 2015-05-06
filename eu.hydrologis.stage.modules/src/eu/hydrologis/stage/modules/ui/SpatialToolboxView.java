@@ -23,7 +23,7 @@ import org.eclipse.swt.widgets.Display;
  * 
  * @author Andrea Antonello (www.hydrologis.com)
  */
-public class StageView {
+public class SpatialToolboxView {
 
     public static final String SPATIAL_TOOLBOX = "Spatial Toolbox...";
     public static final String LOADING_MODULES_FROM_LIBRARIES = "Loading modules from libraries...";
@@ -39,22 +39,22 @@ public class StageView {
         CTabItem stageTab = new CTabItem(mainStageCFolder, SWT.NONE);
         stageTab.setText("STAGE");
         mainStageCFolder.setSelection(stageTab);
-        StageModulesView stageModulesView = new StageModulesView();
+        SpatialToolboxModulesView stageModulesView = new SpatialToolboxModulesView();
         stageModulesView.createStageModulesTab(display, mainStageCFolder, stageTab);
 
         CTabItem scriptingTab = new CTabItem(mainStageCFolder, SWT.NONE);
         scriptingTab.setText("Geo-scripting");
-        StageScriptingView stageScriptingView = new StageScriptingView();
+        SpatialToolboxScriptingView stageScriptingView = new SpatialToolboxScriptingView();
         stageScriptingView.createStageScriptingTab(display, mainStageCFolder, scriptingTab);
 
         CTabItem fileManagementTab = new CTabItem(mainStageCFolder, SWT.NONE);
         fileManagementTab.setText("File Management");
-        StageFilemanagementView stageFileManagementView = new StageFilemanagementView();
+        SpatialToolboxFilemanagementView stageFileManagementView = new SpatialToolboxFilemanagementView();
         stageFileManagementView.createStageFileManagementTab(display, mainStageCFolder, fileManagementTab);
 
         CTabItem viewerTab = new CTabItem(mainStageCFolder, SWT.NONE);
         viewerTab.setText("Simple Viewer");
-        StageSimpleViewerView stageViewerView = new StageSimpleViewerView();
+        SpatialToolboxSimpleViewerView stageViewerView = new SpatialToolboxSimpleViewerView();
         stageViewerView.createStageSimpleViewerTab(display, mainStageCFolder, viewerTab);
 
     }

@@ -42,7 +42,7 @@ import eu.hydrologis.stage.libs.workspace.User;
 import eu.hydrologis.stage.modules.core.ScriptHandler;
 import eu.hydrologis.stage.modules.utils.FileUtilities;
 import eu.hydrologis.stage.modules.utils.ScriptTemplatesUtil;
-import eu.hydrologis.stage.modules.utils.StageConstants;
+import eu.hydrologis.stage.modules.utils.SpatialToolboxConstants;
 
 /**
  * The stage scripting view.
@@ -50,7 +50,7 @@ import eu.hydrologis.stage.modules.utils.StageConstants;
  * @author Andrea Antonello (www.hydrologis.com)
  */
 @SuppressWarnings("serial")
-public class StageScriptingView {
+public class SpatialToolboxScriptingView {
 
     private static final String EMPTY_SCRIPT_NAME = "The script name can't be empty.";
     private static final String SCRIPT_IS_EMPTY = "Script is empty";
@@ -290,7 +290,7 @@ public class StageScriptingView {
             return;
         }
         ScriptHandler scriptHandler = new ScriptHandler();
-        String scriptID = name + " " + StageConstants.dateTimeFormatterYYYYMMDDHHMMSS.format(new Date());
+        String scriptID = name + " " + SpatialToolboxConstants.dateTimeFormatterYYYYMMDDHHMMSS.format(new Date());
         logList.removeAll();
         scriptHandler.runModule(scriptID, script, logList);
     }

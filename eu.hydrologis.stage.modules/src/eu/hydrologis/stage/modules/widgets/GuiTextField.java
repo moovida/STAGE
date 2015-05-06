@@ -39,10 +39,10 @@ import org.eclipse.swt.widgets.Text;
 import eu.hydrologis.stage.libs.utilsrap.FileSelectionDialog;
 import eu.hydrologis.stage.libs.workspace.StageWorkspace;
 import eu.hydrologis.stage.libs.workspace.User;
-import eu.hydrologis.stage.modules.StageSessionPluginSingleton;
+import eu.hydrologis.stage.modules.SpatialToolboxSessionPluginSingleton;
 import eu.hydrologis.stage.modules.core.FieldData;
-import eu.hydrologis.stage.modules.utils.StageConstants;
-import eu.hydrologis.stage.modules.utils.StageModulesUtils;
+import eu.hydrologis.stage.modules.utils.SpatialToolboxConstants;
+import eu.hydrologis.stage.modules.utils.SpatialToolboxUtils;
 
 /**
  * Class representing an swt textfield gui.
@@ -86,23 +86,23 @@ public class GuiTextField extends ModuleGuiElement implements ModifyListener, Fo
         this.constraints = constraints;
 
         if (data.guiHints != null) {
-            if (data.guiHints.contains(StageConstants.FILEIN_UI_HINT)) {
+            if (data.guiHints.contains(SpatialToolboxConstants.FILEIN_UI_HINT)) {
                 isInFile = true;
                 isFileOrFolder = true;
             }
-            if (data.guiHints.contains(StageConstants.FOLDERIN_UI_HINT)) {
+            if (data.guiHints.contains(SpatialToolboxConstants.FOLDERIN_UI_HINT)) {
                 isInFolder = true;
                 isFileOrFolder = true;
             }
-            if (data.guiHints.contains(StageConstants.FILEOUT_UI_HINT)) {
+            if (data.guiHints.contains(SpatialToolboxConstants.FILEOUT_UI_HINT)) {
                 isOutFile = true;
                 isFileOrFolder = true;
             }
-            if (data.guiHints.contains(StageConstants.FOLDEROUT_UI_HINT)) {
+            if (data.guiHints.contains(SpatialToolboxConstants.FOLDEROUT_UI_HINT)) {
                 isOutFolder = true;
                 isFileOrFolder = true;
             }
-            if (data.guiHints.contains(StageConstants.CRS_UI_HINT)) {
+            if (data.guiHints.contains(SpatialToolboxConstants.CRS_UI_HINT)) {
                 isCrs = true;
             }
             // if (data.guiHints.contains(OmsBoxConstants.EASTINGNORTHING_UI_HINT)) {
@@ -112,14 +112,14 @@ public class GuiTextField extends ModuleGuiElement implements ModifyListener, Fo
             // } else if (data.guiHints.contains(OmsBoxConstants.EASTING_UI_HINT)) {
             // isEasting = true;
             // }
-            if (data.guiHints.contains(StageConstants.MULTILINE_UI_HINT)) {
+            if (data.guiHints.contains(SpatialToolboxConstants.MULTILINE_UI_HINT)) {
                 isMultiline = true;
 
                 String[] split = data.guiHints.split(","); //$NON-NLS-1$
                 for( String string : split ) {
                     String hint = string.trim();
-                    if (hint.startsWith(StageConstants.MULTILINE_UI_HINT)) {
-                        hint = hint.replaceFirst(StageConstants.MULTILINE_UI_HINT, ""); //$NON-NLS-1$
+                    if (hint.startsWith(SpatialToolboxConstants.MULTILINE_UI_HINT)) {
+                        hint = hint.replaceFirst(SpatialToolboxConstants.MULTILINE_UI_HINT, ""); //$NON-NLS-1$
                         rows = 1;
                         try {
                             rows = Integer.parseInt(hint);
@@ -129,27 +129,27 @@ public class GuiTextField extends ModuleGuiElement implements ModifyListener, Fo
                     }
                 }
             }
-            if (data.guiHints.contains(StageConstants.MAPCALC_UI_HINT)) {
+            if (data.guiHints.contains(SpatialToolboxConstants.MAPCALC_UI_HINT)) {
                 isMapcalc = true;
             }
-            if (data.guiHints.contains(StageConstants.GRASSFILE_UI_HINT)) {
+            if (data.guiHints.contains(SpatialToolboxConstants.GRASSFILE_UI_HINT)) {
                 isGrassfile = true;
             }
-            if (data.guiHints.contains(StageConstants.PROCESS_NORTH_UI_HINT)) {
+            if (data.guiHints.contains(SpatialToolboxConstants.PROCESS_NORTH_UI_HINT)) {
                 isProcessingNorth = true;
-            } else if (data.guiHints.contains(StageConstants.PROCESS_SOUTH_UI_HINT)) {
+            } else if (data.guiHints.contains(SpatialToolboxConstants.PROCESS_SOUTH_UI_HINT)) {
                 isProcessingSouth = true;
-            } else if (data.guiHints.contains(StageConstants.PROCESS_WEST_UI_HINT)) {
+            } else if (data.guiHints.contains(SpatialToolboxConstants.PROCESS_WEST_UI_HINT)) {
                 isProcessingWest = true;
-            } else if (data.guiHints.contains(StageConstants.PROCESS_EAST_UI_HINT)) {
+            } else if (data.guiHints.contains(SpatialToolboxConstants.PROCESS_EAST_UI_HINT)) {
                 isProcessingEast = true;
-            } else if (data.guiHints.contains(StageConstants.PROCESS_COLS_UI_HINT)) {
+            } else if (data.guiHints.contains(SpatialToolboxConstants.PROCESS_COLS_UI_HINT)) {
                 isProcessingCols = true;
-            } else if (data.guiHints.contains(StageConstants.PROCESS_ROWS_UI_HINT)) {
+            } else if (data.guiHints.contains(SpatialToolboxConstants.PROCESS_ROWS_UI_HINT)) {
                 isProcessingRows = true;
-            } else if (data.guiHints.contains(StageConstants.PROCESS_XRES_UI_HINT)) {
+            } else if (data.guiHints.contains(SpatialToolboxConstants.PROCESS_XRES_UI_HINT)) {
                 isProcessingXres = true;
-            } else if (data.guiHints.contains(StageConstants.PROCESS_YRES_UI_HINT)) {
+            } else if (data.guiHints.contains(SpatialToolboxConstants.PROCESS_YRES_UI_HINT)) {
                 isProcessingYres = true;
             }
         }
@@ -193,12 +193,12 @@ public class GuiTextField extends ModuleGuiElement implements ModifyListener, Fo
         if (data.fieldValue != null) {
             String tmp = data.fieldValue;
 
-            if (tmp.contains(StageConstants.WORKINGFOLDER)) {
+            if (tmp.contains(SpatialToolboxConstants.WORKINGFOLDER)) {
                 // check if there is a working folder defined
-                String workingFolder = StageSessionPluginSingleton.getInstance().getWorkingFolder();
+                String workingFolder = SpatialToolboxSessionPluginSingleton.getInstance().getWorkingFolder();
                 workingFolder = checkBackSlash(workingFolder, true);
                 if (workingFolder != null) {
-                    tmp = tmp.replaceFirst(StageConstants.WORKINGFOLDER, workingFolder);
+                    tmp = tmp.replaceFirst(SpatialToolboxConstants.WORKINGFOLDER, workingFolder);
                     data.fieldValue = tmp;
                 } else {
                     data.fieldValue = "";
@@ -612,7 +612,7 @@ public class GuiTextField extends ModuleGuiElement implements ModifyListener, Fo
                                 setTextContent(file);
                                 folder = file.getParentFile().getAbsolutePath();
                             }
-                            StageSessionPluginSingleton.getInstance().setLastFolderChosen(folder);
+                            SpatialToolboxSessionPluginSingleton.getInstance().setLastFolderChosen(folder);
                         }
                     }
                 }
@@ -738,7 +738,7 @@ public class GuiTextField extends ModuleGuiElement implements ModifyListener, Fo
         }
         if (isGrassfile) {
             File file = StageWorkspace.makeRelativeDataPathToFile(textStr, isOutFile);
-            if (length != 0 && !StageModulesUtils.isGrass(file.getAbsolutePath())) {
+            if (length != 0 && !SpatialToolboxUtils.isGrass(file.getAbsolutePath())) {
                 sb.append("Grass modules currently work only with data contained in a GRASS mapset (which doesn't seem to be the case for: "
                         + file.getName() + ").\n");
             }

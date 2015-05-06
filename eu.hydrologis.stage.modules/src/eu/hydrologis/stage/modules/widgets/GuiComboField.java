@@ -18,7 +18,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 
 import eu.hydrologis.stage.modules.core.FieldData;
-import eu.hydrologis.stage.modules.utils.StageConstants;
+import eu.hydrologis.stage.modules.utils.SpatialToolboxConstants;
 
 /**
  * Class representing a gui for combobox choice.
@@ -50,8 +50,8 @@ public class GuiComboField extends ModuleGuiElement {
         String[] guiHintsSplit = data.guiHints.split(";");
         String[] imtemsSplit = new String[]{" - "};
         for( String guiHint : guiHintsSplit ) {
-            if (guiHint.startsWith(StageConstants.COMBO_UI_HINT)) {
-                String items = guiHint.replaceFirst(StageConstants.COMBO_UI_HINT, "").replaceFirst(":", "").trim();
+            if (guiHint.startsWith(SpatialToolboxConstants.COMBO_UI_HINT)) {
+                String items = guiHint.replaceFirst(SpatialToolboxConstants.COMBO_UI_HINT, "").replaceFirst(":", "").trim();
                 imtemsSplit = items.split(",");
                 break;
             }
