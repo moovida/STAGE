@@ -9,6 +9,7 @@
 package eu.hydrologis.stage.libs.workspace;
 
 import java.io.File;
+import java.util.Properties;
 
 import eu.hydrologis.stage.libs.log.StageLogger;
 

@@ -84,10 +84,6 @@ public class StageEntryPoint extends AbstractEntryPoint {
                 public void widgetSelected( SelectionEvent e ) {
                     UrlLauncher launcher = RWT.getClient().getService(UrlLauncher.class);
                     launcher.openURL(appButton.getData().toString());
-                    // launcher.openURL( RWT.getResourceManager().getLocation( "my-doc.pdf" ) );
-                    // launcher.openURL( "mailto:someone@nowhere.org?cc=other@nowhere.org"
-                    // + "&subject=Hello%3F&body=RAP%20is%20awesome!" );
-                    // launcher.openURL( "tel:555-123456" );
                 }
             });
 

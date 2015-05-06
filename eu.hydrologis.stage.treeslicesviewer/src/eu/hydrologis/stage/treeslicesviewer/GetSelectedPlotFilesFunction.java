@@ -6,7 +6,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * (http://www.eclipse.org/legal/epl-v10.html).
  */
-package eu.hydrologis.stage.modules.treesslicer;
+package eu.hydrologis.stage.treeslicesviewer;
 
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.browser.BrowserFunction;

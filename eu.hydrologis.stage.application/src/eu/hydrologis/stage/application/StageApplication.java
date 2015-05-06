@@ -30,6 +30,8 @@ import org.eclipse.rap.rwt.service.ServiceHandler;
 
 import eu.hydrologis.stage.geopaparazzi.geopapbrowser.GeopapBrowserEntryPoint;
 import eu.hydrologis.stage.modules.SpatialToolboxEntryPoint;
+import eu.hydrologis.stage.treeslicesviewer.TreeSlicesViewerEntryPoint;
+import eu.hydrologis.stage.treeslicesviewer.TreeSlicesViewerView;
 
 public class StageApplication implements ApplicationConfiguration {
 
@@ -60,14 +62,12 @@ public class StageApplication implements ApplicationConfiguration {
         geopapBrowserProperties.put(WebClient.FAVICON, "resources/favicon.png");
         application.addEntryPoint("/geopapbrowser", GeopapBrowserEntryPoint.class, geopapBrowserProperties);
 
-        // Map<String, String> chartProperties = new HashMap<String, String>();
-        // chartProperties.put(WebClient.PAGE_TITLE, "Geopaparazzi Browser");
-        // chartProperties.put(WebClient.BODY_HTML,
-        // readTextFromResource("resources/body_geopapbrowser.html", "UTF-8"));
-        // chartProperties.put(WebClient.HEAD_HTML, readTextFromResource("resources/head.html",
-        // "UTF-8"));
-        // chartProperties.put(WebClient.FAVICON, "resources/favicon.png");
-        // application.addEntryPoint("/chart", ChartDemo.class, chartProperties);
+        Map<String, String> treeSlicesProperties = new HashMap<String, String>();
+        treeSlicesProperties.put(WebClient.PAGE_TITLE, "Tree SLices Viewer");
+        treeSlicesProperties.put(WebClient.BODY_HTML, readTextFromResource("resources/body_geopapbrowser.html", "UTF-8"));
+        treeSlicesProperties.put(WebClient.HEAD_HTML, readTextFromResource("resources/head.html", "UTF-8"));
+        treeSlicesProperties.put(WebClient.FAVICON, "resources/favicon.png");
+        application.addEntryPoint("/treeslicesviewer", TreeSlicesViewerEntryPoint.class, treeSlicesProperties);
 
         application.setOperationMode(OperationMode.SWT_COMPATIBILITY);
         application.addStyleSheet(RWT.DEFAULT_THEME_ID, "theme/theme.css");

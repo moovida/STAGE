@@ -33,7 +33,6 @@ import org.jgrasstools.gears.utils.images.ImageGenerator;
 import eu.hydrologis.stage.libs.utilsrap.FileSelectionDialog;
 import eu.hydrologis.stage.libs.workspace.StageWorkspace;
 import eu.hydrologis.stage.libs.workspace.User;
-import eu.hydrologis.stage.modules.treesslicer.TreeSlicerDialog;
 import eu.hydrologis.stage.modules.utils.FileUtilities;
 
 /**
@@ -147,14 +146,11 @@ public class SpatialToolboxSimpleViewerView {
         drawButton.addSelectionListener(new SelectionAdapter(){
             @Override
             public void widgetSelected( SelectionEvent e ) {
-                TreeSlicerDialog d = new TreeSlicerDialog(browser.getShell());
-                d.open();
-                
-//                try {
-//                    setImage(browser, selectedFiles);
-//                } catch (Exception e1) {
-//                    e1.printStackTrace();
-//                }
+                try {
+                    setImage(browser, selectedFiles);
+                } catch (Exception e1) {
+                    e1.printStackTrace();
+                }
             }
         });
 

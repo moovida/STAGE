@@ -1,4 +1,4 @@
-package eu.hydrologis.stage.modules.treesslicer;
+package eu.hydrologis.stage.treeslicesviewer;
 
 import java.io.IOException;
 import java.io.InputStream;

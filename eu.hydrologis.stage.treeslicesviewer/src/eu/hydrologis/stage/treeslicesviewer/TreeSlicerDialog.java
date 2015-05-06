@@ -1,11 +1,12 @@
-package eu.hydrologis.stage.modules.treesslicer;
+package eu.hydrologis.stage.treeslicesviewer;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FilenameFilter;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
 import org.eclipse.jface.dialogs.Dialog;
-import org.eclipse.rap.rwt.RWT;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.browser.BrowserFunction;
@@ -18,6 +19,8 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 
+import eu.hydrologis.stage.libs.utils.FileUtilities;
+
 public class TreeSlicerDialog extends Dialog {
 
     public static final String SESSION_USER_KEY = "SESSION_USER";
@@ -26,10 +29,13 @@ public class TreeSlicerDialog extends Dialog {
 
     private String htmlUrl;
 
+    private File treeSlicesFolder;
+
     // private static final String CANCEL = "Cancel";
 
-    public TreeSlicerDialog( Shell parent ) {
+    public TreeSlicerDialog( Shell parent, File treeSlicesFolder ) {
         super(parent);
+        this.treeSlicesFolder = treeSlicesFolder;
         JsResources.ensureJavaScriptResources();
         htmlUrl = JsResources.ensureHtmlResources();
         // htmlUrl = JsResources.registerIfMissing("trees_info.html");
@@ -41,7 +47,7 @@ public class TreeSlicerDialog extends Dialog {
         // if (title != null) {
         // shell.setText(title);
         // }
-        
+
         shell.setMaximized(true);
     }
 
@@ -61,7 +67,20 @@ public class TreeSlicerDialog extends Dialog {
                     new BrowserFunction(treeSlicerBrowser, "getPlotFiles"){
                         @Override
                         public Object function( Object[] arguments ) {
-                            return "[{\"name\": \"plot1.json\"}, {\"name\": \"plot2.json\"}]";
+                            File[] plotFiles = treeSlicesFolder.listFiles(new FilenameFilter(){
+                                @Override
+                                public boolean accept( File dir, String name ) {
+                                    return name.endsWith(".json");
+                                }
+                            });
+                            StringBuilder sb = new StringBuilder();
+                            sb.append("[");
+                            for( File plotFile : plotFiles ) {
+                                String name = FileUtilities.getNameWithoutExtention(plotFile);
+                                sb.append("{\"name\":\"").append(name).append("\"},");
+                            }
+                            sb.append("{\"name\":\" - \"}]");
+                            return sb.toString();
                         }
                     };
                     treeSlicerBrowser.evaluate("loadScript();");

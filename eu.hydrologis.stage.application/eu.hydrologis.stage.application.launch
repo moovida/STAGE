@@ -17,7 +17,7 @@
 <stringAttribute key="org.eclipse.jdt.launching.JRE_CONTAINER" value="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jdk1.7.0_67"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-os ${target.os} -ws ${target.ws} -arch ${target.arch} -nl ${target.nl} -console -consolelog"/>
 <stringAttribute key="org.eclipse.jdt.launching.SOURCE_PATH_PROVIDER" value="org.eclipse.pde.ui.workbenchClasspathProvider"/>
-<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Declipse.ignoreApp=true -Dosgi.noShutdown=true -Dorg.eclipse.equinox.http.jetty.log.stderr.threshold=info -Dorg.eclipse.rap.workbenchAutostart=false -Dosgi.parentClassloader=ext -Dstage.workspace=&quot;D:\STAGEWORKSPACE&quot; -Dstage.javaexec=D:\SOFTWARE\STAGE\stage_1.0.0\jreWin64\bin\java.exe -Dstage.geopaparazzifolder=&quot;D:\Dropbox\geopaparazzi\projects\&quot; -Dstage.datafolder=&quot;D:\data&quot; -Dstage.scriptsfolder=&quot;D:\Dropbox\hydrologis\lavori\STAGE_SCRIPTS&quot;"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Declipse.ignoreApp=true -Dosgi.noShutdown=true -Dorg.eclipse.equinox.http.jetty.log.stderr.threshold=info -Dorg.eclipse.rap.workbenchAutostart=false -Dosgi.parentClassloader=ext -Dstage.workspace=&quot;D:\STAGEWORKSPACE&quot; -Dstage.javaexec=&quot;D:\SOFTWARE\STAGE\stage_1.0.0\jreWin64\bin\java.exe&quot; -Dstage.geopaparazzifolder=&quot;D:\Dropbox\geopaparazzi\projects&quot; -Dstage.datafolder=&quot;D:\data&quot; -Dstage.scriptsfolder=&quot;D:\Dropbox\hydrologis\lavori\STAGE_SCRIPTS&quot;"/>
 <stringAttribute key="org.eclipse.rap.launch.browserMode" value="INTERNAL"/>
 <stringAttribute key="org.eclipse.rap.launch.contextpath" value="/"/>
 <stringAttribute key="org.eclipse.rap.launch.dataLocation" value="${workspace_loc}/.metadata/.plugins/org.eclipse.rap.tools.launch/eu.hydrologis.stage.application"/>
@@ -37,5 +37,5 @@
 <booleanAttribute key="tracing" value="false"/>
 <booleanAttribute key="useCustomFeatures" value="false"/>
 <booleanAttribute key="useDefaultConfigArea" value="true"/>
-<stringAttribute key="workspace_bundles" value="eu.hydrologis.stage.application@default:default,eu.hydrologis.stage.geopaparazzi@default:default,eu.hydrologis.stage.libs@default:default,eu.hydrologis.stage.modules@default:default,org.eclipse.rap.addons.filedialog@default:default,org.eclipse.rap.addons.fileupload@default:default"/>
+<stringAttribute key="workspace_bundles" value="eu.hydrologis.stage.application@default:default,eu.hydrologis.stage.geopaparazzi@default:default,eu.hydrologis.stage.libs@default:default,eu.hydrologis.stage.modules@default:default,eu.hydrologis.stage.treeslicesviewer@default:default,org.eclipse.rap.addons.filedialog@default:default,org.eclipse.rap.addons.fileupload@default:default"/>
 </launchConfiguration>

@@ -12,7 +12,8 @@ Require-Bundle: org.eclipse.rap.rwt,
  org.eclipse.equinox.http.registry;resolution:=optional,
  eu.hydrologis.stage.libs,
  eu.hydrologis.stage.modules;bundle-version="1.0.0",
- eu.hydrologis.stage.geopaparazzi;bundle-version="1.0.0"
+ eu.hydrologis.stage.geopaparazzi;bundle-version="1.0.0",
+ eu.hydrologis.stage.treeslicesviewer;bundle-version="1.0.0"
 Service-Component: OSGI-INF/contribution.xml
 Import-Package: javax.imageio,
  javax.imageio.event,
