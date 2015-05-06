@@ -57,5 +57,10 @@ public class SpatialToolboxView {
         SpatialToolboxSimpleViewerView stageViewerView = new SpatialToolboxSimpleViewerView();
         stageViewerView.createStageSimpleViewerTab(display, mainStageCFolder, viewerTab);
 
+        CTabItem processTab = new CTabItem(mainStageCFolder, SWT.NONE);
+        processTab.setText("Processes");
+        SpatialToolboxProcessView processView = new SpatialToolboxProcessView();
+        processView.createStageProcessesTab(mainStageCFolder, processTab);
+
     }
 }

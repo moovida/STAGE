@@ -10,7 +10,6 @@ package eu.hydrologis.stage.modules.core;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.eclipse.rap.rwt.RWT;
 import org.eclipse.rap.rwt.service.ServerPushSession;
@@ -160,20 +159,6 @@ public class ScriptHandler {
      *            the script.
      */
     public void runModule( final String scriptId, String script, final org.eclipse.swt.widgets.List logList ) {
-        // FIXME
-        // JConsoleOutputConsole outputConsole = new
-        // JConsoleOutputConsole(scriptId);
-        // outputConsole.clearConsole();
-
-        // PrintStream internalStream = System.out;// outputConsole.internal;
-        // PrintStream outputStream = outputConsole.out;
-        // PrintStream errorStream = System.err;// outputConsole.err;
-        // open console
-        // IConsoleManager manager =
-        // org.eclipse.ui.console.ConsolePlugin.getDefault().getConsoleManager();
-        // manager.addConsoles(new IConsole[]{outputConsole});
-        // manager.showConsoleView(outputConsole);
-
         try {
             final Display display = Display.getCurrent();
             String sessionId = RWT.getUISession().getId();

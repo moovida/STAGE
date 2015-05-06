@@ -25,9 +25,6 @@ import java.util.List;
 import oms3.CLI;
 import eu.hydrologis.stage.libs.StageLibsActivator;
 import eu.hydrologis.stage.modules.SpatialToolboxSessionPluginSingleton;
-import eu.hydrologis.stage.modules.utils.FileUtilities;
-import eu.hydrologis.stage.modules.utils.OsCheck;
-import eu.hydrologis.stage.modules.utils.OsCheck.OSType;
 import eu.hydrologis.stage.modules.utils.SpatialToolboxConstants;
 
 /**
@@ -56,7 +53,8 @@ public class StageScriptExecutor {
          */
         File javaFile = StageLibsActivator.getStageJavaExec();
         if (!javaFile.getAbsolutePath().equals("java")) {
-            javaExec = "\"" + javaFile.getAbsolutePath() + "\"";
+            javaExec = javaFile.getAbsolutePath();
+            // javaExec = "\"" + javaFile.getAbsolutePath() + "\"";
         } else {
             javaExec = javaFile.getName();
         }
@@ -147,32 +145,32 @@ public class StageScriptExecutor {
         arguments.add("-cp");
         arguments.add(classPath);
         arguments.add(CLI.class.getCanonicalName());
-        arguments.add("-r ");
+        arguments.add("-r");
         arguments.add("\"" + scriptFile.getAbsolutePath() + "\"");
 
-        String tmpScriptFilesDir = System.getProperty("java.io.tmpdir");
-        File tmpScriptFolder = new File(tmpScriptFilesDir);
-        StringBuilder runSb = new StringBuilder();
-        for( String arg : arguments ) {
-            runSb.append(arg).append(" ");
-        }
-
-        String[] args;
-        if (OsCheck.getOperatingSystemType() == OSType.Windows) {
-            File tmpRunFile = new File(tmpScriptFolder, "udig_spatialtoolbox_" + sessionId + ".bat");
-            FileUtilities.writeFile("@echo off\n" + runSb.toString(), tmpRunFile);
-            args = new String[]{"cmd", "/c", tmpRunFile.getAbsolutePath()};
-        } else {
-            File tmpRunFile = new File(tmpScriptFolder, "udig_spatialtoolbox_" + sessionId + ".sh");
-            FileUtilities.writeFile(runSb.toString(), tmpRunFile);
-            args = new String[]{"sh", tmpRunFile.getAbsolutePath()};
-        }
+        // String tmpScriptFilesDir = System.getProperty("java.io.tmpdir");
+        // File tmpScriptFolder = new File(tmpScriptFilesDir);
+        // StringBuilder runSb = new StringBuilder();
+        // for( String arg : arguments ) {
+        // runSb.append(arg).append(" ");
+        // }
+        //
+        // String[] args;
+        // if (OsCheck.getOperatingSystemType() == OSType.Windows) {
+        // File tmpRunFile = new File(tmpScriptFolder, "udig_spatialtoolbox_" + sessionId + ".bat");
+        // FileUtilities.writeFile("@echo off\n" + runSb.toString(), tmpRunFile);
+        // args = new String[]{"cmd", "/c", tmpRunFile.getAbsolutePath()};
+        // } else {
+        // File tmpRunFile = new File(tmpScriptFolder, "udig_spatialtoolbox_" + sessionId + ".sh");
+        // FileUtilities.writeFile(runSb.toString(), tmpRunFile);
+        // args = new String[]{"sh", tmpRunFile.getAbsolutePath()};
+        // }
 
         // {javaFile, ramExpr, resourcesFlag, "-cp", classPath,
         // CLI.class.getCanonicalName(), "-r",
         // scriptFile.getAbsolutePath()};
 
-        ProcessBuilder processBuilder = new ProcessBuilder(args);
+        ProcessBuilder processBuilder = new ProcessBuilder(arguments);
         // work in home
         // processBuilder.directory(homeFile);
 
@@ -184,7 +182,8 @@ public class StageScriptExecutor {
         logBuilder.setLength(0);
 
         StringBuilder preCommentsBuilder = new StringBuilder();
-        preCommentsBuilder.append("Process started: " + SpatialToolboxConstants.dateTimeFormatterYYYYMMDDHHMMSS.format(new Date()));
+        preCommentsBuilder.append("Process started: "
+                + SpatialToolboxConstants.dateTimeFormatterYYYYMMDDHHMMSS.format(new Date()));
         preCommentsBuilder.append(nl);
 
         // command launched
@@ -249,7 +248,8 @@ public class StageScriptExecutor {
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
-                    printMessage("Process finished: " + SpatialToolboxConstants.dateTimeFormatterYYYYMMDDHHMMSS.format(new Date()),
+                    printMessage(
+                            "Process finished: " + SpatialToolboxConstants.dateTimeFormatterYYYYMMDDHHMMSS.format(new Date()),
                             LogStyle.COMMENT);
                     isRunning = false;
                     updateListenersForModuleStop();
