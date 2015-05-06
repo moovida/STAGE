@@ -3,10 +3,16 @@ package eu.hydrologis.stage.treeslicesviewer;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FilenameFilter;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Arrays;
 
 import org.eclipse.jface.dialogs.Dialog;
+import org.eclipse.rap.rwt.RWT;
+import org.eclipse.rap.rwt.client.service.JavaScriptLoader;
+import org.eclipse.rap.rwt.service.ResourceLoader;
+import org.eclipse.rap.rwt.service.ResourceManager;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.browser.BrowserFunction;
@@ -45,7 +51,7 @@ public class TreeSlicerDialog extends Dialog {
     protected void configureShell( Shell shell ) {
         super.configureShell(shell);
         // if (title != null) {
-        // shell.setText(title);
+        shell.setText("PLOTS FOLDER: " + treeSlicesFolder.getName());
         // }
 
         shell.setMaximized(true);
@@ -73,6 +79,7 @@ public class TreeSlicerDialog extends Dialog {
                                     return name.endsWith(".json");
                                 }
                             });
+                            Arrays.sort(plotFiles);
                             StringBuilder sb = new StringBuilder();
                             sb.append("[");
                             for( File plotFile : plotFiles ) {
@@ -81,6 +88,21 @@ public class TreeSlicerDialog extends Dialog {
                             }
                             sb.append("{\"name\":\" - \"}]");
                             return sb.toString();
+                        }
+                    };
+                    new BrowserFunction(treeSlicerBrowser, "getPlotData"){
+                        @Override
+                        public Object function( Object[] arguments ) {
+                            File plotFile = new File(treeSlicesFolder, arguments[0] + ".json");
+                            if (plotFile.exists()) {
+                                try {
+                                    String fileJson = FileUtilities.readFile(plotFile);
+                                    return fileJson;
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                            throw new RuntimeException("Plot file does not exist: " + plotFile.getName());
                         }
                     };
                     treeSlicerBrowser.evaluate("loadScript();");
@@ -98,7 +120,6 @@ public class TreeSlicerDialog extends Dialog {
         }
         return composite;
     }
-
     public static String getTreeHtml() throws Exception {
         InputStream inputStream = JsResources.class.getClassLoader().getResourceAsStream("js/trees_info.html");
 

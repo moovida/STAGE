@@ -50,13 +50,13 @@ public class TreeSlicesViewerView {
         mainComposite.setLayoutData(new GridData(SWT.CENTER, SWT.FILL, true, true));
 
         Group fileSelectionGroup = new Group(mainComposite, SWT.NONE);
-        fileSelectionGroup.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, true));
+        fileSelectionGroup.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
         GridLayout filesSelLayout = new GridLayout(1, true);
         fileSelectionGroup.setLayout(filesSelLayout);
         filesSelLayout.marginBottom = 30;
         filesSelLayout.marginTop = 30;
-        filesSelLayout.marginLeft = 80;
-        filesSelLayout.marginRight = 80;
+        filesSelLayout.marginLeft = 10;
+        filesSelLayout.marginRight = 10;
         fileSelectionGroup.setText("Tree Slices Folder Selection");
 
         selectedFile = null;
@@ -64,7 +64,12 @@ public class TreeSlicesViewerView {
         button.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
         button.setText("Select folder");
 
-        final Label label = new Label(fileSelectionGroup, SWT.NONE);
+        Group selectedFileGroup = new Group(fileSelectionGroup, SWT.NONE);
+        selectedFileGroup.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+        selectedFileGroup.setLayout(new GridLayout(1, false));
+        selectedFileGroup.setText("Selected Folder");
+
+        final Label label = new Label(selectedFileGroup, SWT.NONE);
         label.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
         label.setText("");
 

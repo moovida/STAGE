@@ -75,7 +75,7 @@ public class JsResources {
             e.printStackTrace();
         }
         JavaScriptLoader loader = RWT.getClient().getService(JavaScriptLoader.class);
-        for( String toRequireStr : toRequireList ) {
+        for( String toRequireStr : toRequireHtmlList ) {
             loader.require(toRequireStr);
         }
         return toRequireHtmlList.get(0);

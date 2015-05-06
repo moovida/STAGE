@@ -195,37 +195,46 @@ Andrea Antonello
 
                 clearInfoAndChart();
 
-                var jsonFile = _folder + fileName;
-                var fileSize;
-                var request;
-                request = $.ajax({
-                    type : "HEAD",
-                    url : jsonFile, //$("#url").val(),
-                    success : function() {
-                        fileSize = request.getResponseHeader("Content-Length");
-                    }
-                });
-
-                var progressRect = d3.select("#progressbar").append("svg").attr("width", mainColumnWidth).attr("height", "10px").append("g").append("rect").attr("x", 0).attr("y", 0).attr("width", 0).attr("height", 10).style("fill", "red").style("stroke", "red").style("fill-opacity", 0.5);
-                var progress = 0;
-                d3.json(jsonFile).on("progress", function() {
-                    var i = d3.interpolate(progress, d3.event.loaded / fileSize);
-                    d3.transition().tween("progress", function() {
-                        return function(t) {
-                            progress = i(t);
-                            progressRect.attr("width", mainColumnWidth * progress);
-                        };
-                    });
-                }).get(function(error, data) {
+                if ( typeof getPlotData === 'function') {
+                    var plotData = getPlotData(fileName);
+                    var data = JSON.parse(plotData);
                     plots = data.plotData.plots;
                     plot = plots[0];
                     readData();
-                    setTimeout(function() {
-                        // just to make the bar visible
-                        d3.select("#progressbar").selectAll("svg").remove();
-                    }, 1000);
+                } else {
+                    var jsonFile = _folder + fileName;
+                    var fileSize;
+                    var request;
+                    request = $.ajax({
+                        type : "HEAD",
+                        url : jsonFile, //$("#url").val(),
+                        success : function() {
+                            fileSize = request.getResponseHeader("Content-Length");
+                        }
+                    });
 
-                });
+                    var progressRect = d3.select("#progressbar").append("svg").attr("width", mainColumnWidth).attr("height", "10px").append("g").append("rect").attr("x", 0).attr("y", 0).attr("width", 0).attr("height", 10).style("fill", "red").style("stroke", "red").style("fill-opacity", 0.5);
+                    var progress = 0;
+                    d3.json(jsonFile).on("progress", function() {
+                        var i = d3.interpolate(progress, d3.event.loaded / fileSize);
+                        d3.transition().tween("progress", function() {
+                            return function(t) {
+                                progress = i(t);
+                                progressRect.attr("width", mainColumnWidth * progress);
+                            };
+                        });
+                    }).get(function(error, data) {
+                        plots = data.plotData.plots;
+                        plot = plots[0];
+                        readData();
+                        setTimeout(function() {
+                            // just to make the bar visible
+                            d3.select("#progressbar").selectAll("svg").remove();
+                        }, 1000);
+
+                    });
+                }
+
             }
 
             function project(x, y) {
