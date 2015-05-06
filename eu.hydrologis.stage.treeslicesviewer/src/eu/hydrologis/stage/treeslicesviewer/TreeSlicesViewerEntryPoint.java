@@ -55,7 +55,7 @@ public class TreeSlicesViewerEntryPoint extends AbstractEntryPoint {
         mainComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
         new Label(mainComposite, SWT.NONE);
-        
+
         Group fileSelectionGroup = new Group(mainComposite, SWT.NONE);
         fileSelectionGroup.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
         GridLayout filesSelLayout = new GridLayout(1, true);
@@ -94,7 +94,8 @@ public class TreeSlicesViewerEntryPoint extends AbstractEntryPoint {
                     }
 
                     selectedFile = fileDialog.getSelectedFile();
-                    label.setText(selectedFile.getName());
+                    if (selectedFile != null)
+                        label.setText(selectedFile.getName());
                 } catch (Exception e1) {
                     e1.printStackTrace();
                 }

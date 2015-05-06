@@ -1,11 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry exported="true" kind="lib" path="libs/jgt-oms3-0.7.9-SNAPSHOT.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/jgt-hortonmachine-0.7.9-SNAPSHOT.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/jgt-jgrassgears-0.7.9-SNAPSHOT.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/jgt-lesto-0.7.9-SNAPSHOT.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/jgt-modules-0.7.9-SNAPSHOT.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/miglayout-3.7.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
+	<classpathentry kind="src" path="src"/>
 	<classpathentry exported="true" kind="lib" path="libs-geotools/antlr-2.7.7.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs-geotools/antlr-3.3.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs-geotools/antlr-runtime-3.3.jar"/>
@@ -100,8 +97,11 @@
 	<classpathentry exported="true" kind="lib" path="libs-geotools/tools.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs-geotools/vecmath-1.3.2.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs-geotools/xml-commons-resolver-1.2.jar"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
-	<classpathentry kind="src" path="src"/>
+	<classpathentry exported="true" kind="lib" path="libs/jgt-hortonmachine-0.7.9-SNAPSHOT.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/jgt-jgrassgears-0.7.9-SNAPSHOT.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/jgt-lesto-0.7.9-SNAPSHOT.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/jgt-modules-0.7.9-SNAPSHOT.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/miglayout-3.7.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/jgt-oms3-0.7.9-SNAPSHOT.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
