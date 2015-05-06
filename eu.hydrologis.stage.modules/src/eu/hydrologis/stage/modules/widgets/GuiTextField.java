@@ -427,16 +427,17 @@ public class GuiTextField extends ModuleGuiElement implements ModifyListener, Fo
     private void setDataValue() {
         String textStr = text.getText();
         String tmpTextStr = checkBackSlash(textStr, isFileOrFolder);
-        // if (!tmpTextStr.equals(textStr)) {
-        // // changed
-        // text.removeModifyListener(this);
-        // textStr = tmpTextStr;
-        // text.setText(textStr);
-        // text.addModifyListener(this);
-        // }
+        if (!tmpTextStr.equals(textStr)) {
+            // changed
+            text.removeModifyListener(this);
+            textStr = tmpTextStr;
+            text.setText(textStr);
+            text.addModifyListener(this);
+        }
         if (isFileOrFolder && tmpTextStr.length() > 0) {
             File file = StageWorkspace.makeRelativeDataPathToFile(tmpTextStr, isOutFile);
-            data.fieldValue = file.getAbsolutePath();
+            String path = checkBackSlash(file.getAbsolutePath(), isFileOrFolder);
+            data.fieldValue = path;
         } else {
             data.fieldValue = textStr;
         }
@@ -448,7 +449,7 @@ public class GuiTextField extends ModuleGuiElement implements ModifyListener, Fo
 
     public void modifyText( ModifyEvent e ) {
         setDataValue();
-        // text.setSelection(text.getCharCount());
+        text.setSelection(text.getCharCount());
     }
 
     public void focusGained( FocusEvent e ) {
