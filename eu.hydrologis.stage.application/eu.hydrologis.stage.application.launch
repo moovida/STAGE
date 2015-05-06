@@ -17,7 +17,7 @@
 <stringAttribute key="org.eclipse.jdt.launching.JRE_CONTAINER" value="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jdk1.7.0_67"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-os ${target.os} -ws ${target.ws} -arch ${target.arch} -nl ${target.nl} -console -consolelog"/>
 <stringAttribute key="org.eclipse.jdt.launching.SOURCE_PATH_PROVIDER" value="org.eclipse.pde.ui.workbenchClasspathProvider"/>
-<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Declipse.ignoreApp=true -Dosgi.noShutdown=true -Dorg.eclipse.equinox.http.jetty.log.stderr.threshold=info -Dorg.eclipse.rap.workbenchAutostart=false -Dosgi.parentClassloader=ext -Dstage.workspace=&quot;/home/hydrologis/STAGEWORKSPACE/&quot; -Dstage.javaexec=/home/hydrologis/SOFTWARE/STAGE/stage_1.0.0/jre64/bin/java -Dstage.geopaparazzifolder=&quot;/home/hydrologis/Dropbox/geopaparazzi/projects/&quot; -Dstage.datafolder=&quot;/home/hydrologis/data/&quot; -Dstage.scriptsfolder=&quot;/home/hydrologis/Dropbox/hydrologis/lavori/STAGE_SCRIPTS/&quot;"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Declipse.ignoreApp=true -Dosgi.noShutdown=true -Dorg.eclipse.equinox.http.jetty.log.stderr.threshold=info -Dorg.eclipse.rap.workbenchAutostart=false -Dosgi.parentClassloader=ext -Dstage.workspace=&quot;D:\STAGEWORKSPACE&quot; -Dstage.javaexec=D:\SOFTWARE\STAGE\stage_1.0.0\jreWin64\bin\java.exe -Dstage.geopaparazzifolder=&quot;D:\Dropbox\geopaparazzi\projects\&quot; -Dstage.datafolder=&quot;D:\data&quot; -Dstage.scriptsfolder=&quot;D:\Dropbox\hydrologis\lavori\STAGE_SCRIPTS&quot;"/>
 <stringAttribute key="org.eclipse.rap.launch.browserMode" value="INTERNAL"/>
 <stringAttribute key="org.eclipse.rap.launch.contextpath" value="/"/>
 <stringAttribute key="org.eclipse.rap.launch.dataLocation" value="${workspace_loc}/.metadata/.plugins/org.eclipse.rap.tools.launch/eu.hydrologis.stage.application"/>
@@ -29,7 +29,7 @@
 <booleanAttribute key="org.eclipse.rap.launch.terminatePrevious" value="true"/>
 <booleanAttribute key="org.eclipse.rap.launch.useDefaultDataLocation" value="true"/>
 <booleanAttribute key="org.eclipse.rap.launch.useManualContextPath" value="false"/>
-<booleanAttribute key="org.eclipse.rap.launch.useManualPort" value="true"/>
+<booleanAttribute key="org.eclipse.rap.launch.useManualPort" value="false"/>
 <booleanAttribute key="org.eclipse.rap.launch.useSessionTimeout" value="false"/>
 <stringAttribute key="pde.version" value="3.3"/>
 <booleanAttribute key="show_selected_only" value="false"/>
