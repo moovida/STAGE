@@ -11,8 +11,6 @@ package eu.hydrologis.stage.libs.log;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import org.eclipse.core.runtime.Platform;
-
 /**
  * A simple logger, to be properly implemented.
  * 
@@ -20,9 +18,9 @@ import org.eclipse.core.runtime.Platform;
  */
 public class StageLogger {
 
-    private static boolean LOG_INFO = true;
-    private static boolean LOG_DEBUG = false;
-    private static boolean LOG_ERROR = true;
+    public static final boolean LOG_INFO = true;
+    public static final boolean LOG_DEBUG = false;
+    public static final boolean LOG_ERROR = true;
 
     private static final String SEP = ":: ";
 

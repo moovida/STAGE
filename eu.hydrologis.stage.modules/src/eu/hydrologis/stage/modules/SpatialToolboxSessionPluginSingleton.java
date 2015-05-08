@@ -205,8 +205,8 @@ public class SpatialToolboxSessionPluginSingleton {
     }
 
     private void addPath( String path, StringBuilder sb ) throws IOException {
-        sb.append("\"").append(path).append("\"");
-        // sb.append(path);
+//        sb.append("\"").append(path).append("\"");
+         sb.append(path);
     }
 
     public void addProcess( Process process, String id ) {

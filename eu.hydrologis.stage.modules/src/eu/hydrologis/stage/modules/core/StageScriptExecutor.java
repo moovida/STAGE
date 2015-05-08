@@ -24,6 +24,7 @@ import java.util.List;
 
 import oms3.CLI;
 import eu.hydrologis.stage.libs.StageLibsActivator;
+import eu.hydrologis.stage.libs.log.StageLogger;
 import eu.hydrologis.stage.modules.SpatialToolboxSessionPluginSingleton;
 import eu.hydrologis.stage.modules.utils.SpatialToolboxConstants;
 
@@ -146,7 +147,7 @@ public class StageScriptExecutor {
         arguments.add(classPath);
         arguments.add(CLI.class.getCanonicalName());
         arguments.add("-r");
-        arguments.add("\"" + scriptFile.getAbsolutePath() + "\"");
+        arguments.add(scriptFile.getAbsolutePath());
 
         // String tmpScriptFilesDir = System.getProperty("java.io.tmpdir");
         // File tmpScriptFolder = new File(tmpScriptFilesDir);
@@ -169,6 +170,13 @@ public class StageScriptExecutor {
         // {javaFile, ramExpr, resourcesFlag, "-cp", classPath,
         // CLI.class.getCanonicalName(), "-r",
         // scriptFile.getAbsolutePath()};
+
+        if (StageLogger.LOG_DEBUG) {
+            StageLogger.logDebug(this, "Execution arguments:");
+            for( String arg : arguments ) {
+                StageLogger.logDebug(this, arg);
+            }
+        }
 
         ProcessBuilder processBuilder = new ProcessBuilder(arguments);
         // work in home
