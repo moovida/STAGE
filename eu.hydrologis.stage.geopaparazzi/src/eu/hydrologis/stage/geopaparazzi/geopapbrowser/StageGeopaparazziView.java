@@ -311,20 +311,20 @@ public class StageGeopaparazziView {
 
     }
 
-    private TreeViewer createTreeViewer( Composite modulesComposite ) {
+    private TreeViewer createTreeViewer( Composite projectsComposite ) {
 
         // FIXME
         // PatternFilter patternFilter = new PatternFilter();
         // final FilteredTree filter = new FilteredTree(modulesComposite,
         // SWT.SINGLE | SWT.BORDER, patternFilter, true);
         // final TreeViewer modulesViewer = filter.getViewer();
-        final TreeViewer modulesViewer = new TreeViewer(modulesComposite);
+        final TreeViewer projectsViewer = new TreeViewer(projectsComposite);
 
-        Control control = modulesViewer.getControl();
+        Control control = projectsViewer.getControl();
         GridData controlGD = new GridData(SWT.FILL, SWT.FILL, true, true);
         controlGD.horizontalSpan = 2;
         control.setLayoutData(controlGD);
-        modulesViewer.setContentProvider(new ITreeContentProvider(){
+        projectsViewer.setContentProvider(new ITreeContentProvider(){
             private static final long serialVersionUID = 1L;
 
             public Object[] getElements( Object inputElement ) {
@@ -369,7 +369,7 @@ public class StageGeopaparazziView {
 
         });
 
-        modulesViewer.setLabelProvider(new LabelProvider(){
+        projectsViewer.setLabelProvider(new LabelProvider(){
             private static final long serialVersionUID = 1L;
 
             public Image getImage( Object element ) {
@@ -403,7 +403,7 @@ public class StageGeopaparazziView {
             }
         });
 
-        modulesViewer.addSelectionChangedListener(new ISelectionChangedListener(){
+        projectsViewer.addSelectionChangedListener(new ISelectionChangedListener(){
 
             public void selectionChanged( SelectionChangedEvent event ) {
                 if (!(event.getSelection() instanceof IStructuredSelection)) {
@@ -432,21 +432,21 @@ public class StageGeopaparazziView {
         });
 
         MenuManager manager = new MenuManager();
-        modulesViewer.getControl().setMenu(manager.createContextMenu(modulesViewer.getControl()));
+        projectsViewer.getControl().setMenu(manager.createContextMenu(projectsViewer.getControl()));
         manager.addMenuListener(new IMenuListener(){
             private static final long serialVersionUID = 1L;
 
             @Override
             public void menuAboutToShow( IMenuManager manager ) {
-                if (modulesViewer.getSelection() instanceof IStructuredSelection) {
-                    IStructuredSelection selection = (IStructuredSelection) modulesViewer.getSelection();
+                if (projectsViewer.getSelection() instanceof IStructuredSelection) {
+                    IStructuredSelection selection = (IStructuredSelection) projectsViewer.getSelection();
                     final Object selectedItem = selection.getFirstElement();
                     if (selectedItem == null || selection.isEmpty()) {
                         return;
                     }
 
                     if (selectedItem instanceof ProjectInfo) {
-                        manager.add(makeProjectDownloadAction(modulesViewer, selectedItem));
+                        manager.add(makeProjectDownloadAction(projectsViewer, selectedItem));
                         manager.add(makeMetadataEditAction(selectedItem));
                     }
                 }
@@ -454,7 +454,7 @@ public class StageGeopaparazziView {
 
         });
         manager.setRemoveAllWhenShown(true);
-        return modulesViewer;
+        return projectsViewer;
     }
     /**
      * Extract data from the db and add them to the map view.

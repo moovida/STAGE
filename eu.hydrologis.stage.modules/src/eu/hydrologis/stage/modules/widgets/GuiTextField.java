@@ -449,7 +449,7 @@ public class GuiTextField extends ModuleGuiElement implements ModifyListener, Fo
 
     public void modifyText( ModifyEvent e ) {
         setDataValue();
-        text.setSelection(text.getCharCount());
+//        text.setSelection(text.getCharCount());
     }
 
     public void focusGained( FocusEvent e ) {

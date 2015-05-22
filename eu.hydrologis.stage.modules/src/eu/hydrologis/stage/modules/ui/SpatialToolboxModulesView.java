@@ -88,7 +88,6 @@ public class SpatialToolboxModulesView {
 
     public void createStageModulesTab( Display display, Composite parent, CTabItem stageTab ) throws IOException {
         this.display = display;
-
         SashForm mainComposite = new SashForm(parent, SWT.HORIZONTAL);
         mainComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
@@ -133,7 +132,7 @@ public class SpatialToolboxModulesView {
 
         addRunTools(mainComposite);
 
-        mainComposite.setWeights(new int[]{1, 2, 2});
+        mainComposite.setWeights(new int[]{1, 3, 2});
         try {
             relayout(false, null);
         } catch (Exception e) {
@@ -479,7 +478,7 @@ public class SpatialToolboxModulesView {
             }
         });
 
-        logList = new org.eclipse.swt.widgets.List(runToolsGroup, SWT.BORDER | SWT.V_SCROLL | SWT.H_SCROLL);
+        logList = new org.eclipse.swt.widgets.List(runToolsGroup, SWT.BORDER | SWT.MULTI | SWT.V_SCROLL | SWT.H_SCROLL);
         logList.setLayoutData(new GridData(GridData.FILL_BOTH));
         logList.setData(RWT.MARKUP_ENABLED, Boolean.TRUE);
     }
