@@ -178,6 +178,10 @@ public class ModuleDescription {
     public String getScriptName() {
         return scriptName;
     }
+    
+    public Class< ? > getModuleClass() {
+        return moduleClass;
+    }
 
     // public Class< ? > getModuleClass() {
     // return moduleClass;

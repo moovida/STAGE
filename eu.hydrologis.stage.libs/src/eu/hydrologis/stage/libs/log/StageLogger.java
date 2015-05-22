@@ -49,6 +49,8 @@ public class StageLogger {
     }
 
     private static String toMessage( Object owner, String msg ) {
+        if (msg == null)
+            msg = "";
         String newMsg = f.format(new Date()) + SEP;
         if (owner instanceof String) {
             newMsg = newMsg + owner + SEP;

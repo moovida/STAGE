@@ -45,7 +45,7 @@ public class SpatialToolboxView {
         CTabItem scriptingTab = new CTabItem(mainStageCFolder, SWT.NONE);
         scriptingTab.setText("Geo-scripting");
         SpatialToolboxScriptingView stageScriptingView = new SpatialToolboxScriptingView();
-        stageScriptingView.createStageScriptingTab(display, mainStageCFolder, scriptingTab);
+        stageScriptingView.createStageScriptingTab(display, mainStageCFolder, scriptingTab, stageModulesView);
 
         CTabItem fileManagementTab = new CTabItem(mainStageCFolder, SWT.NONE);
         fileManagementTab.setText("File Management");

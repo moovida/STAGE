@@ -353,7 +353,7 @@ public class ScriptHandler {
         }
 
         // in case make print double[] and double[][] outputs
-        scriptSb.append("println \" \"\n\n");
+        scriptSb.append("println \"\"\n\n");
         for( FieldData fieldData : outputsList ) {
             String varPlusField = mainVarName + "." + fieldData.fieldName;
             if (fieldData.isSimpleArrayType()) {

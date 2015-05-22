@@ -80,6 +80,7 @@ public class SpatialToolboxModulesView {
     private StackLayout modulesGuiStackLayout;
     private TreeViewer modulesViewer;
 
+    private ModuleDescription currentSelectedModule;
     private ModuleGui currentSelectedModuleGui;
     private String filterTextString;
 
@@ -290,7 +291,7 @@ public class SpatialToolboxModulesView {
                 }
 
                 if (selectedItem instanceof ViewerModule) {
-                    ModuleDescription currentSelectedModule = ((ViewerModule) selectedItem).getModuleDescription();
+                    currentSelectedModule = ((ViewerModule) selectedItem).getModuleDescription();
                     currentSelectedModuleGui = new ModuleGui(currentSelectedModule);
 
                     Control control = currentSelectedModuleGui.makeGui(modulesGuiComposite, false);
@@ -567,5 +568,9 @@ public class SpatialToolboxModulesView {
         }
         String script = handler.genereateScript(currentSelectedModuleGui, display.getActiveShell());
         return script;
+    }
+
+    public ModuleDescription getCurrentSelectedModule() {
+        return currentSelectedModule;
     }
 }

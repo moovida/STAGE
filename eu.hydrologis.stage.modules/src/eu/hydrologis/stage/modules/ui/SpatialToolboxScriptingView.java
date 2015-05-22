@@ -39,12 +39,14 @@ import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.ToolItem;
+import org.jgrasstools.gears.libs.modules.ModelsSupporter;
 
 import eu.hydrologis.stage.libs.log.StageLogger;
 import eu.hydrologis.stage.libs.utils.ImageCache;
 import eu.hydrologis.stage.libs.utilsrap.FileSelectionDialog;
 import eu.hydrologis.stage.libs.workspace.StageWorkspace;
 import eu.hydrologis.stage.libs.workspace.User;
+import eu.hydrologis.stage.modules.core.ModuleDescription;
 import eu.hydrologis.stage.modules.core.ScriptHandler;
 import eu.hydrologis.stage.modules.utils.FileUtilities;
 import eu.hydrologis.stage.modules.utils.ScriptTemplatesUtil;
@@ -59,6 +61,7 @@ import eu.hydrologis.stage.modules.utils.SpatialToolboxConstants;
 public class SpatialToolboxScriptingView {
 
     private static final String ERROR = "ERROR";
+    private static final String WARNING = "WARNING";
     private static final String SCRIPT_EXE_ERROR = "An error occurred while executing the script.";
 
     private static final String EMPTY_SCRIPT_NAME = "The script name can't be empty.";
@@ -81,13 +84,15 @@ public class SpatialToolboxScriptingView {
     private static final String COPY_LOG_TOOLTIP = "Copy selected log into the scripting area";
     private static final String SETNAME = "set name";
     private static final String SETNAME_TOOLTIP = "Set a date based script name";
+    private static final String USEMODULE = "use module";
+    private static final String USEMODULE_TOOLTIP = "USe module selected in the modules view";
     private static final String SCRIPT_NAME = "Script name";
     private org.eclipse.swt.widgets.List logList;
     private Text scriptTitleText;
     private Text scriptAreaText;
 
-    public void createStageScriptingTab( Display display, Composite parent, CTabItem stageTab ) throws IOException {
-
+    public void createStageScriptingTab( Display display, Composite parent, CTabItem stageTab,
+            final SpatialToolboxModulesView stageModulesView ) throws IOException {
         final Composite mainComposite = new Composite(parent, SWT.NONE);
         mainComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
         mainComposite.setLayout(new GridLayout(3, false));
@@ -139,7 +144,7 @@ public class SpatialToolboxScriptingView {
                         scriptTitleText.setText(name);
                         scriptAreaText.setText(readFile);
                     } catch (IOException e1) {
-                        e1.printStackTrace();
+                        StageLogger.logError(this, null, e1);
                         MessageDialog.openWarning(mainComposite.getShell(), ERROR, e1.getLocalizedMessage());
                     }
                 }
@@ -178,7 +183,7 @@ public class SpatialToolboxScriptingView {
                         writer.write(scriptText);
                         MessageDialog.openInformation(mainComposite.getShell(), INFORMATION, SCRIPT_SAVED);
                     } catch (IOException e1) {
-                        e1.printStackTrace();
+                        StageLogger.logError(this, null, e1);
                         MessageDialog.openWarning(mainComposite.getShell(), ERROR,
                                 COULD_NOT_SAVE_SCRIPT + e1.getLocalizedMessage());
                     }
@@ -244,7 +249,8 @@ public class SpatialToolboxScriptingView {
                     }
 
                 } catch (Exception e1) {
-                    e1.printStackTrace();
+                    StageLogger.logError(this, null, e1);
+                    MessageDialog.openError(scriptAreaText.getShell(), ERROR, e1.getLocalizedMessage());
                 }
             }
         });
@@ -266,7 +272,34 @@ public class SpatialToolboxScriptingView {
                     sb.append(dateStr);
                     scriptTitleText.setText(sb.toString());
                 } catch (Exception e1) {
-                    e1.printStackTrace();
+                    StageLogger.logError(this, null, e1);
+                    MessageDialog.openError(scriptAreaText.getShell(), ERROR, e1.getLocalizedMessage());
+                }
+            }
+        });
+
+        ToolItem useFromModulesViewButton = new ToolItem(toolBar, SWT.PUSH);
+        useFromModulesViewButton.setText(USEMODULE);
+        useFromModulesViewButton.setImage(ImageCache.getInstance().getImage(display, ImageCache.MODULE));
+        useFromModulesViewButton.setToolTipText(USEMODULE_TOOLTIP);
+        useFromModulesViewButton.addSelectionListener(new SelectionAdapter(){
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public void widgetSelected( SelectionEvent e ) {
+                try {
+
+                    ModuleDescription currentSelectedModule = stageModulesView.getCurrentSelectedModule();
+                    if (currentSelectedModule != null) {
+                        String scriptText = stageModulesView.generateScriptForSelectedModule();
+                        scriptTitleText.setText("Script_" + currentSelectedModule.getClassName());
+                        scriptAreaText.append(scriptText);
+                    } else {
+                        MessageDialog.openWarning(scriptAreaText.getShell(), WARNING, "No module selected.");
+                    }
+                } catch (Exception e1) {
+                    StageLogger.logError(this, null, e1);
+                    MessageDialog.openError(scriptAreaText.getShell(), ERROR, e1.getLocalizedMessage());
                 }
             }
         });
