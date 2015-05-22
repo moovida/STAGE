@@ -28,6 +28,7 @@ public class ImageCache {
     public static final String CATEGORY = "category.gif";
     public static final String MODULE = "module.gif";
     public static final String MODULEEXP = "module_exp.gif";
+    public static final String MODULE_TEMPLATE = "module_template.gif";
     public static final String RUN = "run_module.gif";
     public static final String STOP = "stop_module.gif";
     public static final String GRID = "grid_obj.gif";

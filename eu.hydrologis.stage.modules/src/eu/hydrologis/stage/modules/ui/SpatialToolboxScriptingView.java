@@ -85,7 +85,9 @@ public class SpatialToolboxScriptingView {
     private static final String SETNAME = "set name";
     private static final String SETNAME_TOOLTIP = "Set a date based script name";
     private static final String USEMODULE = "use module";
-    private static final String USEMODULE_TOOLTIP = "USe module selected in the modules view";
+    private static final String USEMODULE_TOOLTIP = "Use module selected in the modules view";
+    private static final String USEMODULETEMPLATE = "module template";
+    private static final String USEMODULETEMPLATE_TOOLTIP = "Use the selected module's template";
     private static final String SCRIPT_NAME = "Script name";
     private org.eclipse.swt.widgets.List logList;
     private Text scriptTitleText;
@@ -292,8 +294,66 @@ public class SpatialToolboxScriptingView {
                     ModuleDescription currentSelectedModule = stageModulesView.getCurrentSelectedModule();
                     if (currentSelectedModule != null) {
                         String scriptText = stageModulesView.generateScriptForSelectedModule();
-                        scriptTitleText.setText("Script_" + currentSelectedModule.getClassName());
-                        scriptAreaText.append(scriptText);
+                        if (scriptTitleText.getText().trim().length() == 0) {
+                            scriptTitleText.setText("Script_" + currentSelectedModule.getName());
+                        }
+
+                        boolean ignoreImports = false;
+                        String IMPORT = "import";
+                        if (scriptAreaText.getText().trim().startsWith(IMPORT)) {
+                            ignoreImports = true;
+                        }
+                        String[] split = scriptText.split("\n");
+                        for( String string : split ) {
+                            if (ignoreImports && string.trim().startsWith(IMPORT))
+                                continue;
+                            if (string.trim().startsWith("println"))
+                                continue;
+                            scriptAreaText.append(string + "\n");
+                        }
+
+                    } else {
+                        MessageDialog.openWarning(scriptAreaText.getShell(), WARNING, "No module selected.");
+                    }
+                } catch (Exception e1) {
+                    StageLogger.logError(this, null, e1);
+                    MessageDialog.openError(scriptAreaText.getShell(), ERROR, e1.getLocalizedMessage());
+                }
+            }
+        });
+
+        ToolItem useTemplateFromModulesViewButton = new ToolItem(toolBar, SWT.PUSH);
+        useTemplateFromModulesViewButton.setText(USEMODULETEMPLATE);
+        useTemplateFromModulesViewButton.setImage(ImageCache.getInstance().getImage(display, ImageCache.MODULE_TEMPLATE));
+        useTemplateFromModulesViewButton.setToolTipText(USEMODULETEMPLATE_TOOLTIP);
+        useTemplateFromModulesViewButton.addSelectionListener(new SelectionAdapter(){
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public void widgetSelected( SelectionEvent e ) {
+                try {
+
+                    ModuleDescription currentSelectedModule = stageModulesView.getCurrentSelectedModule();
+                    if (currentSelectedModule != null) {
+                        Object newInstance = currentSelectedModule.getModuleClass().newInstance();
+                        String template = ModelsSupporter.generateTemplate(newInstance);
+
+                        if (scriptTitleText.getText().trim().length() == 0) {
+                            scriptTitleText.setText("Script_" + currentSelectedModule.getName());
+                        }
+
+                        boolean ignoreImports = false;
+                        String IMPORT = "import";
+                        if (scriptAreaText.getText().trim().startsWith(IMPORT)) {
+                            ignoreImports = true;
+                        }
+                        String[] split = template.split("\n");
+                        for( String string : split ) {
+                            if (ignoreImports && string.trim().startsWith(IMPORT))
+                                continue;
+                            scriptAreaText.append(string + "\n");
+                        }
+
                     } else {
                         MessageDialog.openWarning(scriptAreaText.getShell(), WARNING, "No module selected.");
                     }
