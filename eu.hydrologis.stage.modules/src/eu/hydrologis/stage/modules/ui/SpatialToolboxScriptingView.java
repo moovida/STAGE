@@ -126,7 +126,7 @@ public class SpatialToolboxScriptingView {
         openButton.addSelectionListener(new SelectionAdapter(){
             public void widgetSelected( SelectionEvent e ) {
                 File scriptsFolder = StageWorkspace.getInstance().getScriptsFolder(User.getCurrentUserName());
-                FileSelectionDialog fileDialog = new FileSelectionDialog(mainComposite.getShell(), scriptsFolder,
+                FileSelectionDialog fileDialog = new FileSelectionDialog(mainComposite.getShell(), false, scriptsFolder,
                         new String[]{GROOVY}, new String[]{GROOVY}, null);
                 int returnCode = fileDialog.open();
                 if (returnCode == SWT.CANCEL) {
@@ -233,8 +233,6 @@ public class SpatialToolboxScriptingView {
                 }
             }
         });
-
-      
 
         ToolItem setDefaultNameButton = new ToolItem(toolBar, SWT.PUSH);
         setDefaultNameButton.setText(SETNAME);
@@ -343,7 +341,7 @@ public class SpatialToolboxScriptingView {
                 }
             }
         });
-        
+
         ToolItem copyLogButton = new ToolItem(toolBar, SWT.PUSH);
         copyLogButton.setText(COPY_LOG);
         copyLogButton.setImage(ImageCache.getInstance().getImage(display, ImageCache.COPY));

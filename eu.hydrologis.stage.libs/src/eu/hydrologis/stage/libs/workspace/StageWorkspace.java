@@ -189,21 +189,28 @@ public class StageWorkspace {
      * @return the complete absolute path.
      */
     public static File makeRelativeDataPathToFile( String relativePath, boolean isOutFile ) {
-        File possibleRelativePathFile = new File(relativePath);
-        if (!isOutFile) {
-            if (possibleRelativePathFile.exists()) {
-                // it is an absolute path to an existing file, leave it as is
-                return possibleRelativePathFile;
-            }
+        int firstSlash = relativePath.indexOf('/');
+        if (firstSlash > 2 || firstSlash == -1) {
+            // it is assumed to be relative
+            File dataFolder = getInstance().getDataFolder(User.getCurrentUserName());
+            File file = new File(dataFolder, relativePath);
+            return file;
         } else {
-            if (possibleRelativePathFile.getParentFile() != null && possibleRelativePathFile.getParentFile().exists()) {
-                // it is an absolute path to a file to be created,
-                // leave it if the folder exists
-                return possibleRelativePathFile;
-            }
+            File absolutePathFile = new File(relativePath);
+//            if (!isOutFile) {
+//                if (absolutePathFile.exists()) {
+//                    // it is an absolute path to an existing file, leave it as is
+//                    return absolutePathFile;
+//                }
+//            } else {
+//                File parentFile = absolutePathFile.getParentFile();
+//                if (parentFile != null && parentFile.exists()) {
+//                    // it is an absolute path to a file to be created,
+//                    // leave it if the folder exists
+//                    return absolutePathFile;
+//                }
+//            }
+            return absolutePathFile;
         }
-        File dataFolder = getInstance().getDataFolder(User.getCurrentUserName());
-        File file = new File(dataFolder, relativePath);
-        return file;
     }
 }

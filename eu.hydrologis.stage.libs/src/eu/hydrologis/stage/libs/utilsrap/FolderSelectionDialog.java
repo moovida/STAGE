@@ -44,7 +44,7 @@ import eu.hydrologis.stage.libs.workspace.StageWorkspace;
  * @author Andrea Antonello (www.hydrologis.com)
  */
 @SuppressWarnings("serial")
-public class FolderSelectionDialog extends Dialog {
+public class FolderSelectionDialog extends Dialog implements ModifyListener {
 
     private static final String FILTER = "Filter";
     private static final String NEW_FOLDER_NAME = "New folder name";
@@ -171,12 +171,7 @@ public class FolderSelectionDialog extends Dialog {
             folderNameText = new Text(mainComposite, SWT.SINGLE | SWT.LEAD | SWT.BORDER);
             folderNameText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
             folderNameText.setText("");
-            folderNameText.addModifyListener(new ModifyListener(){
-                public void modifyText( ModifyEvent event ) {
-                    makeSafe();
-                }
-
-            });
+            folderNameText.addModifyListener(this);
         }
         relayout(false);
 
@@ -185,9 +180,9 @@ public class FolderSelectionDialog extends Dialog {
     private void makeSafe() {
         String text = folderNameText.getText();
         boolean changed = false;
-        if (text.indexOf('.') != -1) {
+        if (text.contains("\\.\\.")) {
             // no dots allowed
-            text = text.replaceAll("\\.", "");
+            text = text.replaceAll("\\.\\.", "");
             changed = true;
         }
         if (text.indexOf('\\') != -1) {
@@ -195,7 +190,9 @@ public class FolderSelectionDialog extends Dialog {
             changed = true;
         }
         if (changed) {
+            folderNameText.removeModifyListener(this);
             folderNameText.setText(text);
+            folderNameText.addModifyListener(this);
         }
     }
 
@@ -412,6 +409,11 @@ public class FolderSelectionDialog extends Dialog {
 
     private Display getDisplay() {
         return parent.getDisplay();
+    }
+
+    @Override
+    public void modifyText( ModifyEvent event ) {
+        makeSafe();
     }
 
 }

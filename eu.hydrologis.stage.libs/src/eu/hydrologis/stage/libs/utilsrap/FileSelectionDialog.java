@@ -34,6 +34,7 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
+import eu.hydrologis.stage.libs.utils.FileUtilities;
 import eu.hydrologis.stage.libs.utils.ImageCache;
 import eu.hydrologis.stage.libs.workspace.StageWorkspace;
 
@@ -43,9 +44,10 @@ import eu.hydrologis.stage.libs.workspace.StageWorkspace;
  * @author Andrea Antonello (www.hydrologis.com)
  */
 @SuppressWarnings("serial")
-public class FileSelectionDialog extends Dialog {
+public class FileSelectionDialog extends Dialog implements ModifyListener {
 
     private static final String FILTER = "Filter";
+    private static final String NEW_FILE_NAME = "New folder name";
     private static final String SELECT_FILE = "Select file";
     private static final int BUTTON_WIDTH = 60;
     private static final int HORIZONTAL_DIALOG_UNIT_PER_CHAR = 4;
@@ -59,16 +61,19 @@ public class FileSelectionDialog extends Dialog {
     private String[] allowedExtentions;
     private Text filterText;
     private String[] foldernamesToHide;
+    private boolean save;
+    private Text fileNameText;
 
-    public FileSelectionDialog( Shell parent, File parentFile, String[] extentionsToHide, String[] allowedExtentions,
-            String[] foldernamesToHide ) {
-        this(parent, SWT.APPLICATION_MODAL, parentFile, extentionsToHide, allowedExtentions, foldernamesToHide);
+    public FileSelectionDialog( Shell parent, boolean save, File parentFile, String[] extentionsToHide,
+            String[] allowedExtentions, String[] foldernamesToHide ) {
+        this(parent, save, SWT.APPLICATION_MODAL, parentFile, extentionsToHide, allowedExtentions, foldernamesToHide);
     }
 
     /**
      * Constructor.
      * 
      * @param parent the parent shell.
+     * @param save it <code>true</code>, save mode is used instead of open mode.
      * @param style the style to use.
      * @param parentFile the root folder to start from.
      * @param extentionsToHide the array of extensions to hide in the browser (i.e. 
@@ -76,11 +81,13 @@ public class FileSelectionDialog extends Dialog {
      * @param allowedExtentions the array of allowed extensions to show.
      * @param foldernamesToHide the array of folder names to hide in the browser (i.e. 
      */
-    public FileSelectionDialog( Shell parent, int style, File parentFile, String[] extentionsToHide, String[] allowedExtentions,
-            String[] foldernamesToHide ) {
+    public FileSelectionDialog( Shell parent, boolean save, int style, File parentFile, String[] extentionsToHide,
+            String[] allowedExtentions, String[] foldernamesToHide ) {
         super(parent, style);
         this.parent = parent;
+        this.save = save;
         this.parentFile = parentFile;
+        selectedFile = parentFile;
         this.extentionsToHide = extentionsToHide;
         this.allowedExtentions = allowedExtentions;
         this.foldernamesToHide = foldernamesToHide;
@@ -135,7 +142,6 @@ public class FileSelectionDialog extends Dialog {
     private void createControls() {
         createMainArea();
         createButtons();
-        okButton.setEnabled(false);
     }
 
     private void createMainArea() {
@@ -164,8 +170,40 @@ public class FileSelectionDialog extends Dialog {
 
         createTableViewer(mainComposite);
 
+        if (save) {
+            Label fileNameLabel = new Label(mainComposite, SWT.NONE);
+            GridData fileNameLabelGD = new GridData(SWT.FILL, SWT.FILL, false, false);
+            fileNameLabelGD.widthHint = SWT.DEFAULT;
+            fileNameLabelGD.heightHint = SWT.DEFAULT;
+            fileNameLabel.setLayoutData(fileNameLabelGD);
+            fileNameLabel.setText(NEW_FILE_NAME);
+            fileNameText = new Text(mainComposite, SWT.SINGLE | SWT.LEAD | SWT.BORDER);
+            fileNameText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+            fileNameText.setText("");
+            fileNameText.addModifyListener(this);
+        }
+
         relayout(false);
 
+    }
+
+    private void makeSafe() {
+        String text = fileNameText.getText();
+        boolean changed = false;
+        if (text.contains("\\.\\.")) {
+            // no dots allowed
+            text = text.replaceAll("\\.\\.", "");
+            changed = true;
+        }
+        if (text.indexOf('\\') != -1) {
+            text = FileUtilities.checkBackSlash(text);
+            changed = true;
+        }
+        if (changed) {
+            fileNameText.removeModifyListener(this);
+            fileNameText.setText(text);
+            fileNameText.addModifyListener(this);
+        }
     }
 
     private TreeViewer createTableViewer( Composite parentComposite ) {
@@ -331,9 +369,9 @@ public class FileSelectionDialog extends Dialog {
         composite.setLayout(new GridLayout(0, true));
         GridData gridData = new GridData(SWT.RIGHT, SWT.CENTER, true, false);
         composite.setLayoutData(gridData);
-        okButton = createButton(composite, SWT.getMessage("SWT_OK"), SWT.OK);
+        okButton = createOkButton(composite);
         shell.setDefaultButton(okButton);
-        createButton(composite, SWT.getMessage("SWT_Cancel"), SWT.CANCEL);
+        createCancelButton(composite);
         okButton.forceFocus();
     }
 
@@ -348,7 +386,37 @@ public class FileSelectionDialog extends Dialog {
         shell.pack();
     }
 
-    private Button createButton( Composite parent, String text, final int buttonId ) {
+    private Button createOkButton( Composite parent ) {
+        String text = SWT.getMessage("SWT_OK");
+        final int buttonId = SWT.OK;
+        ((GridLayout) parent.getLayout()).numColumns++;
+        Button result = new Button(parent, SWT.PUSH);
+        GridData data = new GridData(GridData.HORIZONTAL_ALIGN_FILL);
+        int widthHint = convertHorizontalDLUsToPixels(shell, BUTTON_WIDTH);
+        Point minSize = result.computeSize(SWT.DEFAULT, SWT.DEFAULT, true);
+        data.widthHint = Math.max(widthHint, minSize.x);
+        result.setLayoutData(data);
+        result.setText(text);
+        result.addSelectionListener(new SelectionAdapter(){
+            @Override
+            public void widgetSelected( SelectionEvent event ) {
+                if (save) {
+                    String newFileName = fileNameText.getText().trim();
+                    if (newFileName.length() > 0) {
+                        File newFileFile = new File(selectedFile, newFileName);
+                        selectedFile = newFileFile;
+                    }
+                }
+                FileSelectionDialog.this.returnCode = buttonId;
+                shell.close();
+            }
+        });
+        return result;
+    }
+
+    private Button createCancelButton( Composite parent ) {
+        String text = SWT.getMessage("SWT_Cancel");
+        final int buttonId = SWT.CANCEL;
         ((GridLayout) parent.getLayout()).numColumns++;
         Button result = new Button(parent, SWT.PUSH);
         GridData data = new GridData(GridData.HORIZONTAL_ALIGN_FILL);
@@ -376,6 +444,11 @@ public class FileSelectionDialog extends Dialog {
 
     private Display getDisplay() {
         return parent.getDisplay();
+    }
+
+    @Override
+    public void modifyText( ModifyEvent event ) {
+        makeSafe();
     }
 
 }

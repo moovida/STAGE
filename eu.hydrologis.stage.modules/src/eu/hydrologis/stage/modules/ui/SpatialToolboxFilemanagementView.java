@@ -185,7 +185,7 @@ public class SpatialToolboxFilemanagementView {
             public void widgetSelected( SelectionEvent e ) {
                 try {
                     File userFolder = StageWorkspace.getInstance().getDataFolder(User.getCurrentUserName());
-                    FileSelectionDialog fileDialog = new FileSelectionDialog(parentShell, userFolder, null, null,
+                    FileSelectionDialog fileDialog = new FileSelectionDialog(parentShell, false, userFolder, null, null,
                             new String[]{StageWorkspace.GEOPAPARAZZI_FOLDERNAME});
                     int returnCode = fileDialog.open();
                     if (returnCode == SWT.CANCEL) {
@@ -213,7 +213,7 @@ public class SpatialToolboxFilemanagementView {
             public void widgetSelected( SelectionEvent e ) {
                 try {
                     File userFolder = StageWorkspace.getInstance().getScriptsFolder(User.getCurrentUserName());
-                    FileSelectionDialog fileDialog = new FileSelectionDialog(parentShell, userFolder, null, null,
+                    FileSelectionDialog fileDialog = new FileSelectionDialog(parentShell, false, userFolder, null, null,
                             new String[]{StageWorkspace.GEOPAPARAZZI_FOLDERNAME});
                     int returnCode = fileDialog.open();
                     if (returnCode == SWT.CANCEL) {
