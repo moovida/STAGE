@@ -273,6 +273,19 @@ public class FileUtilities {
     }
 
     /**
+     * Replaces backslashes with /.
+     * 
+     * @param textStr the string to check.
+     * @return the string without backslashes.
+     */
+    public static String checkBackSlash( String textStr ) {
+        if (textStr != null) {
+            textStr = textStr.replaceAll("\\\\", "/");
+        }
+        return textStr;
+    }
+
+    /**
      * Returns the name of the file without the extention.
      * 
      * @param file the file to trim.

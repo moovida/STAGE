@@ -36,7 +36,9 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
 
+import eu.hydrologis.stage.libs.utils.FileUtilities;
 import eu.hydrologis.stage.libs.utilsrap.FileSelectionDialog;
+import eu.hydrologis.stage.libs.utilsrap.FolderSelectionDialog;
 import eu.hydrologis.stage.libs.workspace.StageWorkspace;
 import eu.hydrologis.stage.libs.workspace.User;
 import eu.hydrologis.stage.modules.SpatialToolboxSessionPluginSingleton;
@@ -196,7 +198,7 @@ public class GuiTextField extends ModuleGuiElement implements ModifyListener, Fo
             if (tmp.contains(SpatialToolboxConstants.WORKINGFOLDER)) {
                 // check if there is a working folder defined
                 String workingFolder = SpatialToolboxSessionPluginSingleton.getInstance().getWorkingFolder();
-                workingFolder = checkBackSlash(workingFolder, true);
+                workingFolder = FileUtilities.checkBackSlash(workingFolder);
                 if (workingFolder != null) {
                     tmp = tmp.replaceFirst(SpatialToolboxConstants.WORKINGFOLDER, workingFolder);
                     data.fieldValue = tmp;
@@ -209,7 +211,8 @@ public class GuiTextField extends ModuleGuiElement implements ModifyListener, Fo
                 data.fieldValue = StageWorkspace.makeRelativeToDataFolder(new File(data.fieldValue));
             }
 
-            data.fieldValue = checkBackSlash(data.fieldValue, isFileOrFolder);
+            if (isFileOrFolder)
+                data.fieldValue = FileUtilities.checkBackSlash(data.fieldValue);
             text.setText(data.fieldValue);
             // text.setSelection(text.getCharCount());
         }
@@ -244,28 +247,9 @@ public class GuiTextField extends ModuleGuiElement implements ModifyListener, Fo
                         setDataValue();
                     }
 
-                    // FIXME create a local file picker
-
-                    // FileDialog fileDialog = new FileDialog(text.getShell(), isInFile ? SWT.OPEN :
-                    // SWT.SAVE);
-                    // String lastFolderChosen =
-                    // StagePluginSingleton.getInstance().getLastFolderChosen();
-                    // fileDialog.setFilterPath(lastFolderChosen);
-                    // String path = fileDialog.open();
-                    //
-                    // if (path == null || path.length() < 1) {
-                    // text.setText("");
-                    // } else {
-                    // path = checkBackSlash(path, isFileOrFolder);
-                    // text.setText(path);
-                    // text.setSelection(text.getCharCount());
-                    // setDataValue();
-                    // }
-                    // StagePluginSingleton.getInstance().setLastFolderChosen(fileDialog.getFilterPath());
                 }
             });
         }
-
         if (isFolder) {
             final Button browseButton = new Button(parent, SWT.PUSH);
             browseButton.setLayoutData(new GridData(SWT.END, SWT.CENTER, false, false));
@@ -273,8 +257,8 @@ public class GuiTextField extends ModuleGuiElement implements ModifyListener, Fo
             browseButton.addSelectionListener(new SelectionAdapter(){
                 public void widgetSelected( SelectionEvent e ) {
                     File dataFolder = StageWorkspace.getInstance().getDataFolder(User.getCurrentUserName());
-                    FileSelectionDialog fileDialog = new FileSelectionDialog(browseButton.getShell(), dataFolder, null, null,
-                            null);
+                    FolderSelectionDialog fileDialog = new FolderSelectionDialog(browseButton.getShell(), !isInFolder,
+                            dataFolder, null);
                     int returnCode = fileDialog.open();
                     if (returnCode == SWT.CANCEL) {
                         return;
@@ -287,21 +271,6 @@ public class GuiTextField extends ModuleGuiElement implements ModifyListener, Fo
                         setDataValue();
                     }
                     // FIXME create a local folder picker
-
-                    // DirectoryDialog directoryDialog = new DirectoryDialog(text.getShell(),
-                    // isInFolder ? SWT.OPEN : SWT.SAVE);
-                    // String lastFolderChosen = OmsBoxPlugin.getDefault().getLastFolderChosen();
-                    // directoryDialog.setFilterPath(lastFolderChosen);
-                    // String path = directoryDialog.open();
-                    //
-                    // if (path == null || path.length() < 1) {
-                    // text.setText("");
-                    // } else {
-                    // path = checkBackSlash(path, isFileOrFolder);
-                    // text.setText(path);
-                    // // text.setSelection(text.getCharCount());
-                    // setDataValue();
-                    // }
                     // OmsBoxPlugin.getDefault().setLastFolderChosen(directoryDialog.getFilterPath());
                 }
             });
@@ -426,7 +395,9 @@ public class GuiTextField extends ModuleGuiElement implements ModifyListener, Fo
 
     private void setDataValue() {
         String textStr = text.getText();
-        String tmpTextStr = checkBackSlash(textStr, isFileOrFolder);
+        String tmpTextStr = textStr;
+        if (isFileOrFolder)
+            tmpTextStr = FileUtilities.checkBackSlash(textStr);
         if (!tmpTextStr.equals(textStr)) {
             // changed
             text.removeModifyListener(this);
@@ -436,7 +407,9 @@ public class GuiTextField extends ModuleGuiElement implements ModifyListener, Fo
         }
         if (isFileOrFolder && tmpTextStr.length() > 0) {
             File file = StageWorkspace.makeRelativeDataPathToFile(tmpTextStr, isOutFile);
-            String path = checkBackSlash(file.getAbsolutePath(), isFileOrFolder);
+            String path = file.getAbsolutePath();
+            if (isFileOrFolder)
+                path = FileUtilities.checkBackSlash(path);
             data.fieldValue = path;
         } else {
             data.fieldValue = textStr;
@@ -449,7 +422,7 @@ public class GuiTextField extends ModuleGuiElement implements ModifyListener, Fo
 
     public void modifyText( ModifyEvent e ) {
         setDataValue();
-//        text.setSelection(text.getCharCount());
+        // text.setSelection(text.getCharCount());
     }
 
     public void focusGained( FocusEvent e ) {
@@ -693,7 +666,8 @@ public class GuiTextField extends ModuleGuiElement implements ModifyListener, Fo
         // insertTextAtCaretPosition(text, map);
         // } else {
         String absolutePath = file.getAbsolutePath();
-        absolutePath = checkBackSlash(absolutePath, isFileOrFolder);
+        if (isFileOrFolder)
+            absolutePath = FileUtilities.checkBackSlash(absolutePath);
         text.setText(absolutePath);
         text.setSelection(text.getCharCount());
         // }

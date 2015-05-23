@@ -25,6 +25,7 @@ import java.util.List;
 import oms3.CLI;
 import eu.hydrologis.stage.libs.StageLibsActivator;
 import eu.hydrologis.stage.libs.log.StageLogger;
+import eu.hydrologis.stage.libs.workspace.StageWorkspace;
 import eu.hydrologis.stage.modules.SpatialToolboxSessionPluginSingleton;
 import eu.hydrologis.stage.modules.utils.SpatialToolboxConstants;
 
@@ -214,7 +215,11 @@ public class StageScriptExecutor {
             // script run
             preCommentsBuilder.append("Script run: " + nl);
             preCommentsBuilder.append("-----------" + nl);
-            preCommentsBuilder.append(script);
+
+            // remove datafolder reference
+            String script4LogString = script;
+            script4LogString = StageWorkspace.substituteDataFolder(script4LogString);
+            preCommentsBuilder.append(script4LogString);
             preCommentsBuilder.append("" + nl);
             preCommentsBuilder.append("------------------------------>8----------------------------" + nl);
             preCommentsBuilder.append("" + nl);

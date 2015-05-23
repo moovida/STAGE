@@ -69,6 +69,7 @@ public class SpatialToolboxScriptingView {
     private static final String GROOVY = ".groovy";
     private static final String FILE_IS_FOLDER = "The selected file is a folder.";
     private static final String TEMPLATES = "templates";
+    private static final String TEMPLATES_TOOLTIP = "Use one of the available templates";
     private static final String SCRIPT_SAVED = "Script saved.";
     private static final String INFORMATION = "Information";
     private static final String COULD_NOT_SAVE_SCRIPT = "Could not save script: ";
@@ -198,6 +199,7 @@ public class SpatialToolboxScriptingView {
 
         final ToolItem templatesCombo = new ToolItem(toolBar, SWT.DROP_DOWN);
         templatesCombo.setText(TEMPLATES);
+        templatesCombo.setToolTipText(TEMPLATES_TOOLTIP);
         templatesCombo.setImage(ImageCache.getInstance().getImage(display, ImageCache.FILE));
         final Menu templatesMenu = new Menu(toolBar.getShell(), SWT.POP_UP);
         List<String> scriptNames = ScriptTemplatesUtil.getScriptNames();
@@ -232,30 +234,7 @@ public class SpatialToolboxScriptingView {
             }
         });
 
-        ToolItem copyLogButton = new ToolItem(toolBar, SWT.PUSH);
-        copyLogButton.setText(COPY_LOG);
-        copyLogButton.setImage(ImageCache.getInstance().getImage(display, ImageCache.COPY));
-        copyLogButton.setToolTipText(COPY_LOG_TOOLTIP);
-        copyLogButton.addSelectionListener(new SelectionAdapter(){
-            private static final long serialVersionUID = 1L;
-
-            @Override
-            public void widgetSelected( SelectionEvent e ) {
-                try {
-                    String[] selection = logList.getSelection();
-                    if (selection.length == 0) {
-                        selection = logList.getItems();
-                    }
-                    for( String string : selection ) {
-                        scriptAreaText.append(string + "\n");
-                    }
-
-                } catch (Exception e1) {
-                    StageLogger.logError(this, null, e1);
-                    MessageDialog.openError(scriptAreaText.getShell(), ERROR, e1.getLocalizedMessage());
-                }
-            }
-        });
+      
 
         ToolItem setDefaultNameButton = new ToolItem(toolBar, SWT.PUSH);
         setDefaultNameButton.setText(SETNAME);
@@ -294,6 +273,7 @@ public class SpatialToolboxScriptingView {
                     ModuleDescription currentSelectedModule = stageModulesView.getCurrentSelectedModule();
                     if (currentSelectedModule != null) {
                         String scriptText = stageModulesView.generateScriptForSelectedModule();
+                        scriptText = StageWorkspace.substituteDataFolder(scriptText);
                         if (scriptTitleText.getText().trim().length() == 0) {
                             scriptTitleText.setText("Script_" + currentSelectedModule.getName());
                         }
@@ -357,6 +337,31 @@ public class SpatialToolboxScriptingView {
                     } else {
                         MessageDialog.openWarning(scriptAreaText.getShell(), WARNING, "No module selected.");
                     }
+                } catch (Exception e1) {
+                    StageLogger.logError(this, null, e1);
+                    MessageDialog.openError(scriptAreaText.getShell(), ERROR, e1.getLocalizedMessage());
+                }
+            }
+        });
+        
+        ToolItem copyLogButton = new ToolItem(toolBar, SWT.PUSH);
+        copyLogButton.setText(COPY_LOG);
+        copyLogButton.setImage(ImageCache.getInstance().getImage(display, ImageCache.COPY));
+        copyLogButton.setToolTipText(COPY_LOG_TOOLTIP);
+        copyLogButton.addSelectionListener(new SelectionAdapter(){
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public void widgetSelected( SelectionEvent e ) {
+                try {
+                    String[] selection = logList.getSelection();
+                    if (selection.length == 0) {
+                        selection = logList.getItems();
+                    }
+                    for( String string : selection ) {
+                        scriptAreaText.append(string + "\n");
+                    }
+
                 } catch (Exception e1) {
                     StageLogger.logError(this, null, e1);
                     MessageDialog.openError(scriptAreaText.getShell(), ERROR, e1.getLocalizedMessage());

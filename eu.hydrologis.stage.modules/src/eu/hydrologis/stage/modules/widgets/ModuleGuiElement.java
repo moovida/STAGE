@@ -96,11 +96,4 @@ public abstract class ModuleGuiElement {
         return null;
     }
 
-    protected String checkBackSlash( String textStr, boolean isFile ) {
-        if (isFile && textStr != null) {
-            textStr = textStr.replaceAll("\\\\", "/");
-        }
-        return textStr;
-    }
-
 }

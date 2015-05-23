@@ -39,6 +39,7 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 
+import eu.hydrologis.stage.libs.utils.FileUtilities;
 import eu.hydrologis.stage.modules.SpatialToolboxSessionPluginSingleton;
 import eu.hydrologis.stage.modules.core.FieldData;
 import eu.hydrologis.stage.modules.utils.SpatialToolboxConstants;
@@ -167,8 +168,9 @@ public class GuiFilespathListInputField extends ModuleGuiElement implements Modi
         final TextTransfer textTransfer = TextTransfer.getInstance();
         final FileTransfer fileTransfer = FileTransfer.getInstance();
         final URLTransfer urlTransfer = URLTransfer.getInstance();
-//        final UDigByteAndLocalTransfer omsboxTransfer = UDigByteAndLocalTransfer.getInstance();
-        Transfer[] types = new Transfer[]{fileTransfer, textTransfer, urlTransfer};//, omsboxTransfer};
+        // final UDigByteAndLocalTransfer omsboxTransfer = UDigByteAndLocalTransfer.getInstance();
+        Transfer[] types = new Transfer[]{fileTransfer, textTransfer, urlTransfer};// ,
+                                                                                   // omsboxTransfer};
         target.setTransfer(types);
         target.addDropListener(new DropTargetListener(){
             @SuppressWarnings("nls")
@@ -183,7 +185,8 @@ public class GuiFilespathListInputField extends ModuleGuiElement implements Modi
                         File file = new File(files[0]);
                         if (file.exists()) {
                             addFileToViewer(file);
-                            SpatialToolboxSessionPluginSingleton.getInstance().setLastFolderChosen(file.getParentFile().getAbsolutePath());
+                            SpatialToolboxSessionPluginSingleton.getInstance().setLastFolderChosen(
+                                    file.getParentFile().getAbsolutePath());
                         }
                     }
                 }
@@ -191,54 +194,55 @@ public class GuiFilespathListInputField extends ModuleGuiElement implements Modi
                     Object data2 = event.data;
                     System.out.println(data2);
                 }
-//                if (omsboxTransfer.isSupportedType(event.currentDataType)) {
-//                    try {
-//                        Object data = event.data;
-//                        if (data instanceof TreeSelection) {
-//                            TreeSelection selection = (TreeSelection) data;
-//                            Object firstElement = selection.getFirstElement();
-//
-//                            IGeoResource geoResource = null;
-//                            if (firstElement instanceof LayerImpl) {
-//                                LayerImpl layer = (LayerImpl) firstElement;
-//                                geoResource = layer.getGeoResource();
-//
-//                            }
-//                            if (firstElement instanceof IService) {
-//                                IService service = (IService) firstElement;
-//                                List< ? extends IGeoResource> resources = service.resources(new NullProgressMonitor());
-//                                if (resources.size() > 0) {
-//                                    geoResource = resources.get(0);
-//                                }
-//                            }
-//                            if (geoResource != null) {
-//                                ID id = geoResource.getID();
-//                                if (id != null)
-//                                    if (id.isFile()) {
-//                                        File file = id.toFile();
-//                                        if (file.exists()) {
-//                                            addFileToViewer(file);
-//                                            OmsBoxPlugin.getDefault().setLastFolderChosen(file.getParentFile().getAbsolutePath());
-//                                        }
-//                                    } else if (id.toString().contains("#") && id.toString().startsWith("file")) {
-//                                        // try to get the file
-//                                        String string = id.toString().replaceAll("#", "");
-//                                        URL url = new URL(string);
-//                                        File file = new File(url.toURI());
-//                                        if (file.exists()) {
-//                                            addFileToViewer(file);
-//                                            OmsBoxPlugin.getDefault().setLastFolderChosen(file.getParentFile().getAbsolutePath());
-//                                        }
-//                                    } else {
-//                                        System.out.println("Not a file: " + id.toString());
-//                                    }
-//                            }
-//
-//                        }
-//                    } catch (Exception e) {
-//                        e.printStackTrace();
-//                    }
-//                }
+                // if (omsboxTransfer.isSupportedType(event.currentDataType)) {
+                // try {
+                // Object data = event.data;
+                // if (data instanceof TreeSelection) {
+                // TreeSelection selection = (TreeSelection) data;
+                // Object firstElement = selection.getFirstElement();
+                //
+                // IGeoResource geoResource = null;
+                // if (firstElement instanceof LayerImpl) {
+                // LayerImpl layer = (LayerImpl) firstElement;
+                // geoResource = layer.getGeoResource();
+                //
+                // }
+                // if (firstElement instanceof IService) {
+                // IService service = (IService) firstElement;
+                // List< ? extends IGeoResource> resources = service.resources(new
+                // NullProgressMonitor());
+                // if (resources.size() > 0) {
+                // geoResource = resources.get(0);
+                // }
+                // }
+                // if (geoResource != null) {
+                // ID id = geoResource.getID();
+                // if (id != null)
+                // if (id.isFile()) {
+                // File file = id.toFile();
+                // if (file.exists()) {
+                // addFileToViewer(file);
+                // OmsBoxPlugin.getDefault().setLastFolderChosen(file.getParentFile().getAbsolutePath());
+                // }
+                // } else if (id.toString().contains("#") && id.toString().startsWith("file")) {
+                // // try to get the file
+                // String string = id.toString().replaceAll("#", "");
+                // URL url = new URL(string);
+                // File file = new File(url.toURI());
+                // if (file.exists()) {
+                // addFileToViewer(file);
+                // OmsBoxPlugin.getDefault().setLastFolderChosen(file.getParentFile().getAbsolutePath());
+                // }
+                // } else {
+                // System.out.println("Not a file: " + id.toString());
+                // }
+                // }
+                //
+                // }
+                // } catch (Exception e) {
+                // e.printStackTrace();
+                // }
+                // }
                 modifyText(null);
             }
 
@@ -273,7 +277,7 @@ public class GuiFilespathListInputField extends ModuleGuiElement implements Modi
             StringBuilder sb = new StringBuilder();
             sb.append("Arrays.asList(");
             for( String path : newFileList ) {
-                path = checkBackSlash(path, true);
+                path = FileUtilities.checkBackSlash(path);
                 sb.append("\"");
                 sb.append(path);
                 sb.append("\",");

@@ -9,7 +9,6 @@
 package eu.hydrologis.stage.libs.workspace;
 
 import java.io.File;
-import java.util.Properties;
 
 import eu.hydrologis.stage.libs.log.StageLogger;
 
@@ -34,11 +33,11 @@ public class StageWorkspace {
     public static final String SCRIPTS_FOLDERNAME = "scripts";
 
     /**
-     * Name of the string to use in scripts to refer to the data folder.
-     * 
+     * Name of the string to use in scripts to refer to the remote data folder.
+     *  
      * <p>This will be substituted at runtime.
      */
-    public static final String STAGE_DATA_FOLDER_SUBSTITUTION_NAME = "DATAFOLDER";
+    public static final String STAGE_DATA_FOLDER_SUBSTITUTION_NAME = "@df";
 
     private static final String COULD_NOT_CREATE_DATA_FOLDER = "Could not create data folder in workspace.";
     private static final String COULD_NOT_CREATE_GEOPAP_FOLDER = "Could not create geopaparazzi folder in workspace.";
@@ -156,6 +155,22 @@ public class StageWorkspace {
             relativePath = relativePath.substring(1);
         }
         return relativePath;
+    }
+
+    /**
+     * Substitute the datafolder in a string.
+     * 
+     * @param stringToCheck
+     * @return
+     */
+    public static String substituteDataFolder( String stringToCheck ) {
+        File dataFolder = getInstance().getDataFolder(User.getCurrentUserName());
+
+        String dataFolderPath = dataFolder.getAbsolutePath();
+        dataFolderPath = checkBackSlash(dataFolderPath);
+
+        String removed = stringToCheck.replaceAll(dataFolderPath, STAGE_DATA_FOLDER_SUBSTITUTION_NAME);
+        return removed;
     }
 
     private static String checkBackSlash( String path ) {
