@@ -16,6 +16,10 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
+import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.IMenuListener;
+import org.eclipse.jface.action.IMenuManager;
+import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.dialogs.IInputValidator;
 import org.eclipse.jface.dialogs.InputDialog;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -80,7 +84,7 @@ public class SpatialToolboxScriptingView {
     private static final String OPEN = "open";
     private static final String OPEN_TOOLTIP = "Open existing script";
     private static final String RUN = "run";
-    private static final String RUN_TOOLTIP = "Run module";
+    private static final String RUN_TOOLTIP = "Run module [ALT+ENTER]";
     private static final String COPY_LOG = "copy log";
     private static final String COPY_LOG_TOOLTIP = "Copy selected log into the scripting area";
     private static final String SETNAME = "set name";
@@ -90,6 +94,8 @@ public class SpatialToolboxScriptingView {
     private static final String USEMODULETEMPLATE = "module template";
     private static final String USEMODULETEMPLATE_TOOLTIP = "Use the selected module's template";
     private static final String SCRIPT_NAME = "Script name";
+    private static final String INSERT_FILE = "Insert file";
+
     private org.eclipse.swt.widgets.List logList;
     private Text scriptTitleText;
     private Text scriptAreaText;
@@ -394,6 +400,7 @@ public class SpatialToolboxScriptingView {
         scriptAreaTextGD.horizontalSpan = 2;
         scriptAreaText.setLayoutData(scriptAreaTextGD);
         scriptAreaText.setText("import org.jgrasstools.modules.*\n");
+        addTextAreaMenu();
 
         logList = new org.eclipse.swt.widgets.List(mainScriptingComposite, SWT.BORDER | SWT.MULTI | SWT.V_SCROLL | SWT.H_SCROLL);
         logList.setLayoutData(new GridData(GridData.FILL_BOTH));
@@ -415,6 +422,55 @@ public class SpatialToolboxScriptingView {
             }
         });
 
+    }
+
+    private void addTextAreaMenu() {
+        MenuManager manager = new MenuManager();
+        scriptAreaText.setMenu(manager.createContextMenu(scriptAreaText));
+        manager.addMenuListener(new IMenuListener(){
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public void menuAboutToShow( IMenuManager manager ) {
+                manager.add(new Action(INSERT_FILE, null){
+                    private static final long serialVersionUID = 1L;
+
+                    @Override
+                    public void run() {
+                        File userFolder = StageWorkspace.getInstance().getDataFolder(User.getCurrentUserName());
+                        FileSelectionDialog fileDialog = new FileSelectionDialog(scriptAreaText.getShell(), false, userFolder,
+                                null, null, null);
+                        int returnCode = fileDialog.open();
+                        if (returnCode == SWT.CANCEL) {
+                            return;
+                        }
+                        String selectedFile = fileDialog.getSelectedFileRelativePath();
+                        insertTextAtCaret(StageWorkspace.STAGE_DATA_FOLDER_SUBSTITUTION_NAME + "/" + selectedFile);
+                    }
+                });
+            }
+
+        });
+        manager.setRemoveAllWhenShown(true);
+
+        // final Menu textAreaMenu = new Menu(scriptAreaText);
+        // final MenuItem insertFileItem = new MenuItem(textAreaMenu, SWT.PUSH);
+        // insertFileItem.setText("Insert file");
+        // insertFileItem.addSelectionListener(new SelectionAdapter(){
+        // @Override
+        // public void widgetSelected( SelectionEvent e ) {}
+        // });
+    }
+
+    private void insertTextAtCaret( String insertText ) {
+        int caretPosition = scriptAreaText.getCaretPosition();
+        String text = scriptAreaText.getText();
+
+        String part1 = text.substring(0, caretPosition);
+        String part2 = text.substring(caretPosition, text.length() - 1);
+        String newText = part1 + insertText + part2;
+        scriptAreaText.setText(newText);
+        scriptAreaText.setSelection(caretPosition);
     }
 
     private File getScriptFile( String name ) {
