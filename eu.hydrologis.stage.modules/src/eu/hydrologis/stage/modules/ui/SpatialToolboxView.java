@@ -13,6 +13,8 @@ import java.io.IOException;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CTabItem;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
@@ -36,15 +38,16 @@ public class SpatialToolboxView {
         mainStageCFolder.setLayout(new FillLayout());
         mainStageCFolder.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
-        CTabItem stageTab = new CTabItem(mainStageCFolder, SWT.NONE);
+        final CTabItem stageTab = new CTabItem(mainStageCFolder, SWT.NONE);
         stageTab.setText("STAGE");
         mainStageCFolder.setSelection(stageTab);
-        SpatialToolboxModulesView stageModulesView = new SpatialToolboxModulesView();
+        final SpatialToolboxModulesView stageModulesView = new SpatialToolboxModulesView();
         stageModulesView.createStageModulesTab(display, mainStageCFolder, stageTab);
-
-        CTabItem scriptingTab = new CTabItem(mainStageCFolder, SWT.NONE);
+        stageModulesView.selected(true);
+        
+        final CTabItem scriptingTab = new CTabItem(mainStageCFolder, SWT.NONE);
         scriptingTab.setText("Geo-scripting");
-        SpatialToolboxScriptingView stageScriptingView = new SpatialToolboxScriptingView();
+        final SpatialToolboxScriptingView stageScriptingView = new SpatialToolboxScriptingView();
         stageScriptingView.createStageScriptingTab(display, mainStageCFolder, scriptingTab, stageModulesView);
 
         CTabItem fileManagementTab = new CTabItem(mainStageCFolder, SWT.NONE);
@@ -61,6 +64,28 @@ public class SpatialToolboxView {
         processTab.setText("Processes");
         SpatialToolboxProcessView processView = new SpatialToolboxProcessView();
         processView.createStageProcessesTab(mainStageCFolder, processTab);
+
+        mainStageCFolder.addSelectionListener(new SelectionListener(){
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public void widgetSelected( SelectionEvent e ) {
+                CTabItem selection = mainStageCFolder.getSelection();
+                if (selection == stageTab) {
+                    stageModulesView.selected(true);
+                    stageScriptingView.selected(false);
+                } else if (selection == scriptingTab) {
+                    stageModulesView.selected(false);
+                    stageScriptingView.selected(true);
+                }
+
+            }
+
+            @Override
+            public void widgetDefaultSelected( SelectionEvent e ) {
+
+            }
+        });
 
     }
 }

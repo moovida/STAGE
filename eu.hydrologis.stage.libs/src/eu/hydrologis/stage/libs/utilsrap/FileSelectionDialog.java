@@ -47,7 +47,7 @@ import eu.hydrologis.stage.libs.workspace.StageWorkspace;
 public class FileSelectionDialog extends Dialog implements ModifyListener {
 
     private static final String FILTER = "Filter";
-    private static final String NEW_FILE_NAME = "New folder name";
+    private static final String NEW_FILE_NAME = "New file name";
     private static final String SELECT_FILE = "Select file";
     private static final int BUTTON_WIDTH = 60;
     private static final int HORIZONTAL_DIALOG_UNIT_PER_CHAR = 4;

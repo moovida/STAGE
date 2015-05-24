@@ -36,6 +36,7 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Menu;
@@ -64,44 +65,49 @@ import eu.hydrologis.stage.modules.utils.SpatialToolboxConstants;
 @SuppressWarnings("serial")
 public class SpatialToolboxScriptingView {
 
-    private static final String ERROR = "ERROR";
-    private static final String WARNING = "WARNING";
-    private static final String SCRIPT_EXE_ERROR = "An error occurred while executing the script.";
+    public static final String ERROR = "ERROR";
+    public static final String WARNING = "WARNING";
+    public static final String SCRIPT_EXE_ERROR = "An error occurred while executing the script.";
 
-    private static final String EMPTY_SCRIPT_NAME = "The script name can't be empty.";
-    private static final String SCRIPT_IS_EMPTY = "Script is empty";
-    private static final String GROOVY = ".groovy";
-    private static final String FILE_IS_FOLDER = "The selected file is a folder.";
-    private static final String TEMPLATES = "templates";
-    private static final String TEMPLATES_TOOLTIP = "Use one of the available templates";
-    private static final String SCRIPT_SAVED = "Script saved.";
-    private static final String INFORMATION = "Information";
-    private static final String COULD_NOT_SAVE_SCRIPT = "Could not save script: ";
-    private static final String SCRIPT_NAME_TO_SAVE = "Enter the script name to save to:";
-    private static final String SCRIPT_NAME_NOT_VALID = "The script name is not valid!";
-    private static final String SAVE = "save";
-    private static final String SAVE_TOOLTIP = "Save current script";
-    private static final String OPEN = "open";
-    private static final String OPEN_TOOLTIP = "Open existing script";
-    private static final String RUN = "run";
-    private static final String RUN_TOOLTIP = "Run module [ALT+ENTER]";
-    private static final String COPY_LOG = "copy log";
-    private static final String COPY_LOG_TOOLTIP = "Copy selected log into the scripting area";
-    private static final String SETNAME = "set name";
-    private static final String SETNAME_TOOLTIP = "Set a date based script name";
-    private static final String USEMODULE = "use module";
-    private static final String USEMODULE_TOOLTIP = "Use module selected in the modules view";
-    private static final String USEMODULETEMPLATE = "module template";
-    private static final String USEMODULETEMPLATE_TOOLTIP = "Use the selected module's template";
-    private static final String SCRIPT_NAME = "Script name";
-    private static final String INSERT_FILE = "Insert file";
+    public static final String EMPTY_SCRIPT_NAME = "The script name can't be empty.";
+    public static final String SCRIPT_IS_EMPTY = "Script is empty";
+    public static final String GROOVY = ".groovy";
+    public static final String FILE_IS_FOLDER = "The selected file is a folder.";
+    public static final String TEMPLATES = "templates";
+    public static final String TEMPLATES_TOOLTIP = "Use one of the available templates";
+    public static final String SCRIPT_SAVED = "Script saved.";
+    public static final String INFORMATION = "Information";
+    public static final String SCRIPTING = "Scripting";
+    public static final String EXECUTION_LOG = "Execution log";
+    public static final String COULD_NOT_SAVE_SCRIPT = "Could not save script: ";
+    public static final String SCRIPT_NAME_TO_SAVE = "Enter the script name to save to:";
+    public static final String SCRIPT_NAME_NOT_VALID = "The script name is not valid!";
+    public static final String SAVE = "save";
+    public static final String SAVE_TOOLTIP = "Save current script";
+    public static final String OPEN = "open";
+    public static final String OPEN_TOOLTIP = "Open existing script";
+    public static final String RUN = "run";
+    public static final String RUN_TOOLTIP = "Run module [ALT+ENTER]";
+    public static final String COPY_LOG = "copy log";
+    public static final String COPY_LOG_TOOLTIP = "Copy selected log into the scripting area";
+    public static final String SETNAME = "set name";
+    public static final String SETNAME_TOOLTIP = "Set a date based script name";
+    public static final String USEMODULE = "use module";
+    public static final String USEMODULE_TOOLTIP = "Use module selected in the modules view";
+    public static final String USEMODULETEMPLATE = "module template";
+    public static final String USEMODULETEMPLATE_TOOLTIP = "Use the selected module's template";
+    public static final String SCRIPT_NAME = "Script name";
+    public static final String INSERT_FILE = "Insert file";
 
     private org.eclipse.swt.widgets.List logList;
     private Text scriptTitleText;
     private Text scriptAreaText;
+    private Display display;
+    private Listener runKeyListener;
 
     public void createStageScriptingTab( Display display, Composite parent, CTabItem stageTab,
             final SpatialToolboxModulesView stageModulesView ) throws IOException {
+        this.display = display;
         final Composite mainComposite = new Composite(parent, SWT.NONE);
         mainComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
         mainComposite.setLayout(new GridLayout(3, false));
@@ -378,7 +384,8 @@ public class SpatialToolboxScriptingView {
         mainScriptingCompositeGD.horizontalSpan = 3;
         mainScriptingComposite.setLayoutData(mainScriptingCompositeGD);
 
-        Composite leftComposite = new Composite(mainScriptingComposite, SWT.None);
+        Group leftComposite = new Group(mainScriptingComposite, SWT.NONE);
+        leftComposite.setText(SCRIPTING);
         GridLayout leftLayout = new GridLayout(2, false);
         leftLayout.marginWidth = 0;
         leftLayout.marginHeight = 0;
@@ -402,25 +409,18 @@ public class SpatialToolboxScriptingView {
         scriptAreaText.setText("import org.jgrasstools.modules.*\n");
         addTextAreaMenu();
 
-        logList = new org.eclipse.swt.widgets.List(mainScriptingComposite, SWT.BORDER | SWT.MULTI | SWT.V_SCROLL | SWT.H_SCROLL);
+        Group logComposite = new Group(mainScriptingComposite, SWT.NONE);
+        logComposite.setText(EXECUTION_LOG);
+        logComposite.setLayout(new GridLayout(1, false));
+        GridData logGD = new GridData(GridData.FILL, GridData.FILL, true, true);
+        leftComposite.setLayoutData(logGD);
+        logList = new org.eclipse.swt.widgets.List(logComposite, SWT.BORDER | SWT.MULTI | SWT.V_SCROLL | SWT.H_SCROLL);
         logList.setLayoutData(new GridData(GridData.FILL_BOTH));
         logList.setData(RWT.MARKUP_ENABLED, Boolean.TRUE);
 
         mainScriptingComposite.setWeights(new int[]{1, 1});
 
         stageTab.setControl(mainComposite);
-
-        /*
-         * execution shortcut
-         */
-        String[] shortcut = new String[]{"ALT+ENTER"};
-        display.setData(RWT.ACTIVE_KEYS, shortcut);
-        display.setData(RWT.CANCEL_KEYS, shortcut);
-        display.addFilter(SWT.KeyDown, new Listener(){
-            public void handleEvent( Event event ) {
-                runScript();
-            }
-        });
 
     }
 
@@ -509,6 +509,26 @@ public class SpatialToolboxScriptingView {
             String msg = "Error running script: " + scriptTitleText.getText() + "\n" + scriptAreaText.getText();
             StageLogger.logError(this, msg, e1);
             MessageDialog.openError(scriptAreaText.getShell(), ERROR, SCRIPT_EXE_ERROR);
+        }
+    }
+
+    public void selected( boolean selected ) {
+        /*
+         * execution shortcut
+         */
+        if (selected) {
+            runKeyListener = new Listener(){
+                public void handleEvent( Event event ) {
+                    runScript();
+                }
+            };
+            String[] shortcut = new String[]{"ALT+ENTER"};
+            display.setData(RWT.ACTIVE_KEYS, shortcut);
+            display.setData(RWT.CANCEL_KEYS, shortcut);
+            display.addFilter(SWT.KeyDown, runKeyListener);
+        } else {
+            if (runKeyListener != null)
+                display.removeFilter(SWT.KeyDown, runKeyListener);
         }
     }
 }

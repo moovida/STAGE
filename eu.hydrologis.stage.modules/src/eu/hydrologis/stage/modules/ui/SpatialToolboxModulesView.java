@@ -36,17 +36,25 @@ import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
-import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Listener;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.MenuItem;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
+import org.eclipse.swt.widgets.ToolBar;
+import org.eclipse.swt.widgets.ToolItem;
 
+import eu.hydrologis.stage.libs.log.StageLogger;
 import eu.hydrologis.stage.libs.utils.ImageCache;
 import eu.hydrologis.stage.libs.utilsrap.MessageDialogUtil;
 import eu.hydrologis.stage.libs.workspace.StageWorkspace;
@@ -70,11 +78,10 @@ public class SpatialToolboxModulesView {
 
     private static final String PARAMETERS = "Parameters";
     private static final String EXECUTION_TOOLS = "Execution";
-    private static final String CHARACTER_ENCODING = "Encoding";
-    private static final String DEBUG_INFO = "Debug info";
-    private static final String MEMORY_MB = "Memory [MB]";
-    private static final String PROCESS_SETTINGS = "Process settings";
-    private static final String LOAD_EXPERIMENTAL_MODULES = "Load experimental modules";
+    private static final String CHARACTER_ENCODING = "Select a Character Encoding";
+    private static final String DEBUG_INFO = "Toggle debug information in the otuput log";
+    private static final String MEMORY_MB = "Memory in [MB] to make available to the process";
+    private static final String LOAD_EXPERIMENTAL_MODULES = "Load experimental";
     private static final String NO_MODULE_SELECTED = "No module selected";
     private static final String MODULES = "Modules";
 
@@ -88,11 +95,46 @@ public class SpatialToolboxModulesView {
 
     private Display display;
     private org.eclipse.swt.widgets.List logList;
+    private Listener runKeyListener;
+    private Composite parent;
 
-    public void createStageModulesTab( Display display, Composite parent, CTabItem stageTab ) throws IOException {
+    public void createStageModulesTab( Display display, final Composite parent, CTabItem stageTab ) throws IOException {
         this.display = display;
-        SashForm mainComposite = new SashForm(parent, SWT.HORIZONTAL);
-        mainComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+        this.parent = parent;
+
+        final Composite composite = new Composite(parent, SWT.NONE);
+        composite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+        composite.setLayout(new GridLayout(2, true));
+
+        final ToolBar toolBar = new ToolBar(composite, SWT.NONE);
+        Menu menu = new Menu(toolBar);
+        MenuItem item = new MenuItem(menu, SWT.PUSH);
+        item.setText("context menu item");
+        toolBar.setMenu(menu);
+
+        ToolItem runModuleButton = new ToolItem(toolBar, SWT.PUSH);
+        runModuleButton.setText(SpatialToolboxScriptingView.RUN);
+        runModuleButton.setImage(ImageCache.getInstance().getImage(display, ImageCache.RUN));
+        runModuleButton.setToolTipText(SpatialToolboxScriptingView.RUN_TOOLTIP);
+        runModuleButton.addSelectionListener(new SelectionAdapter(){
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public void widgetSelected( SelectionEvent e ) {
+                runSelectedModule(parent.getShell());
+            }
+        });
+
+        new ToolItem(toolBar, SWT.SEPARATOR);
+
+        addMemoryCombo(toolBar);
+        addDebugCombo(toolBar);
+        addEncodingCombo(toolBar);
+
+        SashForm mainComposite = new SashForm(composite, SWT.HORIZONTAL);
+        GridData mainCompositeGD = new GridData(SWT.FILL, SWT.FILL, true, true);
+        mainCompositeGD.horizontalSpan = 2;
+        mainComposite.setLayoutData(mainCompositeGD);
 
         Composite leftComposite = new Composite(mainComposite, SWT.None);
         GridLayout leftLayout = new GridLayout(1, true);
@@ -112,8 +154,6 @@ public class SpatialToolboxModulesView {
         List<ViewerFolder> viewerFolders = new ArrayList<ViewerFolder>();
         modulesViewer.setInput(viewerFolders);
         addFilterButtons(modulesListGroup);
-
-        addQuickSettings(leftComposite);
 
         Group parametersTabsGroup = new Group(mainComposite, SWT.NONE);
         GridData modulesGuiCompositeGD = new GridData(SWT.FILL, SWT.FILL, true, true);
@@ -142,7 +182,150 @@ public class SpatialToolboxModulesView {
             e.printStackTrace();
         }
 
-        stageTab.setControl(mainComposite);
+        stageTab.setControl(composite);
+    }
+
+    private void addDebugCombo( final ToolBar toolBar ) throws IOException {
+        final ToolItem debugCombo = new ToolItem(toolBar, SWT.DROP_DOWN);
+
+        debugCombo.setToolTipText(DEBUG_INFO);
+        debugCombo.setImage(ImageCache.getInstance().getImage(display, ImageCache.DEBUG));
+        debugCombo.setWidth(150);
+        final Menu templatesMenu = new Menu(toolBar.getShell(), SWT.POP_UP);
+        String savedLogLevel = SpatialToolboxSessionPluginSingleton.getInstance().retrieveSavedLogLevel();
+        debugCombo.setText(savedLogLevel);
+
+        for( String logLevel : SpatialToolboxConstants.LOGLEVELS_GUI ) {
+            final MenuItem menuItem = new MenuItem(templatesMenu, SWT.PUSH);
+            menuItem.setText(logLevel);
+            menuItem.addSelectionListener(new SelectionAdapter(){
+                private static final long serialVersionUID = 1L;
+
+                @Override
+                public void widgetSelected( SelectionEvent e ) {
+                    String item = menuItem.getText();
+                    try {
+                        SpatialToolboxSessionPluginSingleton.getInstance().saveLogLevel(item);
+                        debugCombo.setText(item);
+                        toolBar.layout();
+                    } catch (IOException e1) {
+                        e1.printStackTrace();
+                    }
+                }
+            });
+        }
+
+        debugCombo.addSelectionListener(new SelectionAdapter(){
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public void widgetSelected( final SelectionEvent event ) {
+                if (event.detail == SWT.ARROW) {
+                    Point point = toolBar.toDisplay(event.x, event.y);
+                    templatesMenu.setLocation(point);
+                    templatesMenu.setVisible(true);
+                }
+            }
+        });
+    }
+
+    private void addMemoryCombo( final ToolBar toolBar ) throws IOException {
+        final ToolItem memoryCombo = new ToolItem(toolBar, SWT.DROP_DOWN);
+
+        memoryCombo.setToolTipText(MEMORY_MB);
+        memoryCombo.setImage(ImageCache.getInstance().getImage(display, ImageCache.MEMORY));
+        memoryCombo.setWidth(150);
+        final Menu templatesMenu = new Menu(toolBar.getShell(), SWT.POP_UP);
+        int savedHeapLevel = SpatialToolboxSessionPluginSingleton.getInstance().retrieveSavedHeap();
+        memoryCombo.setText("" + savedHeapLevel);
+
+        for( String heapLevel : SpatialToolboxConstants.HEAPLEVELS ) {
+            final MenuItem menuItem = new MenuItem(templatesMenu, SWT.PUSH);
+            menuItem.setText(heapLevel);
+            menuItem.addSelectionListener(new SelectionAdapter(){
+                private static final long serialVersionUID = 1L;
+
+                @Override
+                public void widgetSelected( SelectionEvent e ) {
+                    String item = menuItem.getText();
+                    try {
+                        SpatialToolboxSessionPluginSingleton.getInstance().saveHeap(Integer.parseInt(item));
+                        memoryCombo.setText(item);
+                        toolBar.layout();
+                    } catch (NumberFormatException | IOException e1) {
+                        e1.printStackTrace();
+                    }
+                }
+            });
+        }
+
+        memoryCombo.addSelectionListener(new SelectionAdapter(){
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public void widgetSelected( final SelectionEvent event ) {
+                if (event.detail == SWT.ARROW) {
+                    Point point = toolBar.toDisplay(event.x, event.y);
+                    templatesMenu.setLocation(point);
+                    templatesMenu.setVisible(true);
+                }
+            }
+        });
+    }
+
+    private void addEncodingCombo( final ToolBar toolBar ) throws IOException {
+        final ToolItem encodingCombo = new ToolItem(toolBar, SWT.DROP_DOWN);
+
+        encodingCombo.setToolTipText(CHARACTER_ENCODING);
+        encodingCombo.setImage(ImageCache.getInstance().getImage(display, ImageCache.FONT));
+        encodingCombo.setWidth(150);
+        final Menu templatesMenu = new Menu(toolBar.getShell(), SWT.POP_UP);
+        String savedEncoding = SpatialToolboxSessionPluginSingleton.getInstance().retrieveSavedEncoding();
+        final String empty = "DEFAULT";
+        if (savedEncoding.length() == 0) {
+            savedEncoding = empty;
+        }
+        encodingCombo.setText(savedEncoding);
+
+        SortedMap<String, Charset> charsetMap = Charset.availableCharsets();
+        List<String> namesList = new ArrayList<String>();
+        namesList.add(empty);
+        for( Entry<String, Charset> charset : charsetMap.entrySet() ) {
+            namesList.add(charset.getKey());
+        }
+        for( String charset : namesList ) {
+            final MenuItem menuItem = new MenuItem(templatesMenu, SWT.PUSH);
+            menuItem.setText(charset);
+            menuItem.addSelectionListener(new SelectionAdapter(){
+                private static final long serialVersionUID = 1L;
+
+                @Override
+                public void widgetSelected( SelectionEvent e ) {
+                    String item = menuItem.getText();
+                    try {
+                        encodingCombo.setText(item);
+                        if (item.equals(empty))
+                            item = "";
+                        SpatialToolboxSessionPluginSingleton.getInstance().saveEncoding(item);
+                        toolBar.layout();
+                    } catch (IOException e1) {
+                        e1.printStackTrace();
+                    }
+                }
+            });
+        }
+        encodingCombo.addSelectionListener(new SelectionAdapter(){
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public void widgetSelected( final SelectionEvent event ) {
+                if (event.detail == SWT.ARROW) {
+                    Point point = toolBar.toDisplay(event.x, event.y);
+                    templatesMenu.setLocation(point);
+                    templatesMenu.setVisible(true);
+                }
+            }
+        });
     }
 
     private Label getNoModuleLabel() {
@@ -339,120 +522,6 @@ public class SpatialToolboxModulesView {
         });
     }
 
-    private void addQuickSettings( Composite modulesListComposite ) throws IOException {
-        Group quickSettingsGroup = new Group(modulesListComposite, SWT.NONE);
-        quickSettingsGroup.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
-        quickSettingsGroup.setLayout(new GridLayout(2, false));
-        quickSettingsGroup.setText(PROCESS_SETTINGS);
-
-        Label heapLabel = new Label(quickSettingsGroup, SWT.NONE);
-        heapLabel.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
-        heapLabel.setText(MEMORY_MB);
-        final Combo heapCombo = new Combo(quickSettingsGroup, SWT.DROP_DOWN);
-        heapCombo.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-        heapCombo.setItems(SpatialToolboxConstants.HEAPLEVELS);
-        int savedHeapLevel = SpatialToolboxSessionPluginSingleton.getInstance().retrieveSavedHeap();
-        for( int i = 0; i < SpatialToolboxConstants.HEAPLEVELS.length; i++ ) {
-            if (SpatialToolboxConstants.HEAPLEVELS[i].equals(String.valueOf(savedHeapLevel))) {
-                heapCombo.select(i);
-                break;
-            }
-        }
-        heapCombo.addSelectionListener(new SelectionAdapter(){
-            private static final long serialVersionUID = 1L;
-
-            public void widgetSelected( SelectionEvent e ) {
-                String item = heapCombo.getText();
-                try {
-                    SpatialToolboxSessionPluginSingleton.getInstance().saveHeap(Integer.parseInt(item));
-                } catch (NumberFormatException | IOException e1) {
-                    e1.printStackTrace();
-                }
-            }
-        });
-        heapCombo.addModifyListener(new ModifyListener(){
-            private static final long serialVersionUID = 1L;
-
-            public void modifyText( ModifyEvent e ) {
-                String item = heapCombo.getText();
-                try {
-                    Integer.parseInt(item);
-                } catch (Exception ex) {
-                    return;
-                }
-                if (item.length() > 0) {
-                    try {
-                        SpatialToolboxSessionPluginSingleton.getInstance().saveHeap(Integer.parseInt(item));
-                    } catch (NumberFormatException | IOException e1) {
-                        // TODO Auto-generated catch block
-                        e1.printStackTrace();
-                    }
-                }
-            }
-        });
-
-        Label logLabel = new Label(quickSettingsGroup, SWT.NONE);
-        logLabel.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
-        logLabel.setText(DEBUG_INFO);
-        final Combo logCombo = new Combo(quickSettingsGroup, SWT.DROP_DOWN | SWT.READ_ONLY);
-        logCombo.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-        logCombo.setItems(SpatialToolboxConstants.LOGLEVELS_GUI);
-        String savedLogLevel = SpatialToolboxSessionPluginSingleton.getInstance().retrieveSavedLogLevel();
-        for( int i = 0; i < SpatialToolboxConstants.LOGLEVELS_GUI.length; i++ ) {
-            if (SpatialToolboxConstants.LOGLEVELS_GUI[i].equals(savedLogLevel)) {
-                logCombo.select(i);
-                break;
-            }
-        }
-        logCombo.addSelectionListener(new SelectionAdapter(){
-            private static final long serialVersionUID = 1L;
-
-            public void widgetSelected( SelectionEvent e ) {
-                String item = logCombo.getText();
-                try {
-                    SpatialToolboxSessionPluginSingleton.getInstance().saveLogLevel(item);
-                } catch (IOException e1) {
-                    e1.printStackTrace();
-                }
-            }
-        });
-
-        Label chartsetLabel = new Label(quickSettingsGroup, SWT.NONE);
-        chartsetLabel.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
-        chartsetLabel.setText(CHARACTER_ENCODING);
-
-        SortedMap<String, Charset> charsetMap = Charset.availableCharsets();
-        ArrayList<String> charsetList = new ArrayList<String>();
-        charsetList.add("");
-        for( Entry<String, Charset> charset : charsetMap.entrySet() ) {
-            charsetList.add(charset.getKey());
-        }
-        String[] charsetArray = charsetList.toArray(new String[0]);
-        final Combo encodingCombo = new Combo(quickSettingsGroup, SWT.DROP_DOWN | SWT.READ_ONLY);
-        encodingCombo.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-        encodingCombo.setItems(charsetArray);
-        String savedEncoding = SpatialToolboxSessionPluginSingleton.getInstance().retrieveSavedEncoding();
-        for( int i = 0; i < charsetArray.length; i++ ) {
-            if (charsetArray[i].equals(savedEncoding)) {
-                encodingCombo.select(i);
-                break;
-            }
-        }
-        encodingCombo.addSelectionListener(new SelectionAdapter(){
-            private static final long serialVersionUID = 1L;
-
-            public void widgetSelected( SelectionEvent e ) {
-                String item = encodingCombo.getText();
-                try {
-                    SpatialToolboxSessionPluginSingleton.getInstance().saveEncoding(item);
-                } catch (IOException e1) {
-                    e1.printStackTrace();
-                }
-            }
-        });
-
-    }
-
     private void addRunTools( Composite modulesListComposite ) throws IOException {
         Group runToolsGroup = new Group(modulesListComposite, SWT.NONE);
         GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
@@ -462,24 +531,6 @@ public class SpatialToolboxModulesView {
         GridLayout gridLayout = new GridLayout(2, false);
         runToolsGroup.setLayout(gridLayout);
         runToolsGroup.setText(EXECUTION_TOOLS);
-
-        Button runModuleButton = new Button(runToolsGroup, SWT.PUSH);
-        runModuleButton.setLayoutData(new GridData(SWT.BEGINNING, SWT.TOP, false, false));
-        // runModuleButton.setText("Run module");
-        runModuleButton.setToolTipText("Run module");
-        runModuleButton.setImage(ImageCache.getInstance().getImage(display, ImageCache.RUN));
-        runModuleButton.addSelectionListener(new SelectionAdapter(){
-            private static final long serialVersionUID = 1L;
-
-            @Override
-            public void widgetSelected( SelectionEvent e ) {
-                try {
-                    runSelectedModule();
-                } catch (Exception e1) {
-                    e1.printStackTrace();
-                }
-            }
-        });
 
         logList = new org.eclipse.swt.widgets.List(runToolsGroup, SWT.BORDER | SWT.MULTI | SWT.V_SCROLL | SWT.H_SCROLL);
         logList.setLayoutData(new GridData(GridData.FILL_BOTH));
@@ -537,28 +588,32 @@ public class SpatialToolboxModulesView {
 
     /**
      * Runs the module currently selected in the gui.
-     * 
-     * @throws Exception
      */
-    public void runSelectedModule() throws Exception {
-        ScriptHandler scriptHandler = new ScriptHandler();
-        if (currentSelectedModuleGui == null) {
-            MessageDialogUtil.openWarning(modulesGuiComposite.getShell(), "WARNING", NO_MODULE_SELECTED, null);
-            return;
-        }
-        String script = scriptHandler.genereateScript(currentSelectedModuleGui, display.getActiveShell());
-        if (script == null) {
-            return;
-        }
+    public void runSelectedModule( Shell shell ) {
+        try {
+            ScriptHandler scriptHandler = new ScriptHandler();
+            if (currentSelectedModuleGui == null) {
+                MessageDialogUtil.openWarning(modulesGuiComposite.getShell(), "WARNING", NO_MODULE_SELECTED, null);
+                return;
+            }
+            String script = scriptHandler.genereateScript(currentSelectedModuleGui, display.getActiveShell());
+            if (script == null) {
+                return;
+            }
 
-        String scriptID = currentSelectedModuleGui.getModuleDescription().getName() + " "
-                + SpatialToolboxConstants.dateTimeFormatterYYYYMMDDHHMMSS.format(new Date());
-        logList.removeAll();
+            String scriptID = currentSelectedModuleGui.getModuleDescription().getName() + " "
+                    + SpatialToolboxConstants.dateTimeFormatterYYYYMMDDHHMMSS.format(new Date());
+            logList.removeAll();
 
-        String currentUserName = User.getCurrentUserName();
-        String dataFolder = StageWorkspace.getInstance().getDataFolder(currentUserName).getAbsolutePath();
-        dataFolder = StageWorkspace.makeSafe(dataFolder);
-        scriptHandler.runModule(scriptID, script, logList, dataFolder);
+            String currentUserName = User.getCurrentUserName();
+            String dataFolder = StageWorkspace.getInstance().getDataFolder(currentUserName).getAbsolutePath();
+            dataFolder = StageWorkspace.makeSafe(dataFolder);
+            scriptHandler.runModule(scriptID, script, logList, dataFolder);
+        } catch (Exception e1) {
+            String msg = "An error occurred while executing the module.";
+            StageLogger.logError(SpatialToolboxModulesView.this, msg, e1);
+            MessageDialogUtil.openError(shell, SpatialToolboxScriptingView.ERROR, msg, null);
+        }
     }
 
     /**
@@ -578,5 +633,27 @@ public class SpatialToolboxModulesView {
 
     public ModuleDescription getCurrentSelectedModule() {
         return currentSelectedModule;
+    }
+
+    public void selected( boolean selected ) {
+        /*
+         * execution shortcut
+         */
+        if (selected) {
+            runKeyListener = new Listener(){
+                private static final long serialVersionUID = 1L;
+
+                public void handleEvent( Event event ) {
+                    runSelectedModule(parent.getShell());
+                }
+            };
+            String[] shortcut = new String[]{"ALT+ENTER"};
+            display.setData(RWT.ACTIVE_KEYS, shortcut);
+            display.setData(RWT.CANCEL_KEYS, shortcut);
+            display.addFilter(SWT.KeyDown, runKeyListener);
+        } else {
+            if (runKeyListener != null)
+                display.removeFilter(SWT.KeyDown, runKeyListener);
+        }
     }
 }

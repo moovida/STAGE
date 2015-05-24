@@ -37,6 +37,8 @@ public class ImageCache {
     public static final String SAVE = "save_edit.gif";
     public static final String COPY = "copy_edit.gif";
     
+    public static final String MEMORY = "memory.gif";
+    public static final String DEBUG = "debug.gif";
     public static final String FONT = "font.gif";
     public static final String FILE = "file.gif";
     public static final String FOLDER = "folder.gif";
