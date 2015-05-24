@@ -49,6 +49,8 @@ import org.eclipse.swt.widgets.Text;
 
 import eu.hydrologis.stage.libs.utils.ImageCache;
 import eu.hydrologis.stage.libs.utilsrap.MessageDialogUtil;
+import eu.hydrologis.stage.libs.workspace.StageWorkspace;
+import eu.hydrologis.stage.libs.workspace.User;
 import eu.hydrologis.stage.modules.SpatialToolboxSessionPluginSingleton;
 import eu.hydrologis.stage.modules.core.ModuleDescription;
 import eu.hydrologis.stage.modules.core.ModuleDescription.Status;
@@ -552,7 +554,11 @@ public class SpatialToolboxModulesView {
         String scriptID = currentSelectedModuleGui.getModuleDescription().getName() + " "
                 + SpatialToolboxConstants.dateTimeFormatterYYYYMMDDHHMMSS.format(new Date());
         logList.removeAll();
-        scriptHandler.runModule(scriptID, script, logList);
+
+        String currentUserName = User.getCurrentUserName();
+        String dataFolder = StageWorkspace.getInstance().getDataFolder(currentUserName).getAbsolutePath();
+        dataFolder = StageWorkspace.makeSafe(dataFolder);
+        scriptHandler.runModule(scriptID, script, logList, dataFolder);
     }
 
     /**

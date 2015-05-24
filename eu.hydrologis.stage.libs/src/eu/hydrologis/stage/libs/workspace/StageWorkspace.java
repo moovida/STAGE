@@ -180,6 +180,11 @@ public class StageWorkspace {
         return path;
     }
 
+    public static String makeSafe( String path ) {
+        path = path.replace('\\', '/');
+        return path;
+    }
+
     /**
      * Add to the relative file path the data folder. 
      * 
@@ -197,19 +202,19 @@ public class StageWorkspace {
             return file;
         } else {
             File absolutePathFile = new File(relativePath);
-//            if (!isOutFile) {
-//                if (absolutePathFile.exists()) {
-//                    // it is an absolute path to an existing file, leave it as is
-//                    return absolutePathFile;
-//                }
-//            } else {
-//                File parentFile = absolutePathFile.getParentFile();
-//                if (parentFile != null && parentFile.exists()) {
-//                    // it is an absolute path to a file to be created,
-//                    // leave it if the folder exists
-//                    return absolutePathFile;
-//                }
-//            }
+            // if (!isOutFile) {
+            // if (absolutePathFile.exists()) {
+            // // it is an absolute path to an existing file, leave it as is
+            // return absolutePathFile;
+            // }
+            // } else {
+            // File parentFile = absolutePathFile.getParentFile();
+            // if (parentFile != null && parentFile.exists()) {
+            // // it is an absolute path to a file to be created,
+            // // leave it if the folder exists
+            // return absolutePathFile;
+            // }
+            // }
             return absolutePathFile;
         }
     }

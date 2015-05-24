@@ -433,9 +433,9 @@ public class SpatialToolboxScriptingView {
             String script = scriptAreaText.getText();
             String name = scriptTitleText.getText();
             String currentUserName = User.getCurrentUserName();
-            String dataPath = StageWorkspace.getInstance().getDataFolder(currentUserName).getAbsolutePath();
-            dataPath = dataPath.replace('\\', '/');
-            script = script.replaceAll(StageWorkspace.STAGE_DATA_FOLDER_SUBSTITUTION_NAME, dataPath);
+            String dataFolder = StageWorkspace.getInstance().getDataFolder(currentUserName).getAbsolutePath();
+            dataFolder = StageWorkspace.makeSafe(dataFolder);
+            script = script.replaceAll(StageWorkspace.STAGE_DATA_FOLDER_SUBSTITUTION_NAME, dataFolder);
             if (script.length() == 0) {
                 MessageDialog.openWarning(scriptAreaText.getShell(), ERROR, SCRIPT_IS_EMPTY);
                 return;
@@ -447,7 +447,7 @@ public class SpatialToolboxScriptingView {
             ScriptHandler scriptHandler = new ScriptHandler();
             String scriptID = name + " " + SpatialToolboxConstants.dateTimeFormatterYYYYMMDDHHMMSS.format(new Date());
             logList.removeAll();
-            scriptHandler.runModule(scriptID, script, logList);
+            scriptHandler.runModule(scriptID, script, logList, dataFolder);
         } catch (Exception e1) {
             e1.printStackTrace();
             String msg = "Error running script: " + scriptTitleText.getText() + "\n" + scriptAreaText.getText();

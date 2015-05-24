@@ -19,6 +19,7 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
 import eu.hydrologis.stage.libs.utilsrap.MessageDialogUtil;
+import eu.hydrologis.stage.libs.workspace.StageWorkspace;
 import eu.hydrologis.stage.modules.SpatialToolboxSessionPluginSingleton;
 import eu.hydrologis.stage.modules.utils.SpatialToolboxConstants;
 import eu.hydrologis.stage.modules.utils.SpatialToolboxUtils;
@@ -157,8 +158,10 @@ public class ScriptHandler {
      *            run script.
      * @param script
      *            the script.
+     * @param dataFolder 
      */
-    public void runModule( final String scriptId, String script, final org.eclipse.swt.widgets.List logList ) {
+    public void runModule( final String scriptId, String script, final org.eclipse.swt.widgets.List logList,
+            final String dataFolder ) {
         try {
             final Display display = Display.getCurrent();
             String sessionId = RWT.getUISession().getId();
@@ -181,11 +184,13 @@ public class ScriptHandler {
                 public void onMessage( final String message, boolean isError ) {
                     display.asyncExec(new Runnable(){
                         public void run() {
-                            logList.add(message);
-                            logList.select(logList.getItemCount() - 1);
-                            logList.showSelection();
-//                            int itemCount = logList.getItemCount();
-//                            logList.setTopIndex(itemCount - 1);
+
+                            String _message = message.replaceFirst(dataFolder, StageWorkspace.STAGE_DATA_FOLDER_SUBSTITUTION_NAME);
+                            logList.add(_message, 0);
+                            // logList.select(logList.getItemCount() - 1);
+                            // logList.showSelection();
+                            // int itemCount = logList.getItemCount();
+                            // logList.setTopIndex(itemCount - 1);
                         }
                     });
                 }
