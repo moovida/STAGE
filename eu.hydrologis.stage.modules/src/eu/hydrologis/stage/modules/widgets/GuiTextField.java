@@ -35,6 +35,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
+import org.jgrasstools.gears.libs.modules.JGTProcessingRegion;
 
 import eu.hydrologis.stage.libs.utils.FileUtilities;
 import eu.hydrologis.stage.libs.utilsrap.FileSelectionDialog;
@@ -154,6 +155,7 @@ public class GuiTextField extends ModuleGuiElement implements ModifyListener, Fo
             } else if (data.guiHints.contains(SpatialToolboxConstants.PROCESS_YRES_UI_HINT)) {
                 isProcessingYres = true;
             }
+
         }
     }
 
@@ -192,6 +194,30 @@ public class GuiTextField extends ModuleGuiElement implements ModifyListener, Fo
         }
         text.addModifyListener(this);
         text.addFocusListener(this);
+
+        if (isProcessing()) {
+            JGTProcessingRegion processingRegion = SpatialToolboxSessionPluginSingleton.getInstance().getProcessingRegion();
+            if (processingRegion != null) {
+                if (isProcessingNorth) {
+                    text.setText(String.valueOf(processingRegion.getNorth()));
+                } else if (isProcessingSouth) {
+                    text.setText(String.valueOf(processingRegion.getSouth()));
+                } else if (isProcessingWest) {
+                    text.setText(String.valueOf(processingRegion.getWest()));
+                } else if (isProcessingEast) {
+                    text.setText(String.valueOf(processingRegion.getEast()));
+                } else if (isProcessingCols) {
+                    text.setText(String.valueOf(processingRegion.getCols()));
+                } else if (isProcessingRows) {
+                    text.setText(String.valueOf(processingRegion.getRows()));
+                } else if (isProcessingXres) {
+                    text.setText(String.valueOf(processingRegion.getWEResolution()));
+                } else if (isProcessingYres) {
+                    text.setText(String.valueOf(processingRegion.getNSResolution()));
+                }
+            }
+        }
+
         if (data.fieldValue != null) {
             String tmp = data.fieldValue;
 
@@ -233,8 +259,8 @@ public class GuiTextField extends ModuleGuiElement implements ModifyListener, Fo
             browseButton.addSelectionListener(new SelectionAdapter(){
                 public void widgetSelected( SelectionEvent e ) {
                     File dataFolder = StageWorkspace.getInstance().getDataFolder(User.getCurrentUserName());
-                    FileSelectionDialog fileDialog = new FileSelectionDialog(browseButton.getShell(), !isInFile, dataFolder, null, null,
-                            null);
+                    FileSelectionDialog fileDialog = new FileSelectionDialog(browseButton.getShell(), !isInFile, dataFolder,
+                            null, null, null);
                     int returnCode = fileDialog.open();
                     if (returnCode == SWT.CANCEL) {
                         return;

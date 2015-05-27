@@ -44,11 +44,16 @@ public class SpatialToolboxView {
         final SpatialToolboxModulesView stageModulesView = new SpatialToolboxModulesView();
         stageModulesView.createStageModulesTab(display, mainStageCFolder, stageTab);
         stageModulesView.selected(true);
-        
+
         final CTabItem scriptingTab = new CTabItem(mainStageCFolder, SWT.NONE);
         scriptingTab.setText("Geo-scripting");
         final SpatialToolboxScriptingView stageScriptingView = new SpatialToolboxScriptingView();
         stageScriptingView.createStageScriptingTab(display, mainStageCFolder, scriptingTab, stageModulesView);
+
+        CTabItem processingRegionTab = new CTabItem(mainStageCFolder, SWT.NONE);
+        processingRegionTab.setText("Processing Region");
+        SpatialToolboxProcessingRegionView processingRegionView = new SpatialToolboxProcessingRegionView();
+        processingRegionView.createStageProcessingRegionTab(display, mainStageCFolder, processingRegionTab);
 
         CTabItem fileManagementTab = new CTabItem(mainStageCFolder, SWT.NONE);
         fileManagementTab.setText("File Management");

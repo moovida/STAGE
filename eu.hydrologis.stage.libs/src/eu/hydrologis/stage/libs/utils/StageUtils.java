@@ -19,6 +19,22 @@ import org.geotools.data.Base64;
  * @author Andrea Antonello (www.hydrologis.com)
  */
 public class StageUtils {
+
+    /**
+     * Supported file formats in read and write mode.
+     */
+    public static String[] EXTENTIONS_READ_WRITE = {"asc", "tiff", "tif", "shp"};
+
+    /**
+     * Supported vector formats in read and write mode.
+     */
+    public static String[] VECTOR_EXTENTIONS_READ_WRITE = {"shp"};
+    
+    /**
+     * Supported raster formats in read and write mode.
+     */
+    public static String[] RASTER_EXTENTIONS_READ_WRITE = {"asc", "tiff", "tif"};
+
     public static String escapeHTML( String s ) {
         StringBuilder out = new StringBuilder(Math.max(16, s.length()));
         for( int i = 0; i < s.length(); i++ ) {

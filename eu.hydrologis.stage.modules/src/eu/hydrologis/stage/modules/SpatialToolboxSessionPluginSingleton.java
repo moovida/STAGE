@@ -8,10 +8,6 @@
  */
 package eu.hydrologis.stage.modules;
 
-import static eu.hydrologis.stage.modules.utils.SpatialToolboxConstants.LIBS_MAIN_FOLDER_NAME;
-import static eu.hydrologis.stage.modules.utils.SpatialToolboxConstants.LIBS_SUBFOLDER_NAME;
-import static eu.hydrologis.stage.modules.utils.SpatialToolboxConstants.MODULES_SUBFOLDER_NAME;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -24,9 +20,9 @@ import org.eclipse.rap.rwt.RWT;
 import org.eclipse.rap.rwt.SingletonUtil;
 import org.eclipse.rap.rwt.service.ApplicationContext;
 import org.eclipse.rap.rwt.service.SettingStore;
+import org.jgrasstools.gears.libs.modules.JGTProcessingRegion;
 
 import eu.hydrologis.stage.libs.StageLibsActivator;
-import eu.hydrologis.stage.libs.workspace.StageWorkspace;
 import eu.hydrologis.stage.modules.utils.SpatialToolboxConstants;
 
 public class SpatialToolboxSessionPluginSingleton {
@@ -43,6 +39,7 @@ public class SpatialToolboxSessionPluginSingleton {
     private boolean doIgnoreProcessingRegion = true;
 
     private HashMap<String, Process> runningProcessesMap = new HashMap<String, Process>();
+    private JGTProcessingRegion processingRegion;
 
     private SpatialToolboxSessionPluginSingleton() {
         installationFolder = new File("."); // TODO make this good
@@ -205,8 +202,8 @@ public class SpatialToolboxSessionPluginSingleton {
     }
 
     private void addPath( String path, StringBuilder sb ) throws IOException {
-//        sb.append("\"").append(path).append("\"");
-         sb.append(path);
+        // sb.append("\"").append(path).append("\"");
+        sb.append(path);
     }
 
     public void addProcess( Process process, String id ) {
@@ -276,6 +273,14 @@ public class SpatialToolboxSessionPluginSingleton {
 
     public void setDoIgnoreProcessingRegion( boolean doIgnoreProcessingRegion ) {
         this.doIgnoreProcessingRegion = doIgnoreProcessingRegion;
+    }
+
+    public void setProcessingRegion( JGTProcessingRegion processingRegion ) {
+        this.processingRegion = processingRegion;
+    }
+
+    public JGTProcessingRegion getProcessingRegion() {
+        return processingRegion;
     }
 
 }
