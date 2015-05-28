@@ -17,6 +17,7 @@ import org.eclipse.rap.addons.fileupload.FileDetails;
 import org.eclipse.rap.addons.fileupload.FileUploadEvent;
 import org.eclipse.rap.addons.fileupload.FileUploadHandler;
 import org.eclipse.rap.addons.fileupload.FileUploadListener;
+import org.eclipse.rap.rwt.RWT;
 import org.eclipse.rap.rwt.service.ServerPushSession;
 import org.eclipse.rap.rwt.widgets.FileUpload;
 import org.eclipse.swt.SWT;
@@ -29,15 +30,19 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 
 import eu.hydrologis.stage.libs.utilsrap.DownloadUtils;
 import eu.hydrologis.stage.libs.utilsrap.ExampleUtil;
 import eu.hydrologis.stage.libs.utilsrap.FileSelectionDialog;
+import eu.hydrologis.stage.libs.utilsrap.FolderSelectionDialog;
 import eu.hydrologis.stage.libs.workspace.StageWorkspace;
 import eu.hydrologis.stage.libs.workspace.User;
+import eu.hydrologis.stage.modules.SpatialToolboxSessionPluginSingleton;
 
 /**
  * The stage file management view.
@@ -52,10 +57,13 @@ public class SpatialToolboxFilemanagementView {
     private Button uploadButton;
     private ServerPushSession pushSession;
     private Display display;
+    private Listener runKeyListener;
+    private Composite parent;
 
     public void createStageFileManagementTab( Display display, Composite parent, CTabItem stageTab ) throws IOException {
 
         this.display = display;
+        this.parent = parent;
         Composite mainComposite = new Composite(parent, SWT.NONE);
         mainComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
         mainComposite.setLayout(new GridLayout(1, true));
@@ -228,6 +236,48 @@ public class SpatialToolboxFilemanagementView {
                 }
             }
         });
+    }
+
+    public void selected( boolean selected ) {
+        /*
+         * execution shortcut
+         */
+        if (selected) {
+            runKeyListener = new Listener(){
+                private static final long serialVersionUID = 1L;
+
+                public void handleEvent( Event event ) {
+                    setDataPath(parent.getShell());
+                }
+            };
+            String[] shortcut = new String[]{"CTRL+ALT+w"};
+            display.setData(RWT.ACTIVE_KEYS, shortcut);
+            display.setData(RWT.CANCEL_KEYS, shortcut);
+            display.addFilter(SWT.KeyDown, runKeyListener);
+        } else {
+            if (runKeyListener != null)
+                display.removeFilter(SWT.KeyDown, runKeyListener);
+        }
+    }
+
+    protected void setDataPath( Shell shell ) {
+        if (StageWorkspace.getInstance().isLocal()) {
+            String home = System.getProperty("user.home");
+            File homeFile = new File(home);
+            File dataFolder = StageWorkspace.getInstance().getDataFolder(User.getCurrentUserName());
+            if (!homeFile.exists()) {
+                homeFile = dataFolder;
+            }
+            FolderSelectionDialog folderDialog = new FolderSelectionDialog(shell, false, homeFile, null);
+            int returnCode = folderDialog.open();
+            if (returnCode == SWT.OK) {
+                File selectedFolder = folderDialog.getSelectedFile();
+                if (selectedFolder.exists()) {
+                    StageWorkspace.getInstance().setCustomDataFolder(selectedFolder);
+                    MessageDialog.openInformation(shell, "INFO", "Custom data path set to: " + selectedFolder);
+                }
+            }
+        }
     }
 
 }

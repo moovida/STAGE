@@ -55,9 +55,9 @@ public class SpatialToolboxView {
         SpatialToolboxProcessingRegionView processingRegionView = new SpatialToolboxProcessingRegionView();
         processingRegionView.createStageProcessingRegionTab(display, mainStageCFolder, processingRegionTab);
 
-        CTabItem fileManagementTab = new CTabItem(mainStageCFolder, SWT.NONE);
+        final CTabItem fileManagementTab = new CTabItem(mainStageCFolder, SWT.NONE);
         fileManagementTab.setText("File Management");
-        SpatialToolboxFilemanagementView stageFileManagementView = new SpatialToolboxFilemanagementView();
+        final SpatialToolboxFilemanagementView stageFileManagementView = new SpatialToolboxFilemanagementView();
         stageFileManagementView.createStageFileManagementTab(display, mainStageCFolder, fileManagementTab);
 
         CTabItem viewerTab = new CTabItem(mainStageCFolder, SWT.NONE);
@@ -79,9 +79,15 @@ public class SpatialToolboxView {
                 if (selection == stageTab) {
                     stageModulesView.selected(true);
                     stageScriptingView.selected(false);
+                    stageFileManagementView.selected(false);
                 } else if (selection == scriptingTab) {
-                    stageModulesView.selected(false);
                     stageScriptingView.selected(true);
+                    stageModulesView.selected(false);
+                    stageFileManagementView.selected(false);
+                } else if (selection == fileManagementTab) {
+                    stageFileManagementView.selected(true);
+                    stageModulesView.selected(false);
+                    stageScriptingView.selected(false);
                 }
 
             }

@@ -34,6 +34,7 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
+import eu.hydrologis.stage.libs.log.StageLogger;
 import eu.hydrologis.stage.libs.utils.FileUtilities;
 import eu.hydrologis.stage.libs.utils.ImageCache;
 import eu.hydrologis.stage.libs.workspace.StageWorkspace;
@@ -218,6 +219,9 @@ public class FolderSelectionDialog extends Dialog implements ModifyListener {
                             @Override
                             public boolean accept( File file ) {
                                 String name = file.getName();
+                                if (name.startsWith(".")) {
+                                    return false;
+                                }
                                 // allow folders
                                 if (!file.isDirectory()) {
                                     return false;
@@ -240,7 +244,9 @@ public class FolderSelectionDialog extends Dialog implements ModifyListener {
                                 }
                             }
                         });
-
+                        if (StageLogger.LOG_DEBUG) {
+                            StageLogger.logDebug(this, "getChildren of: " + parentElement);
+                        }
                         Arrays.sort(listFiles);
                         return listFiles;
                     }

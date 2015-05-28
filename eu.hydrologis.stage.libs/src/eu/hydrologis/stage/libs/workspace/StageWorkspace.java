@@ -52,12 +52,14 @@ public class StageWorkspace {
     private static final String STAGE_DATAFOLDER_JAVA_PROPERTIES_KEY = "stage.datafolder";
     private static final String STAGE_SCRIPTSFOLDER_JAVA_PROPERTIES_KEY = "stage.scriptsfolder";
     private static final String STAGE_GEOPAPARAZZIFOLDER_JAVA_PROPERTIES_KEY = "stage.geopaparazzifolder";
+    private static final String STAGE_ISLOCAL_KEY = "stage.islocal";
 
     private static StageWorkspace stageWorkspace;
     private File stageWorkspaceFolder;
     private File customDataFolder;
     private File customScriptsFolder;
     private File customGeopaparazziFolder;
+    private boolean isLocal = false;
 
     public static StageWorkspace getInstance() {
         if (stageWorkspace == null) {
@@ -88,6 +90,14 @@ public class StageWorkspace {
             StageLogger.logInfo(this, "Custom geopaparazzi folder in use: " + customGeopaparazziFolder);
         }
         stageWorkspaceFolder = new File(stageWorkspacepath);
+
+        String isLocalString = System.getProperty(STAGE_ISLOCAL_KEY);
+        if (isLocalString != null) {
+            try {
+                isLocal = Boolean.parseBoolean(isLocalString);
+            } catch (Exception e) {
+            }
+        }
     }
 
     private File getUserFolder( String user ) {
@@ -124,6 +134,10 @@ public class StageWorkspace {
         return dataFolder;
     }
 
+    public void setCustomDataFolder( File customDataFolder ) {
+        this.customDataFolder = customDataFolder;
+    }
+
     public File getGeopaparazziFolder( String user ) {
         if (customGeopaparazziFolder != null) {
             return customGeopaparazziFolder;
@@ -134,6 +148,15 @@ public class StageWorkspace {
             throw new RuntimeException(COULD_NOT_CREATE_GEOPAP_FOLDER);
         }
         return geopaparazziFolder;
+    }
+
+    /**
+     * Getter for the isLocal var.
+     * 
+     * @return <code>true</code>, if the app is being used locally, which enables some features.
+     */
+    public boolean isLocal() {
+        return isLocal;
     }
 
     /**
