@@ -1,18 +1,11 @@
 package eu.hydrologis.stage.treeslicesviewer;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.Arrays;
 
 import org.eclipse.jface.dialogs.Dialog;
-import org.eclipse.rap.rwt.RWT;
-import org.eclipse.rap.rwt.client.service.JavaScriptLoader;
-import org.eclipse.rap.rwt.service.ResourceLoader;
-import org.eclipse.rap.rwt.service.ResourceManager;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.browser.BrowserFunction;
@@ -25,6 +18,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 
+import eu.hydrologis.stage.libs.log.StageLogger;
 import eu.hydrologis.stage.libs.utils.FileUtilities;
 
 public class TreeSlicerDialog extends Dialog {
@@ -37,23 +31,17 @@ public class TreeSlicerDialog extends Dialog {
 
     private File treeSlicesFolder;
 
-    // private static final String CANCEL = "Cancel";
-
     public TreeSlicerDialog( Shell parent, File treeSlicesFolder ) {
         super(parent);
         this.treeSlicesFolder = treeSlicesFolder;
         JsResources.ensureJavaScriptResources();
         htmlUrl = JsResources.ensureHtmlResources();
-        // htmlUrl = JsResources.registerIfMissing("trees_info.html");
     }
 
     @Override
     protected void configureShell( Shell shell ) {
         super.configureShell(shell);
-        // if (title != null) {
         shell.setText("PLOTS FOLDER: " + treeSlicesFolder.getName());
-        // }
-
         shell.setMaximized(true);
     }
 
@@ -99,7 +87,7 @@ public class TreeSlicerDialog extends Dialog {
                                     String fileJson = FileUtilities.readFile(plotFile);
                                     return fileJson;
                                 } catch (IOException e) {
-                                    e.printStackTrace();
+                                    StageLogger.logError(this, "Error reading the plot data.", e);
                                 }
                             }
                             throw new RuntimeException("Plot file does not exist: " + plotFile.getName());
@@ -111,28 +99,10 @@ public class TreeSlicerDialog extends Dialog {
                 }
             });
 
-            // String treeHtml = getTreeHtml();
-            // treeSlicerBrowser.setText(treeHtml);
-
-            // new GetSelectedPlotFilesFunction(treeSlicerBrowser);
         } catch (Exception e) {
             e.printStackTrace();
         }
         return composite;
-    }
-    public static String getTreeHtml() throws Exception {
-        InputStream inputStream = JsResources.class.getClassLoader().getResourceAsStream("js/trees_info.html");
-
-        if (inputStream != null) {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-            StringBuilder sb = new StringBuilder();
-            String line;
-            while( (line = reader.readLine()) != null ) {
-                sb.append(line).append("\n");
-            }
-            return sb.toString();
-        }
-        return "";
     }
 
     @Override

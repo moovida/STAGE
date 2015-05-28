@@ -62,7 +62,7 @@ public class StageApplication implements ApplicationConfiguration {
         application.addEntryPoint("/geopapbrowser", GeopapBrowserEntryPoint.class, geopapBrowserProperties);
 
         Map<String, String> treeSlicesProperties = new HashMap<String, String>();
-        treeSlicesProperties.put(WebClient.PAGE_TITLE, "Tree SLices Viewer");
+        treeSlicesProperties.put(WebClient.PAGE_TITLE, "Tree Slices Viewer");
         treeSlicesProperties.put(WebClient.BODY_HTML, readTextFromResource("resources/body_loading.html", "UTF-8"));
         treeSlicesProperties.put(WebClient.HEAD_HTML, readTextFromResource("resources/head.html", "UTF-8"));
         treeSlicesProperties.put(WebClient.FAVICON, "resources/favicon.png");
