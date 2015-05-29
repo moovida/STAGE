@@ -35,7 +35,7 @@ public class TreeSlicerDialog extends Dialog {
         super(parent);
         this.treeSlicesFolder = treeSlicesFolder;
         JsResources.ensureJavaScriptResources();
-        htmlUrl = JsResources.ensureHtmlResources();
+        //htmlUrl = JsResources.ensureHtmlResources();
     }
 
     @Override

@@ -8,6 +8,9 @@
  */
 package eu.hydrologis.stage.treeslicesviewer;
 
+import static java.lang.Math.max;
+import static java.lang.Math.min;
+
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -18,9 +21,13 @@ import org.eclipse.rap.rwt.RWT;
 import org.eclipse.rap.rwt.application.AbstractEntryPoint;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.browser.Browser;
+import org.eclipse.swt.browser.BrowserFunction;
+import org.eclipse.swt.browser.ProgressEvent;
+import org.eclipse.swt.browser.ProgressListener;
 import org.eclipse.swt.custom.CLabel;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -48,8 +55,14 @@ public class TreeSlicesViewerEntryPoint extends AbstractEntryPoint implements Tr
     private Shell parentShell;
     private Combo plotCombo;
     private boolean onlyDiameterMajor17 = true;
-    private JSONObject selectedJsonPlot;
     private CLabel informationText;
+    private String plotHtmlResource;
+    private double minHeight;
+    private double minDiam;
+    private double maxHeight;
+    private double maxDiam;
+    private JSONObject plotObjectTransfer;
+    private Browser mapBrowser;
 
     @SuppressWarnings("serial")
     @Override
@@ -63,6 +76,9 @@ public class TreeSlicesViewerEntryPoint extends AbstractEntryPoint implements Tr
             errorLabel.setText("<span style='font:bold 24px Arial;'>" + errorMessage + "</span>");
             return;
         }
+
+        JsResources.ensureJavaScriptResources();
+        plotHtmlResource = JsResources.ensurePlotHtmlResource();
 
         parentShell = parent.getShell();
 
@@ -170,11 +186,7 @@ public class TreeSlicesViewerEntryPoint extends AbstractEntryPoint implements Tr
             }
         });
 
-        Browser mapBrowser = new Browser(leftComposite, SWT.NONE | SWT.BORDER);
-        GridData mapBrowserGD = new GridData(SWT.FILL, SWT.FILL, true, true);
-        mapBrowserGD.horizontalSpan = 3;
-        mapBrowser.setLayoutData(mapBrowserGD);
-        // mapBrowser.setUrl();
+        addMapBrowser(leftComposite);
 
         Group infoGroup = new Group(leftComposite, SWT.NONE);
         GridData infoGroupGD = new GridData(SWT.FILL, SWT.FILL, true, true);
@@ -211,21 +223,84 @@ public class TreeSlicesViewerEntryPoint extends AbstractEntryPoint implements Tr
 
     }
 
+    @SuppressWarnings("serial")
+    private void addMapBrowser( Composite leftComposite ) {
+        mapBrowser = new Browser(leftComposite, SWT.NONE | SWT.BORDER);
+        GridData mapBrowserGD = new GridData(SWT.FILL, SWT.FILL, true, true);
+        mapBrowserGD.horizontalSpan = 3;
+        mapBrowser.setLayoutData(mapBrowserGD);
+        mapBrowser.setUrl(plotHtmlResource);
+        mapBrowser.addProgressListener(new ProgressListener(){
+            public void completed( ProgressEvent event ) {
+                new BrowserFunction(mapBrowser, "getPlotData"){
+                    @Override
+                    public Object function( Object[] arguments ) {
+                        if (plotObjectTransfer != null) {
+                            return plotObjectTransfer.toString();
+                        }
+                        return null;
+                    }
+                };
+                new BrowserFunction(mapBrowser, "getMinHeight"){
+                    @Override
+                    public Object function( Object[] arguments ) {
+                        return minHeight;
+                    }
+                };
+                new BrowserFunction(mapBrowser, "getMaxHeight"){
+                    @Override
+                    public Object function( Object[] arguments ) {
+                        return maxHeight;
+                    }
+                };
+                new BrowserFunction(mapBrowser, "getMinDiam"){
+                    @Override
+                    public Object function( Object[] arguments ) {
+                        return minDiam;
+                    }
+                };
+                new BrowserFunction(mapBrowser, "getMaxDiam"){
+                    @Override
+                    public Object function( Object[] arguments ) {
+                        return maxDiam;
+                    }
+                };
+
+                Rectangle clientArea = mapBrowser.getClientArea();
+                int w = clientArea.width;
+                int h = clientArea.height;
+                mapBrowser.evaluate("createMap(" + w + ", " + h + ")");
+            }
+            public void changed( ProgressEvent event ) {
+            }
+        });
+
+    }
+
     protected void selectPlot( String selectedText ) {
         File plotFile = new File(selectedFile, selectedText + ".json");
+
         if (plotFile.exists()) {
+
+            plotObjectTransfer = new JSONObject();
+
             try {
                 String fileJson = FileUtilities.readFile(plotFile);
                 JSONObject plotObject = new JSONObject(fileJson);
                 JSONObject plotData = plotObject.getJSONObject(JSON_PLOT_DATA);
                 JSONArray plotsArray = plotData.getJSONArray(JSON_PLOTS);
-                selectedJsonPlot = plotsArray.getJSONObject(0);
+                JSONObject selectedJsonPlot = plotsArray.getJSONObject(0);
 
                 String id = selectedJsonPlot.getString(JSON_PLOT_ID);
                 double lon = selectedJsonPlot.getDouble(JSON_PLOT_CENTERLON);
                 double lat = selectedJsonPlot.getDouble(JSON_PLOT_CENTERLAT);
                 double radius = selectedJsonPlot.getDouble(JSON_PLOT_RADIUS);
-                // selectedJsonPlot.getString(JSON_PLOT_RADIUSDEG);
+                double radiusLL = selectedJsonPlot.getDouble(JSON_PLOT_RADIUSDEG);
+
+                plotObjectTransfer.put(JSON_PLOT_ID, id);
+                plotObjectTransfer.put(JSON_PLOT_CENTERLAT, lat);
+                plotObjectTransfer.put(JSON_PLOT_CENTERLON, lon);
+                plotObjectTransfer.put(JSON_PLOT_RADIUSDEG, radiusLL);
 
                 DecimalFormat radiusFormatter = new DecimalFormat("0.0");
                 DecimalFormat llFormatter = new DecimalFormat("0.000000");
@@ -241,17 +316,35 @@ public class TreeSlicesViewerEntryPoint extends AbstractEntryPoint implements Tr
                 int fnCount = 0;
                 int matchedCount = 0;
 
+                minHeight = Double.POSITIVE_INFINITY;
+                minDiam = Double.POSITIVE_INFINITY;
+                maxHeight = Double.NEGATIVE_INFINITY;
+                maxDiam = Double.NEGATIVE_INFINITY;
+
+                JSONArray treesArrayTransfer = new JSONArray();
+                int index = 0;
+                plotObjectTransfer.put(JSON_PLOT_TREES, treesArrayTransfer);
+
                 JSONArray treesArray = selectedJsonPlot.getJSONArray(JSON_PLOT_TREES);
                 for( int i = 0; i < treesArray.length(); i++ ) {
                     JSONObject treeObject = treesArray.getJSONObject(i);
+                    double treeHeight = treeObject.getDouble(JSON_TREE_HEIGHT);
+                    minHeight = min(minHeight, treeHeight);
+                    maxHeight = max(maxHeight, treeHeight);
+
                     boolean hasDiam = false;
                     boolean hasMatch = false;
+                    double diamLL = 0;
                     if (treeObject.has(JSON_TREE_DIAM)) {
                         hasDiam = true;
                         double diam = treeObject.getDouble(JSON_TREE_DIAM);
                         if (onlyDiameterMajor17 && diam < 17.5) {
                             continue;
                         }
+
+                        diamLL = treeObject.getDouble(JSON_TREE_DIAMDEG);
+                        minDiam = min(minDiam, diamLL);
+                        maxDiam = max(maxDiam, diamLL);
                     }
                     if (treeObject.has(JSON_TREE_ID_MATCHED)) {
                         matchedCount++;
@@ -264,6 +357,17 @@ public class TreeSlicesViewerEntryPoint extends AbstractEntryPoint implements Tr
                             fnCount++;
                         }
                     }
+
+                    JSONObject treeObjectTransfer = new JSONObject();
+                    treesArrayTransfer.put(index++, treeObjectTransfer);
+                    treeObjectTransfer.put(JSON_TREE_ID, treeObject.getString(JSON_TREE_ID));
+                    treeObjectTransfer.put(JSON_TREE_LAT, treeObject.getDouble(JSON_TREE_LAT));
+                    treeObjectTransfer.put(JSON_TREE_LON, treeObject.getDouble(JSON_TREE_LON));
+                    treeObjectTransfer.put(JSON_TREE_HEIGHT, treeObject.getDouble(JSON_TREE_HEIGHT));
+                    if (hasDiam)
+                        treeObjectTransfer.put(JSON_TREE_DIAMDEG, diamLL);
+                    if (hasMatch)
+                        treeObjectTransfer.put(JSON_TREE_ID_MATCHED, treeObject.getString(JSON_TREE_ID_MATCHED));
                 }
 
                 plotInfoSB.append("<br/><b>Matching:</b><br/>\n");
@@ -272,9 +376,13 @@ public class TreeSlicesViewerEntryPoint extends AbstractEntryPoint implements Tr
                 plotInfoSB.append("false positives = " + fpCount + "<br/>");
 
                 informationText.setText(plotInfoSB.toString());
+
+                mapBrowser.evaluate("updateData()");
             } catch (IOException e) {
                 StageLogger.logError(this, "Error reading the plot data.", e);
             }
+        } else {
+            plotObjectTransfer = null;
         }
 
     }

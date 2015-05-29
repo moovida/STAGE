@@ -22,3 +22,4 @@ eu.hydrologis.stage.modules/bin
 org.eclipse.rap.addons.filedialog/bin
 org.eclipse.rap.addons.fileupload/bin
 
+/eu.hydrologis.stage.treeslicesviewer/js/nbproject/private/

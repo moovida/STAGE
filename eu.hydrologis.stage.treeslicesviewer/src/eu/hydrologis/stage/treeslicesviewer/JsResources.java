@@ -27,6 +27,7 @@ public class JsResources {
 
     private static List<String> toRequireList = new ArrayList<String>();
     private static List<String> toRequireHtmlList = new ArrayList<String>();
+    private static String toRequirePlotmap;
 
     private static final ResourceLoader resourceLoader = new ResourceLoader(){
         public InputStream getResourceAsStream( String resourceName ) throws IOException {
@@ -58,7 +59,7 @@ public class JsResources {
         }
     }
 
-    public static String ensureHtmlResources() {
+    public static String ensureTreesHtmlResource() {
         ResourceManager resourceManager = RWT.getApplicationContext().getResourceManager();
         try {
             String fileName = "trees_info.html";
@@ -79,6 +80,29 @@ public class JsResources {
             loader.require(toRequireStr);
         }
         return toRequireHtmlList.get(0);
+    }
+
+    public static String ensurePlotHtmlResource() {
+        ResourceManager resourceManager = RWT.getApplicationContext().getResourceManager();
+        try {
+            String fileName = "plotmap.html";
+            if (!resourceManager.isRegistered(fileName)) {
+                InputStream resourceAsStream = resourceLoader.getResourceAsStream(fileName);
+                if (resourceAsStream == null) {
+                    throw new NullPointerException();
+                }
+                String registered = register(resourceManager, fileName, resourceAsStream);
+                if (toRequirePlotmap == null)
+                    toRequirePlotmap = registered;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        if (toRequirePlotmap != null) {
+            JavaScriptLoader loader = RWT.getClient().getService(JavaScriptLoader.class);
+            loader.require(toRequirePlotmap);
+        }
+        return toRequirePlotmap;
     }
 
     public static String registerIfMissing( String resource ) {
