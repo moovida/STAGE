@@ -48,6 +48,7 @@ import org.jgrasstools.gears.libs.modules.ModelsSupporter;
 
 import eu.hydrologis.stage.libs.log.StageLogger;
 import eu.hydrologis.stage.libs.utils.ImageCache;
+import eu.hydrologis.stage.libs.utils.StageUtils;
 import eu.hydrologis.stage.libs.utilsrap.FileSelectionDialog;
 import eu.hydrologis.stage.libs.workspace.StageWorkspace;
 import eu.hydrologis.stage.libs.workspace.User;
@@ -439,9 +440,9 @@ public class SpatialToolboxScriptingView {
                     public void run() {
                         File userFolder = StageWorkspace.getInstance().getDataFolder(User.getCurrentUserName());
                         FileSelectionDialog fileDialog = new FileSelectionDialog(scriptAreaText.getShell(), false, userFolder,
-                                null, null, null);
+                                null, StageUtils.EXTENTIONS_READ_WRITE, null);
                         int returnCode = fileDialog.open();
-                        if (returnCode == SWT.CANCEL) {
+                        if (returnCode != SWT.OK) {
                             return;
                         }
                         String selectedFile = fileDialog.getSelectedFileRelativePath();

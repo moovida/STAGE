@@ -38,6 +38,7 @@ import org.eclipse.swt.widgets.Text;
 import org.jgrasstools.gears.libs.modules.JGTProcessingRegion;
 
 import eu.hydrologis.stage.libs.utils.FileUtilities;
+import eu.hydrologis.stage.libs.utils.StageUtils;
 import eu.hydrologis.stage.libs.utilsrap.FileSelectionDialog;
 import eu.hydrologis.stage.libs.utilsrap.FolderSelectionDialog;
 import eu.hydrologis.stage.libs.workspace.StageWorkspace;
@@ -260,7 +261,7 @@ public class GuiTextField extends ModuleGuiElement implements ModifyListener, Fo
                 public void widgetSelected( SelectionEvent e ) {
                     File dataFolder = StageWorkspace.getInstance().getDataFolder(User.getCurrentUserName());
                     FileSelectionDialog fileDialog = new FileSelectionDialog(browseButton.getShell(), !isInFile, dataFolder,
-                            null, null, null);
+                            null, StageUtils.EXTENTIONS_READ_WRITE, null);
                     int returnCode = fileDialog.open();
                     if (returnCode == SWT.CANCEL) {
                         return;
