@@ -29,6 +29,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.Text;
 import org.jgrasstools.gears.utils.files.FileUtilities;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -88,9 +89,10 @@ public class TreeSlicesViewerEntryPoint extends AbstractEntryPoint implements Tr
         Label datasetTitleLabel = new Label(leftComposite, SWT.NONE);
         datasetTitleLabel.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
         datasetTitleLabel.setText("Dataset: ");
-        final Label datasetNameLabel = new Label(leftComposite, SWT.NONE);
-        datasetNameLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-        datasetNameLabel.setText("");
+        final Text datasetNameText = new Text(leftComposite, SWT.BORDER);
+        datasetNameText.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+        datasetNameText.setText("");
+        datasetNameText.setEditable(false);
         Button datasetButton = new Button(leftComposite, SWT.PUSH);
         datasetButton.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, false, false));
         datasetButton.setText("...");
@@ -103,13 +105,13 @@ public class TreeSlicesViewerEntryPoint extends AbstractEntryPoint implements Tr
                     int returnCode = fileDialog.open();
                     if (returnCode == SWT.CANCEL) {
                         selectedFile = null;
-                        datasetNameLabel.setText("");
+                        datasetNameText.setText("");
                         return;
                     }
 
                     selectedFile = fileDialog.getSelectedFile();
                     if (selectedFile != null)
-                        datasetNameLabel.setText(selectedFile.getName());
+                        datasetNameText.setText(selectedFile.getName());
 
                     File[] plotFiles = selectedFile.listFiles(new FilenameFilter(){
                         @Override
