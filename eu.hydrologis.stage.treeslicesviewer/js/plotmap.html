@@ -12,82 +12,13 @@ Andrea Antonello
         <script type="text/javascript" src="libs/leaflet.js"></script>
         <link rel="stylesheet" href="libs/leaflet.css" />
         <script type='text/javascript' src='libs/jquery.min.js'></script>
-        <style>
-            .control-group {
-                padding-top: 10px;
-                margin: 10px;
-            }
-            svg .line {
-                stroke: red;
-                stroke-width: 1;
-                fill: none;
-            }
-            .dot {
-                fill: #fff;
-                stroke: steelblue;
-            }
-            .axis path, .axis line {
-                fill: none;
-                stroke: #000;
-                shape-rendering: crispEdges;
-            }
-
-            .axis text {
-                font: 10px sans-serif;
-            }
-
-            .axis .grid-line {
-                stroke: #000;
-                shape-rendering: crispEdges;
-            }
-            body {
-                font-family: "helvetica";
-            }
-            #maintable {
-                width: 100%;
-                margin-left: 0%;
-                margin-right: 0%;
-            }
-            #maincolumn {
-            }
-            #chartscolumn {
-            }
-            /*            #plotstitle, #loading, #plotselect{
-             font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-             font-size: 24px;
-             font-weight: bold;
-             float: left;
-
-             margin: 15px;
-             }*/
-            .leftfloat {
-                float: left;
-            }
-            .roundedbox {
-                background-color: rgba(70,130,180,0.3);
-                border: 2px solid steelblue;
-                padding: 5px;
-                margin: 5px;
-                border-radius: 5px 15px;
-            }
-            .whitebox {
-                background-color: white;
-                border: 2px solid steelblue;
-                padding: 5px;
-            }
-        </style>
-
     </head>
     <body>
         <div  id="map"></div>
         <script type="text/javascript">
             // GLOBAL VARS START
             var body = d3.select("body");
-            var clickedTreeId;
-            var mmX = 60;
-            var mmY = 50;
-
-
+            var selectedTreeData;
             var doMajor175 = true;
 
             var plot;
@@ -105,10 +36,6 @@ Andrea Antonello
             profColorMap.set("WE", "green");
             profColorMap.set("WNES", "orange");
             // GLOBAL VARS END
-
-      /*       $(document).ready(function () {
-                createMap(200, 200);
-            }); */
 
             function createMap(mainWidth, mainHeight) {
                 body.select("#map").style("width", mainWidth + "px").style("height", mainHeight + "px");
@@ -135,8 +62,11 @@ Andrea Antonello
                 mapPlotG = mapSvg.append("g");
                 mapLinesG = mapSvg.append("g");
                 mapTreesG = mapSvg.append("g");
+            }
 
-//                updateData();
+            function setMajor175(doSet) {
+                doMajor175 = doSet;
+                updateData();
             }
 
             function updateData() {
@@ -151,11 +81,19 @@ Andrea Antonello
                     mapPlotG.selectAll("circle").remove();
                 }
 
-                clearInfoAndChart();
+                clearSlicePolygons();
 
                 plots = [JSON.parse(plotData)];
                 plot = plots[0];
                 trees = plot.trees;
+
+                trees = trees.filter(function (d) {
+                    if (d.diam && doMajor175) {
+                        return d.diam > 17.5;
+                    }
+                    return true;
+                });
+
                 var de = (maxHeight - minHeight) / 6;
                 heightScale = d3.scale.linear().domain([minHeight, minHeight + 2 * de, minHeight + 3 * de, minHeight + 4 * de, minHeight + 5 * de, maxHeight]).range(["#00BFBF", "#00FF00", "#FFFF00", "#FF7F00", "#BF7F3F", "#141514"]);
                 leafletMap.setView([plot.centerlat, plot.centerlon], 20);
@@ -172,8 +110,18 @@ Andrea Antonello
                 return point;
             }
 
-            function clearInfoAndChart() {
+            function clearSlicePolygons() {
                 mapPlotG.selectAll("polygon").remove();
+                selectedTreeData = null;
+            }
+
+            function clearPlotMap() {
+                mapPlotG.selectAll("polygon").remove();
+                if (plots)
+                    mapPlotG.selectAll("circle").data(plots).remove();
+                if (trees)
+                    mapTreesG.selectAll("circle").data(trees).remove();
+                selectedTreeData = null;
             }
 
             // Reposition the SVG to cover the features.
@@ -205,7 +153,7 @@ Andrea Antonello
                             return "red";
                         }
                     } else {
-                        return "cyan"
+                        return "cyan";
                     }
                 }).style("fill-opacity", function (d) {
                     if (d.diamdeg) {
@@ -214,6 +162,7 @@ Andrea Antonello
                         return 0.0;
                     }
                 }).on("click", clickTree);
+
                 mapPlotG.selectAll("circle").data(plots).attr("cx", function (d) {
                     return project(d.centerlon, d.centerlat).x;
                 }).attr("cy", function (d) {
@@ -223,17 +172,13 @@ Andrea Antonello
                     return r;
                 }).style("fill-opacity", 0.0).style("stroke", "steelblue");
 
-                var selTree = trees.filter(function (d) {
-                    return clickedTreeId === d.id;
-                });
-
-                if (selTree.length === 1) {
+                if (selectedTreeData) {
                     mapPlotG.selectAll("polygon").data(
                             [
-                                [selTree[0].sliceareas.SN, profColorMap.get("SN")],
-                                [selTree[0].sliceareas.SWNE, profColorMap.get("SWNE")],
-                                [selTree[0].sliceareas.WE, profColorMap.get("WE")],
-                                [selTree[0].sliceareas.WNES, profColorMap.get("WNES")]
+                                [selectedTreeData.sliceareas.SN, profColorMap.get("SN")],
+                                [selectedTreeData.sliceareas.SWNE, profColorMap.get("SWNE")],
+                                [selectedTreeData.sliceareas.WE, profColorMap.get("WE")],
+                                [selectedTreeData.sliceareas.WNES, profColorMap.get("WNES")]
                             ]).attr("points", function (d) {
                         var ps = "";
                         d[0].forEach(function (p) {
@@ -251,12 +196,13 @@ Andrea Antonello
             }
 
             var clickTree = function (d) {
-                clickedTreeId = d.id;
-                clearInfoAndChart();
+                clearSlicePolygons();
 
-                doMapTreeLines(d);
+                var treeData = getTreedataById(d.id);
+                selectedTreeData = JSON.parse(treeData);
+                doMapTreeLines(selectedTreeData);
 
-//                doTreeCharts(d);
+                doTreeCharts(selectedTreeData);
             };
 
             function doMapTreeLines(tree) {

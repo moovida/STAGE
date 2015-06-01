@@ -16,6 +16,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.Arrays;
+import java.util.HashMap;
 
 import org.eclipse.rap.rwt.RWT;
 import org.eclipse.rap.rwt.application.AbstractEntryPoint;
@@ -62,7 +63,11 @@ public class TreeSlicesViewerEntryPoint extends AbstractEntryPoint implements Tr
     private double maxHeight;
     private double maxDiam;
     private JSONObject plotObjectTransfer;
+    private HashMap<String, JSONObject> id2TreeJsonMap = new HashMap<String, JSONObject>();
     private Browser mapBrowser;
+
+    private DecimalFormat radiusFormatter = new DecimalFormat("0.0");
+    private DecimalFormat llFormatter = new DecimalFormat("0.000000");
 
     @SuppressWarnings("serial")
     @Override
@@ -183,6 +188,8 @@ public class TreeSlicesViewerEntryPoint extends AbstractEntryPoint implements Tr
             @Override
             public void widgetSelected( SelectionEvent e ) {
                 onlyDiameterMajor17 = onlyDiametersCheckButton.getSelection();
+                String tf = onlyDiameterMajor17 ? "true" : "false";
+                mapBrowser.evaluate("setMajor175(" + tf + ")");
             }
         });
 
@@ -241,6 +248,60 @@ public class TreeSlicesViewerEntryPoint extends AbstractEntryPoint implements Tr
                         return null;
                     }
                 };
+                new BrowserFunction(mapBrowser, "getTreedataById"){
+                    @Override
+                    public Object function( Object[] arguments ) {
+                        String treeId = arguments[0].toString();
+                        JSONObject treeObject = id2TreeJsonMap.get(treeId);
+                        if (treeObject != null) {
+                            double treeHeight = treeObject.getDouble(JSON_TREE_HEIGHT);
+                            double lat = treeObject.getDouble(JSON_TREE_LAT);
+                            double lon = treeObject.getDouble(JSON_TREE_LON);
+
+                            StringBuilder plotInfoSB = new StringBuilder();
+                            boolean hasDiam = treeObject.has(JSON_TREE_DIAM);
+                            boolean hasMatched = treeObject.has(JSON_TREE_ID_MATCHED);
+                            boolean isTp = hasDiam && hasMatched;
+                            boolean isFn = hasDiam && !hasMatched;
+                            boolean isFp = !hasDiam;
+                            if (isTp) {
+                                plotInfoSB.append("<b>TRUE POSITIVE</b><br/>\n");
+                            } else if (isFn) {
+                                plotInfoSB.append("<b>FALSE NEGATIVE</b><br/>\n");
+                            } else if (isFp) {
+                                plotInfoSB.append("<b>FALSE POSITIVE</b><br/>\n");
+                            }
+                            if (isTp || isFn) {
+                                double diam = treeObject.getDouble(JSON_TREE_DIAM);
+                                plotInfoSB.append("<br/><b>MAPPED TREE INFORMATION</b><br/>\n");
+                                plotInfoSB.append("id = " + treeId + "<br/>");
+                                plotInfoSB.append("height [m] = " + radiusFormatter.format(treeHeight) + "<br/>");
+                                plotInfoSB.append("diameter [cm] = " + radiusFormatter.format(diam) + "<br/>");
+                                plotInfoSB.append("lat  = " + llFormatter.format(lat) + "<br/>");
+                                plotInfoSB.append("lon  = " + llFormatter.format(lon) + "<br/>");
+                            }
+                            if (isTp) {
+                                double matchedTreeHeight = treeObject.getDouble(JSON_TREE_HEIGHT_MATCHED);
+                                String matchedTreeId = treeObject.getString(JSON_TREE_ID_MATCHED);
+
+                                plotInfoSB.append("<br/><b>EXTRACTED TREE INFORMATION</b><br/>\n");
+                                plotInfoSB.append("id = " + matchedTreeId + "<br/>");
+                                plotInfoSB.append("height [m] = " + radiusFormatter.format(matchedTreeHeight) + "<br/>");
+                            }
+                            if (isFp) {
+                                plotInfoSB.append("<br/><b>EXTRACTED TREE INFORMATION</b><br/>\n");
+                                plotInfoSB.append("id = " + treeId + "<br/>");
+                                plotInfoSB.append("height [m] = " + radiusFormatter.format(treeHeight) + "<br/>");
+                            }
+
+                            informationText.setText(plotInfoSB.toString());
+
+                            String treeJson = treeObject.toString();
+                            return treeJson;
+                        }
+                        return null;
+                    }
+                };
                 new BrowserFunction(mapBrowser, "getMinHeight"){
                     @Override
                     public Object function( Object[] arguments ) {
@@ -280,8 +341,8 @@ public class TreeSlicesViewerEntryPoint extends AbstractEntryPoint implements Tr
     protected void selectPlot( String selectedText ) {
         File plotFile = new File(selectedFile, selectedText + ".json");
 
+        id2TreeJsonMap.clear();
         if (plotFile.exists()) {
-
             plotObjectTransfer = new JSONObject();
 
             try {
@@ -301,9 +362,6 @@ public class TreeSlicesViewerEntryPoint extends AbstractEntryPoint implements Tr
                 plotObjectTransfer.put(JSON_PLOT_CENTERLAT, lat);
                 plotObjectTransfer.put(JSON_PLOT_CENTERLON, lon);
                 plotObjectTransfer.put(JSON_PLOT_RADIUSDEG, radiusLL);
-
-                DecimalFormat radiusFormatter = new DecimalFormat("0.0");
-                DecimalFormat llFormatter = new DecimalFormat("0.000000");
 
                 StringBuilder plotInfoSB = new StringBuilder();
                 plotInfoSB.append("<b>PLOT INFORMATION</b><br/>\n");
@@ -328,6 +386,10 @@ public class TreeSlicesViewerEntryPoint extends AbstractEntryPoint implements Tr
                 JSONArray treesArray = selectedJsonPlot.getJSONArray(JSON_PLOT_TREES);
                 for( int i = 0; i < treesArray.length(); i++ ) {
                     JSONObject treeObject = treesArray.getJSONObject(i);
+                    String treeId = treeObject.getString(JSON_TREE_ID);
+
+                    id2TreeJsonMap.put(treeId, treeObject);
+
                     double treeHeight = treeObject.getDouble(JSON_TREE_HEIGHT);
                     minHeight = min(minHeight, treeHeight);
                     maxHeight = max(maxHeight, treeHeight);
@@ -335,13 +397,10 @@ public class TreeSlicesViewerEntryPoint extends AbstractEntryPoint implements Tr
                     boolean hasDiam = false;
                     boolean hasMatch = false;
                     double diamLL = 0;
+                    double diam = 0;
                     if (treeObject.has(JSON_TREE_DIAM)) {
                         hasDiam = true;
-                        double diam = treeObject.getDouble(JSON_TREE_DIAM);
-                        if (onlyDiameterMajor17 && diam < 17.5) {
-                            continue;
-                        }
-
+                        diam = treeObject.getDouble(JSON_TREE_DIAM);
                         diamLL = treeObject.getDouble(JSON_TREE_DIAMDEG);
                         minDiam = min(minDiam, diamLL);
                         maxDiam = max(maxDiam, diamLL);
@@ -360,14 +419,17 @@ public class TreeSlicesViewerEntryPoint extends AbstractEntryPoint implements Tr
 
                     JSONObject treeObjectTransfer = new JSONObject();
                     treesArrayTransfer.put(index++, treeObjectTransfer);
-                    treeObjectTransfer.put(JSON_TREE_ID, treeObject.getString(JSON_TREE_ID));
+                    treeObjectTransfer.put(JSON_TREE_ID, treeId);
                     treeObjectTransfer.put(JSON_TREE_LAT, treeObject.getDouble(JSON_TREE_LAT));
                     treeObjectTransfer.put(JSON_TREE_LON, treeObject.getDouble(JSON_TREE_LON));
                     treeObjectTransfer.put(JSON_TREE_HEIGHT, treeObject.getDouble(JSON_TREE_HEIGHT));
-                    if (hasDiam)
+                    if (hasDiam) {
                         treeObjectTransfer.put(JSON_TREE_DIAMDEG, diamLL);
-                    if (hasMatch)
+                        treeObjectTransfer.put(JSON_TREE_DIAM, diam);
+                    }
+                    if (hasMatch) {
                         treeObjectTransfer.put(JSON_TREE_ID_MATCHED, treeObject.getString(JSON_TREE_ID_MATCHED));
+                    }
                 }
 
                 plotInfoSB.append("<br/><b>Matching:</b><br/>\n");
@@ -413,6 +475,6 @@ public class TreeSlicesViewerEntryPoint extends AbstractEntryPoint implements Tr
 
     protected void clearPlotSelection() {
         informationText.setText("");
-
+        mapBrowser.evaluate("clearPlotMap()");
     }
 }
