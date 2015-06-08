@@ -17,9 +17,13 @@ import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.eclipse.rap.rwt.RWT;
 import org.eclipse.rap.rwt.application.AbstractEntryPoint;
+import org.eclipse.rap.rwt.widgets.BrowserCallback;
+import org.eclipse.rap.rwt.widgets.BrowserUtil;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.browser.BrowserFunction;
@@ -58,6 +62,7 @@ public class TreeSlicesViewerEntryPoint extends AbstractEntryPoint implements Tr
     private boolean onlyDiameterMajor17 = true;
     private CLabel informationText;
     private String plotHtmlResource;
+    private String chartHtmlResource;
     private double minHeight;
     private double minDiam;
     private double maxHeight;
@@ -65,6 +70,7 @@ public class TreeSlicesViewerEntryPoint extends AbstractEntryPoint implements Tr
     private JSONObject plotObjectTransfer;
     private HashMap<String, JSONObject> id2TreeJsonMap = new HashMap<String, JSONObject>();
     private Browser mapBrowser;
+    private HashMap<String, Browser> chartBrowsers = new HashMap<String, Browser>();
 
     private DecimalFormat radiusFormatter = new DecimalFormat("0.0");
     private DecimalFormat llFormatter = new DecimalFormat("0.000000");
@@ -84,6 +90,7 @@ public class TreeSlicesViewerEntryPoint extends AbstractEntryPoint implements Tr
 
         JsResources.ensureJavaScriptResources();
         plotHtmlResource = JsResources.ensurePlotHtmlResource();
+        chartHtmlResource = JsResources.ensureChartHtmlResource();
 
         parentShell = parent.getShell();
 
@@ -212,22 +219,44 @@ public class TreeSlicesViewerEntryPoint extends AbstractEntryPoint implements Tr
         snGroup.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
         snGroup.setLayout(new GridLayout(1, false));
         snGroup.setText("S->N");
+        addChartBrowser(snGroup, "SN");
 
         Group swNeGroup = new Group(rightComposite, SWT.NONE);
         swNeGroup.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
         swNeGroup.setLayout(new GridLayout(1, false));
         swNeGroup.setText("SW->NE");
+        // addChartBrowser(swNeGroup, "SWNE");
 
         Group weGroup = new Group(rightComposite, SWT.NONE);
         weGroup.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
         weGroup.setLayout(new GridLayout(1, false));
         weGroup.setText("W->E");
+        // addChartBrowser(weGroup, "WE");
 
         Group wnEsGroup = new Group(rightComposite, SWT.NONE);
         wnEsGroup.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
         wnEsGroup.setLayout(new GridLayout(1, false));
         wnEsGroup.setText("WN->ES");
+        // addChartBrowser(wnEsGroup, "WNES");
 
+    }
+
+    private void addChartBrowser( Composite parent, String key ) {
+        final Browser chartBrowser = new Browser(parent, SWT.NONE);
+        GridData chartBrowserGD = new GridData(SWT.FILL, SWT.FILL, true, true);
+        chartBrowser.setLayoutData(chartBrowserGD);
+        chartBrowser.setUrl(chartHtmlResource);
+        chartBrowser.setData(key);
+        chartBrowser.addProgressListener(new ProgressListener(){
+            public void completed( ProgressEvent event ) {
+                addChartBrowserFunction(chartBrowser);
+            }
+
+            public void changed( ProgressEvent event ) {
+            }
+        });
+
+        chartBrowsers.put(key, chartBrowser);
     }
 
     @SuppressWarnings("serial")
@@ -239,103 +268,17 @@ public class TreeSlicesViewerEntryPoint extends AbstractEntryPoint implements Tr
         mapBrowser.setUrl(plotHtmlResource);
         mapBrowser.addProgressListener(new ProgressListener(){
             public void completed( ProgressEvent event ) {
-                new BrowserFunction(mapBrowser, "getPlotData"){
-                    @Override
-                    public Object function( Object[] arguments ) {
-                        if (plotObjectTransfer != null) {
-                            return plotObjectTransfer.toString();
-                        }
-                        return null;
-                    }
-                };
-                new BrowserFunction(mapBrowser, "getTreedataById"){
-                    @Override
-                    public Object function( Object[] arguments ) {
-                        String treeId = arguments[0].toString();
-                        JSONObject treeObject = id2TreeJsonMap.get(treeId);
-                        if (treeObject != null) {
-                            double treeHeight = treeObject.getDouble(JSON_TREE_HEIGHT);
-                            double lat = treeObject.getDouble(JSON_TREE_LAT);
-                            double lon = treeObject.getDouble(JSON_TREE_LON);
-
-                            StringBuilder plotInfoSB = new StringBuilder();
-                            boolean hasDiam = treeObject.has(JSON_TREE_DIAM);
-                            boolean hasMatched = treeObject.has(JSON_TREE_ID_MATCHED);
-                            boolean isTp = hasDiam && hasMatched;
-                            boolean isFn = hasDiam && !hasMatched;
-                            boolean isFp = !hasDiam;
-                            if (isTp) {
-                                plotInfoSB.append("<b>TRUE POSITIVE</b><br/>\n");
-                            } else if (isFn) {
-                                plotInfoSB.append("<b>FALSE NEGATIVE</b><br/>\n");
-                            } else if (isFp) {
-                                plotInfoSB.append("<b>FALSE POSITIVE</b><br/>\n");
-                            }
-                            if (isTp || isFn) {
-                                double diam = treeObject.getDouble(JSON_TREE_DIAM);
-                                plotInfoSB.append("<br/><b>MAPPED TREE INFORMATION</b><br/>\n");
-                                plotInfoSB.append("id = " + treeId + "<br/>");
-                                plotInfoSB.append("height [m] = " + radiusFormatter.format(treeHeight) + "<br/>");
-                                plotInfoSB.append("diameter [cm] = " + radiusFormatter.format(diam) + "<br/>");
-                                plotInfoSB.append("lat  = " + llFormatter.format(lat) + "<br/>");
-                                plotInfoSB.append("lon  = " + llFormatter.format(lon) + "<br/>");
-                            }
-                            if (isTp) {
-                                double matchedTreeHeight = treeObject.getDouble(JSON_TREE_HEIGHT_MATCHED);
-                                String matchedTreeId = treeObject.getString(JSON_TREE_ID_MATCHED);
-
-                                plotInfoSB.append("<br/><b>EXTRACTED TREE INFORMATION</b><br/>\n");
-                                plotInfoSB.append("id = " + matchedTreeId + "<br/>");
-                                plotInfoSB.append("height [m] = " + radiusFormatter.format(matchedTreeHeight) + "<br/>");
-                            }
-                            if (isFp) {
-                                plotInfoSB.append("<br/><b>EXTRACTED TREE INFORMATION</b><br/>\n");
-                                plotInfoSB.append("id = " + treeId + "<br/>");
-                                plotInfoSB.append("height [m] = " + radiusFormatter.format(treeHeight) + "<br/>");
-                            }
-
-                            informationText.setText(plotInfoSB.toString());
-
-                            String treeJson = treeObject.toString();
-                            return treeJson;
-                        }
-                        return null;
-                    }
-                };
-                new BrowserFunction(mapBrowser, "getMinHeight"){
-                    @Override
-                    public Object function( Object[] arguments ) {
-                        return minHeight;
-                    }
-                };
-                new BrowserFunction(mapBrowser, "getMaxHeight"){
-                    @Override
-                    public Object function( Object[] arguments ) {
-                        return maxHeight;
-                    }
-                };
-                new BrowserFunction(mapBrowser, "getMinDiam"){
-                    @Override
-                    public Object function( Object[] arguments ) {
-                        return minDiam;
-                    }
-                };
-                new BrowserFunction(mapBrowser, "getMaxDiam"){
-                    @Override
-                    public Object function( Object[] arguments ) {
-                        return maxDiam;
-                    }
-                };
+                addMapBrowserFunctions();
 
                 Rectangle clientArea = mapBrowser.getClientArea();
                 int w = clientArea.width;
                 int h = clientArea.height;
                 mapBrowser.evaluate("createMap(" + w + ", " + h + ")");
             }
+
             public void changed( ProgressEvent event ) {
             }
         });
-
     }
 
     protected void selectPlot( String selectedText ) {
@@ -439,7 +382,8 @@ public class TreeSlicesViewerEntryPoint extends AbstractEntryPoint implements Tr
 
                 informationText.setText(plotInfoSB.toString());
 
-                mapBrowser.evaluate("updateData()");
+                mapBrowser.evaluate("updateData(" + minHeight + "," + maxHeight + "," + minDiam + "," + maxDiam + ","
+                        + plotObjectTransfer.toString() + ")");
             } catch (IOException e) {
                 StageLogger.logError(this, "Error reading the plot data.", e);
             }
@@ -449,32 +393,182 @@ public class TreeSlicesViewerEntryPoint extends AbstractEntryPoint implements Tr
 
     }
 
-    // private void getTreeInfo(){
-    // String treeId = treeObject.getString(JSON_TREE_ID);
-    // double treeLon = treeObject.getDouble(JSON_TREE_LON);
-    // double treeLat = treeObject.getDouble(JSON_TREE_LAT);
-    // double treeHeight = treeObject.getDouble(JSON_TREE_HEIGHT);
-    //
-    // if (treeObject.has(JSON_TREE_DIAM)) {
-    // double diam = treeObject.getDouble(JSON_TREE_DIAM);
-    // double diamLL = treeObject.getDouble(JSON_TREE_DIAMDEG);
-    // String type = treeObject.getString(JSON_TREE_TYPE);
-    // }
-    // if (treeObject.has(JSON_TREE_ID_MATCHED)) {
-    // String matchedId = treeObject.getString(JSON_TREE_ID_MATCHED);
-    // double matchedLon = treeObject.getDouble(JSON_TREE_LON_MATCHED);
-    // double matchedLat = treeObject.getDouble(JSON_TREE_LAT_MATCHED);
-    // double matchedHeight = treeObject.getDouble(JSON_TREE_HEIGHT_MATCHED);
-    // matchedCount++;
-    // }
-    // double minHeight = treeObject.getDouble(JSON_TREE_MIN_H);
-    // double maxHeight = treeObject.getDouble(JSON_TREE_MAX_H);
-    // double minProgressive = treeObject.getDouble(JSON_TREE_MIN_P);
-    // double maxProgressive = treeObject.getDouble(JSON_TREE_MAX_P);
-    // }
-
     protected void clearPlotSelection() {
         informationText.setText("");
         mapBrowser.evaluate("clearPlotMap()");
+    }
+
+    private void addMapBrowserFunctions() {
+
+        new BrowserFunction(mapBrowser, "getTreedataById"){
+            @Override
+            public Object function( Object[] arguments ) {
+                String treeId = arguments[0].toString();
+                JSONObject treeObject = id2TreeJsonMap.get(treeId);
+                if (treeObject != null) {
+                    double treeHeight = treeObject.getDouble(JSON_TREE_HEIGHT);
+                    double lat = treeObject.getDouble(JSON_TREE_LAT);
+                    double lon = treeObject.getDouble(JSON_TREE_LON);
+
+                    StringBuilder plotInfoSB = new StringBuilder();
+                    boolean hasDiam = treeObject.has(JSON_TREE_DIAM);
+                    boolean hasMatched = treeObject.has(JSON_TREE_ID_MATCHED);
+                    boolean isTp = hasDiam && hasMatched;
+                    boolean isFn = hasDiam && !hasMatched;
+                    boolean isFp = !hasDiam;
+                    if (isTp) {
+                        plotInfoSB.append("<b>TRUE POSITIVE</b><br/>\n");
+                    } else if (isFn) {
+                        plotInfoSB.append("<b>FALSE NEGATIVE</b><br/>\n");
+                    } else if (isFp) {
+                        plotInfoSB.append("<b>FALSE POSITIVE</b><br/>\n");
+                    }
+                    if (isTp || isFn) {
+                        double diam = treeObject.getDouble(JSON_TREE_DIAM);
+                        plotInfoSB.append("<br/><b>MAPPED TREE INFORMATION</b><br/>\n");
+                        plotInfoSB.append("id = " + treeId + "<br/>");
+                        plotInfoSB.append("height [m] = " + radiusFormatter.format(treeHeight) + "<br/>");
+                        plotInfoSB.append("diameter [cm] = " + radiusFormatter.format(diam) + "<br/>");
+                        plotInfoSB.append("lat  = " + llFormatter.format(lat) + "<br/>");
+                        plotInfoSB.append("lon  = " + llFormatter.format(lon) + "<br/>");
+                    }
+                    if (isTp) {
+                        double matchedTreeHeight = treeObject.getDouble(JSON_TREE_HEIGHT_MATCHED);
+                        String matchedTreeId = treeObject.getString(JSON_TREE_ID_MATCHED);
+
+                        plotInfoSB.append("<br/><b>EXTRACTED TREE INFORMATION</b><br/>\n");
+                        plotInfoSB.append("id = " + matchedTreeId + "<br/>");
+                        plotInfoSB.append("height [m] = " + radiusFormatter.format(matchedTreeHeight) + "<br/>");
+                    }
+                    if (isFp) {
+                        plotInfoSB.append("<br/><b>EXTRACTED TREE INFORMATION</b><br/>\n");
+                        plotInfoSB.append("id = " + treeId + "<br/>");
+                        plotInfoSB.append("height [m] = " + radiusFormatter.format(treeHeight) + "<br/>");
+                    }
+
+                    informationText.setText(plotInfoSB.toString());
+
+                    final AtomicInteger count = new AtomicInteger();
+                    for( Entry<String, Browser> browserItem : chartBrowsers.entrySet() ) {
+                        String directionKey = browserItem.getKey();
+                        Browser browser = browserItem.getValue();
+                        Rectangle clientArea = browser.getClientArea();
+                        int w = clientArea.width;
+                        int h = clientArea.height;
+
+                        JSONObject treeObj = new JSONObject();
+                        double minP = treeObject.getDouble(JSON_TREE_MIN_P);
+                        treeObj.put(JSON_TREE_MIN_P, minP);
+                        double maxP = treeObject.getDouble(JSON_TREE_MAX_P);
+                        treeObj.put(JSON_TREE_MAX_P, maxP);
+                        if (treeObject.has(JSON_TREE_DIAM)) {
+                            double diam = treeObject.getDouble(JSON_TREE_DIAM);
+                            treeObj.put(JSON_TREE_DIAM, diam);
+                        }
+                        if (treeObject.has(JSON_TREE_ID_MATCHED)) {
+                            String matchedTreeId = treeObject.getString(JSON_TREE_ID_MATCHED);
+                            treeObj.put(JSON_TREE_ID_MATCHED, matchedTreeId);
+                        }
+                        double progressive = treeObject.getDouble(JSON_TREE_PROGRESSIVE);
+                        treeObj.put(JSON_TREE_PROGRESSIVE, progressive);
+                        double height = treeObject.getDouble(JSON_TREE_HEIGHT);
+                        treeObj.put(JSON_TREE_HEIGHT, height);
+                        if (treeObject.has(JSON_TREE_PROGRESSIVE_MATCHED)) {
+                            double progressiveMatched = treeObject.getDouble(JSON_TREE_PROGRESSIVE_MATCHED);
+                            double heightMatched = treeObject.getDouble(JSON_TREE_HEIGHT_MATCHED);
+                            treeObj.put(JSON_TREE_PROGRESSIVE_MATCHED, progressiveMatched);
+                            treeObj.put(JSON_TREE_HEIGHT_MATCHED, heightMatched);
+                        }
+
+                        // slice data
+                        JSONObject slicesObj = treeObject.getJSONObject(JSON_TREE_SLICES);
+                        JSONArray profileDataArray = slicesObj.getJSONArray(directionKey);
+
+                        StringBuilder scriptBuilder = new StringBuilder();
+                        scriptBuilder.append("doTreeCharts(");
+                        scriptBuilder.append(treeId);
+                        scriptBuilder.append(", ");
+                        scriptBuilder.append(profileDataArray.toString());
+                        scriptBuilder.append(",");
+                        scriptBuilder.append(slicesObj.toString());
+                        scriptBuilder.append(",");
+                        scriptBuilder.append(directionKey);
+                        scriptBuilder.append(", ");
+                        scriptBuilder.append(w);
+                        scriptBuilder.append(", ");
+                        scriptBuilder.append(h);
+                        scriptBuilder.append(")");
+                        String script = scriptBuilder.toString();
+//                        BrowserUtil.evaluate(browser, script, new BrowserCallback(){
+//                            public void evaluationSucceeded( Object result ) {
+//                                System.out.println("STEP");
+//                                count.incrementAndGet();
+//                            }
+//                            public void evaluationFailed( Exception exception ) {
+//                                throw new RuntimeException(exception);
+//                            }
+//                        });
+                         browser.execute(script);
+                    }
+                    
+//                    while( count.intValue() < 4 ) {
+//                        try {
+//                            Thread.sleep(100);
+//                        } catch (InterruptedException e) {
+//                            e.printStackTrace();
+//                        }
+//                    }
+
+                    String treeJson = treeObject.toString();
+                    return treeJson;
+                }
+                return null;
+            }
+        };
+
+    }
+
+    private void addChartBrowserFunction( final Browser chartBrowser ) {
+        // new BrowserFunction(chartBrowser, "getTreeAndSlicesData"){
+        // @Override
+        // public Object function( Object[] arguments ) {
+        // String treeId = arguments[0].toString();
+        // JSONObject treeObject = id2TreeJsonMap.get(treeId);
+        // if (treeObject != null) {
+        // // tree data
+        // JSONObject treeObj = new JSONObject();
+        // double minP = treeObject.getDouble(JSON_TREE_MIN_P);
+        // treeObj.put(JSON_TREE_MIN_P, minP);
+        // double maxP = treeObject.getDouble(JSON_TREE_MAX_P);
+        // treeObj.put(JSON_TREE_MAX_P, maxP);
+        // if (treeObject.has(JSON_TREE_DIAM)) {
+        // double diam = treeObject.getDouble(JSON_TREE_DIAM);
+        // treeObj.put(JSON_TREE_DIAM, diam);
+        // }
+        // if (treeObject.has(JSON_TREE_ID_MATCHED)) {
+        // String matchedTreeId = treeObject.getString(JSON_TREE_ID_MATCHED);
+        // treeObj.put(JSON_TREE_ID_MATCHED, matchedTreeId);
+        // }
+        // double progressive = treeObject.getDouble(JSON_TREE_PROGRESSIVE);
+        // treeObj.put(JSON_TREE_PROGRESSIVE, progressive);
+        // double height = treeObject.getDouble(JSON_TREE_HEIGHT);
+        // treeObj.put(JSON_TREE_HEIGHT, height);
+        // if (treeObject.has(JSON_TREE_PROGRESSIVE_MATCHED)) {
+        // double progressiveMatched = treeObject.getDouble(JSON_TREE_PROGRESSIVE_MATCHED);
+        // double heightMatched = treeObject.getDouble(JSON_TREE_HEIGHT_MATCHED);
+        // treeObj.put(JSON_TREE_PROGRESSIVE_MATCHED, progressiveMatched);
+        // treeObj.put(JSON_TREE_HEIGHT_MATCHED, heightMatched);
+        // }
+        //
+        // // slice data
+        // JSONObject slicesObj = treeObject.getJSONObject(JSON_TREE_SLICES);
+        // JSONArray profileDataArray = slicesObj.getJSONArray(chartBrowser.getData().toString());
+        //
+        // Object[] returnObjs = {treeObj.toString(), profileDataArray.toString()};
+        // return returnObjs;
+        // }
+        // return null;
+        // }
+        // };
     }
 }

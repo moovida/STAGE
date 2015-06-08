@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<!--
+Andrea Antonello
+-->
+<html>
+    <head>
+        <title>Trees info</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script type="text/javascript" src="libs/d3.min.js"></script>
+        <script type="text/javascript" src="tree_profiles_scatterchart.js"></script>
+        <script type="text/javascript" src="libs/hylib.js"></script>
+        <script type="text/javascript" src="libs/leaflet.js"></script>
+        <link rel="stylesheet" href="libs/leaflet.css" />
+        <script type='text/javascript' src='libs/jquery.min.js'></script>
+        <style>
+            svg .line {
+                stroke: red;
+                stroke-width: 1;
+                fill: none;
+            }
+            .dot {
+                fill: #fff;
+                stroke: steelblue;
+            }
+            .axis path, .axis line {
+                fill: none;
+                stroke: #000;
+                shape-rendering: crispEdges;
+            }
+            .axis text {
+                font: 10px sans-serif;
+            }
+            .axis .grid-line {
+                stroke: #000;
+                shape-rendering: crispEdges;
+            }
+        </style>
+        <script type="text/javascript">
+            // GLOBAL VARS START
+            var profColorMap = d3.map();
+            profColorMap.set("SN", "red");
+            profColorMap.set("SWNE", "blue");
+            profColorMap.set("WE", "green");
+            profColorMap.set("WNES", "orange");
+
+            function clearChart() {
+                d3.select("#profilechart").selectAll("svg").remove();
+            }
+
+            function doTreeCharts(treeId,treeData, sliceData, directionKey, chartWidth, chartHeight) {
+//                var treeAndSliceData = getTreeAndSlicesData(treeId);
+//                var treeData = treeAndSliceData[0];
+//                var sliceData = treeAndSliceData[1];
+
+                var color = profColorMap.get(directionKey);
+//                var chartMap = [
+//                    [slices.SN, profColorMap.get("SN"), "sn-cell", tree.progressiveMatchedSN],
+//                    [slices.SWNE, profColorMap.get("SWNE"), "swne-cell", tree.progressiveMatchedSWNE],
+//                    [slices.WE, profColorMap.get("WE"), "we-cell", tree.progressiveMatchedWE],
+//                    [slices.WNES, profColorMap.get("WNES"), "wnes-cell", tree.progressiveMatchedWNES]
+//                ];
+
+                var maximumH = 0;
+                var maxHeight = d3.max(sliceData, function (d) {
+                    return d.h;
+                });
+                if (maxHeight > maximumH) {
+                    maximumH = maxHeight;
+                }
+                maximumH = maximumH + 1;
+                //console.log(item);
+                var chart = treeProfileScatterChart()
+                        .x(
+                                d3.scale.linear().domain([treeData.minP, treeData.maxP])
+                                )
+                        .y(
+                                d3.scale.linear().domain([0, maximumH])
+                                );
+                if (treeData.diam && treeData.idMatched) {
+                    chart.centerTreeProg(treeData.progressive, treeData.height);
+                    chart.centerMatchedTreeProg(treeData.progressiveMatched, treeData.heightMatched);
+                } else if (treeData.diam) {
+                    chart.centerTreeProg(treeData.progressive, treeData.height);
+                } else {
+                    chart.centerMatchedTreeProg(treeData.progressive, treeData.height);
+                }
+                chart.width(chartWidth);
+                chart.height(chartHeight);
+                var margins = {
+                    top: 10,
+                    left: 20,
+                    right: 10,
+                    bottom: 20
+                };
+                chart.margins(margins);
+                chart.color(color);
+                chart.dotsize(2);
+                chart.setData(sliceData);
+                chart.render("#profilechart");
+            }
+
+        </script>
+    </head>
+    <body>
+        <div  id="profilechart"></div>
+    </body>
+</html>

@@ -24,6 +24,8 @@ Andrea Antonello
             var plot;
             var plots;
             var trees;
+            
+            var heightScale;
 
             var mapPlotG;
             var mapLinesG;
@@ -69,12 +71,11 @@ Andrea Antonello
                 updateData();
             }
 
-            function updateData() {
-                plotData = getPlotData();
-                minHeight = getMinHeight();
-                maxHeight = getMaxHeight();
-                minDiam = getMinDiam();
-                maxDiam = getMaxDiam();
+            function updateData(minH, maxH, minD, maxD, plotData) {
+                minHeight = minH;
+                maxHeight = maxH;
+                minDiam = minD;
+                maxDiam = maxD;
 
                 if (!plotData) {
                     mapTreesG.selectAll("circle").remove();
@@ -83,7 +84,7 @@ Andrea Antonello
 
                 clearSlicePolygons();
 
-                plots = [JSON.parse(plotData)];
+                plots = [plotData];//[JSON.parse(plotData)];
                 plot = plots[0];
                 trees = plot.trees;
 
@@ -201,8 +202,6 @@ Andrea Antonello
                 var treeData = getTreedataById(d.id);
                 selectedTreeData = JSON.parse(treeData);
                 doMapTreeLines(selectedTreeData);
-
-                doTreeCharts(selectedTreeData);
             };
 
             function doMapTreeLines(tree) {

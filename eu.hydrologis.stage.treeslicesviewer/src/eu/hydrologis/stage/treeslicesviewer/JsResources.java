@@ -28,6 +28,7 @@ public class JsResources {
     private static List<String> toRequireList = new ArrayList<String>();
     private static List<String> toRequireHtmlList = new ArrayList<String>();
     private static String toRequirePlotmap;
+    private static String toRequireChartmap;
 
     private static final ResourceLoader resourceLoader = new ResourceLoader(){
         public InputStream getResourceAsStream( String resourceName ) throws IOException {
@@ -103,6 +104,29 @@ public class JsResources {
             loader.require(toRequirePlotmap);
         }
         return toRequirePlotmap;
+    }
+
+    public static String ensureChartHtmlResource() {
+        ResourceManager resourceManager = RWT.getApplicationContext().getResourceManager();
+        try {
+            String fileName = "profilechart.html";
+            if (!resourceManager.isRegistered(fileName)) {
+                InputStream resourceAsStream = resourceLoader.getResourceAsStream(fileName);
+                if (resourceAsStream == null) {
+                    throw new NullPointerException();
+                }
+                String registered = register(resourceManager, fileName, resourceAsStream);
+                if (toRequireChartmap == null)
+                    toRequireChartmap = registered;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        if (toRequireChartmap != null) {
+            JavaScriptLoader loader = RWT.getClient().getService(JavaScriptLoader.class);
+            loader.require(toRequireChartmap);
+        }
+        return toRequireChartmap;
     }
 
     public static String registerIfMissing( String resource ) {
