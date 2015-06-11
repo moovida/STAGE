@@ -48,10 +48,10 @@ Andrea Antonello
                 d3.select("#profilechart").selectAll("svg").remove();
             }
 
-            function doTreeCharts(treeId,treeData, sliceData, directionKey, chartWidth, chartHeight) {
-//                var treeAndSliceData = getTreeAndSlicesData(treeId);
-//                var treeData = treeAndSliceData[0];
-//                var sliceData = treeAndSliceData[1];
+            function doTreeCharts(treeId, directionKey, chartWidth, chartHeight) {
+               var treeAndSliceData = getTreeAndSlicesData(treeId);
+               var treeData = treeAndSliceData[0];
+               var sliceData = treeAndSliceData[1];
 
                 var color = profColorMap.get(directionKey);
 //                var chartMap = [

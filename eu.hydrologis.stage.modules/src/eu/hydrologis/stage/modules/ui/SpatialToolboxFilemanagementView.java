@@ -12,11 +12,11 @@ import java.io.File;
 import java.io.IOException;
 
 import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.rap.addons.fileupload.DiskFileUploadReceiver;
-import org.eclipse.rap.addons.fileupload.FileDetails;
-import org.eclipse.rap.addons.fileupload.FileUploadEvent;
-import org.eclipse.rap.addons.fileupload.FileUploadHandler;
-import org.eclipse.rap.addons.fileupload.FileUploadListener;
+import org.eclipse.rap.fileupload.DiskFileUploadReceiver;
+import org.eclipse.rap.fileupload.FileDetails;
+import org.eclipse.rap.fileupload.FileUploadEvent;
+import org.eclipse.rap.fileupload.FileUploadHandler;
+import org.eclipse.rap.fileupload.FileUploadListener;
 import org.eclipse.rap.rwt.RWT;
 import org.eclipse.rap.rwt.service.ServerPushSession;
 import org.eclipse.rap.rwt.widgets.FileUpload;
@@ -42,7 +42,6 @@ import eu.hydrologis.stage.libs.utilsrap.FileSelectionDialog;
 import eu.hydrologis.stage.libs.utilsrap.FolderSelectionDialog;
 import eu.hydrologis.stage.libs.workspace.StageWorkspace;
 import eu.hydrologis.stage.libs.workspace.User;
-import eu.hydrologis.stage.modules.SpatialToolboxSessionPluginSingleton;
 
 /**
  * The stage file management view.

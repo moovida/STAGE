@@ -8,21 +8,11 @@
  */
 package eu.hydrologis.stage.modules.ui;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map.Entry;
 
-import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.rap.addons.fileupload.DiskFileUploadReceiver;
-import org.eclipse.rap.addons.fileupload.FileDetails;
-import org.eclipse.rap.addons.fileupload.FileUploadEvent;
-import org.eclipse.rap.addons.fileupload.FileUploadHandler;
-import org.eclipse.rap.addons.fileupload.FileUploadListener;
-import org.eclipse.rap.rwt.service.ServerPushSession;
-import org.eclipse.rap.rwt.widgets.FileUpload;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabItem;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -32,16 +22,9 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Shell;
 
-import eu.hydrologis.stage.libs.utilsrap.DownloadUtils;
-import eu.hydrologis.stage.libs.utilsrap.ExampleUtil;
-import eu.hydrologis.stage.libs.utilsrap.FileSelectionDialog;
-import eu.hydrologis.stage.libs.workspace.StageWorkspace;
-import eu.hydrologis.stage.libs.workspace.User;
 import eu.hydrologis.stage.modules.SpatialToolboxSessionPluginSingleton;
 
 /**

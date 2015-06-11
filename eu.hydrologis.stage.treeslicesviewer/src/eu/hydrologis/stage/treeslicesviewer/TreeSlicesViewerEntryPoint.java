@@ -30,8 +30,10 @@ import org.eclipse.swt.browser.BrowserFunction;
 import org.eclipse.swt.browser.ProgressEvent;
 import org.eclipse.swt.browser.ProgressListener;
 import org.eclipse.swt.custom.CLabel;
+import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -47,6 +49,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import eu.hydrologis.stage.libs.log.StageLogger;
+import eu.hydrologis.stage.libs.utils.StageUtils;
 import eu.hydrologis.stage.libs.utilsrap.LoginDialog;
 import eu.hydrologis.stage.libs.workspace.StageWorkspace;
 import eu.hydrologis.stage.libs.workspace.User;
@@ -60,7 +63,7 @@ public class TreeSlicesViewerEntryPoint extends AbstractEntryPoint implements Tr
     private Shell parentShell;
     private Combo plotCombo;
     private boolean onlyDiameterMajor17 = true;
-    private CLabel informationText;
+    private Browser informationText;
     private String plotHtmlResource;
     private String chartHtmlResource;
     private double minHeight;
@@ -208,12 +211,12 @@ public class TreeSlicesViewerEntryPoint extends AbstractEntryPoint implements Tr
         infoGroup.setLayoutData(infoGroupGD);
         infoGroup.setLayout(new GridLayout(1, false));
 
-        informationText = new CLabel(infoGroup, SWT.NONE);
+        informationText = new Browser(infoGroup, SWT.NONE);
         GridData informationTextGD = new GridData(SWT.FILL, SWT.FILL, true, true);
         informationText.setLayoutData(informationTextGD);
         informationText.setText("");
-        informationText.setMargins(5, 5, 5, 5);
-        informationText.setData(RWT.MARKUP_ENABLED, Boolean.TRUE);
+        // informationText.setMargins(5, 5, 5, 5);
+        // informationText.setData(RWT.MARKUP_ENABLED, Boolean.TRUE);
 
         Group snGroup = new Group(rightComposite, SWT.NONE);
         snGroup.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
@@ -264,6 +267,7 @@ public class TreeSlicesViewerEntryPoint extends AbstractEntryPoint implements Tr
         mapBrowser = new Browser(leftComposite, SWT.NONE | SWT.BORDER);
         GridData mapBrowserGD = new GridData(SWT.FILL, SWT.FILL, true, true);
         mapBrowserGD.horizontalSpan = 3;
+        mapBrowserGD.minimumHeight = 250;
         mapBrowser.setLayoutData(mapBrowserGD);
         mapBrowser.setUrl(plotHtmlResource);
         mapBrowser.addProgressListener(new ProgressListener(){
@@ -277,8 +281,10 @@ public class TreeSlicesViewerEntryPoint extends AbstractEntryPoint implements Tr
             }
 
             public void changed( ProgressEvent event ) {
+                System.out.println();
             }
         });
+
     }
 
     protected void selectPlot( String selectedText ) {
@@ -380,7 +386,8 @@ public class TreeSlicesViewerEntryPoint extends AbstractEntryPoint implements Tr
                 plotInfoSB.append("false negatives = " + fnCount + "<br/>");
                 plotInfoSB.append("false positives = " + fpCount + "<br/>");
 
-                informationText.setText(plotInfoSB.toString());
+                String text = "<font color=\"" + StageUtils.TEXTCOLOR + "\">" + plotInfoSB.toString() + "</font>";
+                informationText.setText(text);
 
                 mapBrowser.evaluate("updateData(" + minHeight + "," + maxHeight + "," + minDiam + "," + maxDiam + ","
                         + plotObjectTransfer.toString() + ")");
@@ -446,7 +453,8 @@ public class TreeSlicesViewerEntryPoint extends AbstractEntryPoint implements Tr
                         plotInfoSB.append("height [m] = " + radiusFormatter.format(treeHeight) + "<br/>");
                     }
 
-                    informationText.setText(plotInfoSB.toString());
+                    String text = "<font color=\"" + StageUtils.TEXTCOLOR + "\">" + plotInfoSB.toString() + "</font>";
+                    informationText.setText(text);
 
                     final AtomicInteger count = new AtomicInteger();
                     for( Entry<String, Browser> browserItem : chartBrowsers.entrySet() ) {
@@ -481,17 +489,17 @@ public class TreeSlicesViewerEntryPoint extends AbstractEntryPoint implements Tr
                         }
 
                         // slice data
-                        JSONObject slicesObj = treeObject.getJSONObject(JSON_TREE_SLICES);
-                        JSONArray profileDataArray = slicesObj.getJSONArray(directionKey);
+//                        JSONObject slicesObj = treeObject.getJSONObject(JSON_TREE_SLICES);
+//                        JSONArray profileDataArray = slicesObj.getJSONArray(directionKey);
 
                         StringBuilder scriptBuilder = new StringBuilder();
                         scriptBuilder.append("doTreeCharts(");
                         scriptBuilder.append(treeId);
                         scriptBuilder.append(", ");
-                        scriptBuilder.append(profileDataArray.toString());
-                        scriptBuilder.append(",");
-                        scriptBuilder.append(slicesObj.toString());
-                        scriptBuilder.append(",");
+                        // scriptBuilder.append(profileDataArray.toString());
+                        // scriptBuilder.append(",");
+                        // scriptBuilder.append(slicesObj.toString());
+                        // scriptBuilder.append(",");
                         scriptBuilder.append(directionKey);
                         scriptBuilder.append(", ");
                         scriptBuilder.append(w);
@@ -499,25 +507,25 @@ public class TreeSlicesViewerEntryPoint extends AbstractEntryPoint implements Tr
                         scriptBuilder.append(h);
                         scriptBuilder.append(")");
                         String script = scriptBuilder.toString();
-//                        BrowserUtil.evaluate(browser, script, new BrowserCallback(){
-//                            public void evaluationSucceeded( Object result ) {
-//                                System.out.println("STEP");
-//                                count.incrementAndGet();
-//                            }
-//                            public void evaluationFailed( Exception exception ) {
-//                                throw new RuntimeException(exception);
-//                            }
-//                        });
-                         browser.execute(script);
+                        // BrowserUtil.evaluate(browser, script, new BrowserCallback(){
+                        // public void evaluationSucceeded( Object result ) {
+                        // System.out.println("STEP");
+                        // count.incrementAndGet();
+                        // }
+                        // public void evaluationFailed( Exception exception ) {
+                        // throw new RuntimeException(exception);
+                        // }
+                        // });
+                        browser.execute(script);
                     }
-                    
-//                    while( count.intValue() < 4 ) {
-//                        try {
-//                            Thread.sleep(100);
-//                        } catch (InterruptedException e) {
-//                            e.printStackTrace();
-//                        }
-//                    }
+
+                    // while( count.intValue() < 4 ) {
+                    // try {
+                    // Thread.sleep(100);
+                    // } catch (InterruptedException e) {
+                    // e.printStackTrace();
+                    // }
+                    // }
 
                     String treeJson = treeObject.toString();
                     return treeJson;
@@ -525,50 +533,50 @@ public class TreeSlicesViewerEntryPoint extends AbstractEntryPoint implements Tr
                 return null;
             }
         };
-
+        
     }
 
     private void addChartBrowserFunction( final Browser chartBrowser ) {
-        // new BrowserFunction(chartBrowser, "getTreeAndSlicesData"){
-        // @Override
-        // public Object function( Object[] arguments ) {
-        // String treeId = arguments[0].toString();
-        // JSONObject treeObject = id2TreeJsonMap.get(treeId);
-        // if (treeObject != null) {
-        // // tree data
-        // JSONObject treeObj = new JSONObject();
-        // double minP = treeObject.getDouble(JSON_TREE_MIN_P);
-        // treeObj.put(JSON_TREE_MIN_P, minP);
-        // double maxP = treeObject.getDouble(JSON_TREE_MAX_P);
-        // treeObj.put(JSON_TREE_MAX_P, maxP);
-        // if (treeObject.has(JSON_TREE_DIAM)) {
-        // double diam = treeObject.getDouble(JSON_TREE_DIAM);
-        // treeObj.put(JSON_TREE_DIAM, diam);
-        // }
-        // if (treeObject.has(JSON_TREE_ID_MATCHED)) {
-        // String matchedTreeId = treeObject.getString(JSON_TREE_ID_MATCHED);
-        // treeObj.put(JSON_TREE_ID_MATCHED, matchedTreeId);
-        // }
-        // double progressive = treeObject.getDouble(JSON_TREE_PROGRESSIVE);
-        // treeObj.put(JSON_TREE_PROGRESSIVE, progressive);
-        // double height = treeObject.getDouble(JSON_TREE_HEIGHT);
-        // treeObj.put(JSON_TREE_HEIGHT, height);
-        // if (treeObject.has(JSON_TREE_PROGRESSIVE_MATCHED)) {
-        // double progressiveMatched = treeObject.getDouble(JSON_TREE_PROGRESSIVE_MATCHED);
-        // double heightMatched = treeObject.getDouble(JSON_TREE_HEIGHT_MATCHED);
-        // treeObj.put(JSON_TREE_PROGRESSIVE_MATCHED, progressiveMatched);
-        // treeObj.put(JSON_TREE_HEIGHT_MATCHED, heightMatched);
-        // }
-        //
-        // // slice data
-        // JSONObject slicesObj = treeObject.getJSONObject(JSON_TREE_SLICES);
-        // JSONArray profileDataArray = slicesObj.getJSONArray(chartBrowser.getData().toString());
-        //
-        // Object[] returnObjs = {treeObj.toString(), profileDataArray.toString()};
-        // return returnObjs;
-        // }
-        // return null;
-        // }
-        // };
+        new BrowserFunction(chartBrowser, "getTreeAndSlicesData"){
+            @Override
+            public Object function( Object[] arguments ) {
+                String treeId = arguments[0].toString();
+                JSONObject treeObject = id2TreeJsonMap.get(treeId);
+                if (treeObject != null) {
+                    // tree data
+                    JSONObject treeObj = new JSONObject();
+                    double minP = treeObject.getDouble(JSON_TREE_MIN_P);
+                    treeObj.put(JSON_TREE_MIN_P, minP);
+                    double maxP = treeObject.getDouble(JSON_TREE_MAX_P);
+                    treeObj.put(JSON_TREE_MAX_P, maxP);
+                    if (treeObject.has(JSON_TREE_DIAM)) {
+                        double diam = treeObject.getDouble(JSON_TREE_DIAM);
+                        treeObj.put(JSON_TREE_DIAM, diam);
+                    }
+                    if (treeObject.has(JSON_TREE_ID_MATCHED)) {
+                        String matchedTreeId = treeObject.getString(JSON_TREE_ID_MATCHED);
+                        treeObj.put(JSON_TREE_ID_MATCHED, matchedTreeId);
+                    }
+                    double progressive = treeObject.getDouble(JSON_TREE_PROGRESSIVE);
+                    treeObj.put(JSON_TREE_PROGRESSIVE, progressive);
+                    double height = treeObject.getDouble(JSON_TREE_HEIGHT);
+                    treeObj.put(JSON_TREE_HEIGHT, height);
+                    if (treeObject.has(JSON_TREE_PROGRESSIVE_MATCHED)) {
+                        double progressiveMatched = treeObject.getDouble(JSON_TREE_PROGRESSIVE_MATCHED);
+                        double heightMatched = treeObject.getDouble(JSON_TREE_HEIGHT_MATCHED);
+                        treeObj.put(JSON_TREE_PROGRESSIVE_MATCHED, progressiveMatched);
+                        treeObj.put(JSON_TREE_HEIGHT_MATCHED, heightMatched);
+                    }
+
+                    // slice data
+                    JSONObject slicesObj = treeObject.getJSONObject(JSON_TREE_SLICES);
+                    JSONArray profileDataArray = slicesObj.getJSONArray(chartBrowser.getData().toString());
+
+                    Object[] returnObjs = {treeObj.toString(), profileDataArray.toString()};
+                    return returnObjs;
+                }
+                return null;
+            }
+        };
     }
 }

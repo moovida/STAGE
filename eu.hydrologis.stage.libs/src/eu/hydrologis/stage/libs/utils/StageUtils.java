@@ -34,6 +34,11 @@ public class StageUtils {
      * Supported raster formats in read and write mode.
      */
     public static String[] RASTER_EXTENTIONS_READ_WRITE = {"asc", "tiff", "tif"};
+    
+    /**
+     * General textcolor.
+     */
+    public static final String TEXTCOLOR = "#505050";
 
     public static String escapeHTML( String s ) {
         StringBuilder out = new StringBuilder(Math.max(16, s.length()));

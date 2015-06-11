@@ -6,15 +6,12 @@ Bundle-Version: 1.0.0
 Bundle-Vendor: HydroloGIS S.r.l.
 Require-Bundle: org.eclipse.rap.rwt,
  org.eclipse.rap.jface,
- org.eclipse.rap.addons.fileupload,
- org.eclipse.rap.addons.filedialog,
  eu.hydrologis.stage.libs,
  org.eclipse.equinox.http.registry;resolution:=optional
 Import-Package: javax.servlet;version="2.6.0",
  javax.servlet.annotation;version="2.6.0",
  javax.servlet.descriptor;version="2.6.0",
- javax.servlet.http;version="2.6.0",
- javax.servlet.resources;version="2.6.0"
+ javax.servlet.http;version="2.6.0"
 Bundle-ClassPath: .
 Bundle-ActivationPolicy: lazy
 Export-Package: eu.hydrologis.stage.treeslicesviewer
