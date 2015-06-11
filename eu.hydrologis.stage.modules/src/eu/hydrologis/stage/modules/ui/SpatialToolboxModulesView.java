@@ -106,7 +106,7 @@ public class SpatialToolboxModulesView {
         composite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
         composite.setLayout(new GridLayout(2, true));
 
-        final ToolBar toolBar = new ToolBar(composite, SWT.NONE);
+        final ToolBar toolBar = new ToolBar(composite, SWT.FLAT);
         Menu menu = new Menu(toolBar);
         MenuItem item = new MenuItem(menu, SWT.PUSH);
         item.setText("context menu item");

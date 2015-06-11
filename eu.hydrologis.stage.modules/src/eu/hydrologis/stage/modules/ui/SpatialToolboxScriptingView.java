@@ -113,7 +113,7 @@ public class SpatialToolboxScriptingView {
         mainComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
         mainComposite.setLayout(new GridLayout(3, false));
 
-        final ToolBar toolBar = new ToolBar(mainComposite, SWT.NONE);
+        final ToolBar toolBar = new ToolBar(mainComposite, SWT.FLAT);
         Menu menu = new Menu(toolBar);
         MenuItem item = new MenuItem(menu, SWT.PUSH);
         item.setText("context menu item");
