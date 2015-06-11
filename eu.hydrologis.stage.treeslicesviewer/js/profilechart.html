@@ -49,9 +49,10 @@ Andrea Antonello
             }
 
             function doTreeCharts(treeId, directionKey, chartWidth, chartHeight) {
+               clearChart();
                var treeAndSliceData = getTreeAndSlicesData(treeId);
-               var treeData = treeAndSliceData[0];
-               var sliceData = treeAndSliceData[1];
+               var treeData = JSON.parse(treeAndSliceData[0]);
+               var sliceData = JSON.parse(treeAndSliceData[1]);
 
                 var color = profColorMap.get(directionKey);
 //                var chartMap = [
@@ -97,7 +98,7 @@ Andrea Antonello
                 chart.color(color);
                 chart.dotsize(2);
                 chart.setData(sliceData);
-                chart.render("#profilechart");
+                chart.render("profilechart");
             }
 
         </script>

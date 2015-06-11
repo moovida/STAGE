@@ -14,6 +14,7 @@ public interface TreeSlicerConstants {
 
     public static final String JSON_TREE_ID = "id";
     public static final String JSON_TREE_PROGRESSIVE_MATCHED = "progressiveMatched";
+    public static final String[] JSON_DIRECTIONS = {"SN","SWNE","WE","WNES"};
     public static final String JSON_TREE_PROGRESSIVE = "progressive";
     public static final String JSON_TREE_MAX_P = "maxP";
     public static final String JSON_TREE_MIN_P = "minP";
