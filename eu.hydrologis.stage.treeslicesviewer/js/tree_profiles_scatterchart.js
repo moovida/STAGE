@@ -163,7 +163,7 @@ function treeProfileScatterChart() {
     }
 
     function xStart() {
-        return _margins.left;
+    	return _margins.left;
     }
     function yStart() {
         return _height - _margins.bottom;
@@ -180,6 +180,10 @@ function treeProfileScatterChart() {
     function quadrantHeight() {
         return _height - _margins.top - _margins.bottom;
     }
+
+    _chart.svg = function () {
+    	return _svg;
+    };
 
     _chart.width = function (w) {
         if (!arguments.length)
