@@ -9,11 +9,13 @@
 package eu.hydrologis.stage.libs.utils;
 
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Field;
 import java.util.StringTokenizer;
 
 import org.eclipse.rap.rwt.RWT;
 import org.eclipse.rap.rwt.client.service.JavaScriptExecutor;
 import org.eclipse.rap.rwt.client.service.UrlLauncher;
+import org.eclipse.swt.browser.Browser;
 import org.geotools.data.Base64;
 
 /**
@@ -100,6 +102,24 @@ public class StageUtils {
         } else {
             JavaScriptExecutor executor = RWT.getClient().getService(JavaScriptExecutor.class);
             executor.execute("window.location = \"" + url + "\";");
+        }
+    }
+
+    /**
+     * Block until the browser object is safe to execute a script.
+     * 
+     * <p>This is an ugly hack right now.
+     * 
+     * @param browser the browser to check.
+     * @throws NoSuchFieldException
+     * @throws IllegalAccessException
+     */
+    public static void blockWhileOtherScriptIsBusy( final Browser browser ) throws NoSuchFieldException, IllegalAccessException {
+        Field f = browser.getClass().getDeclaredField("executeScript"); // NoSuchFieldException
+        f.setAccessible(true);
+        Object exeScript = null; // IllegalAccessException
+        while( exeScript != null ) {
+            exeScript = f.get(browser);
         }
     }
 }

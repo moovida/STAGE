@@ -48,6 +48,10 @@ public class StageLogger {
         }
     }
 
+    public static void logError( Object owner, Throwable e ) {
+        logError(owner, null, e);
+    }
+
     private static String toMessage( Object owner, String msg ) {
         if (msg == null)
             msg = "";

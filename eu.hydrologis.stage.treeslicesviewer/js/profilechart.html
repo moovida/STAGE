@@ -55,12 +55,6 @@ Andrea Antonello
                var sliceData = JSON.parse(treeAndSliceData[1]);
 
                 var color = profColorMap.get(directionKey);
-//                var chartMap = [
-//                    [slices.SN, profColorMap.get("SN"), "sn-cell", tree.progressiveMatchedSN],
-//                    [slices.SWNE, profColorMap.get("SWNE"), "swne-cell", tree.progressiveMatchedSWNE],
-//                    [slices.WE, profColorMap.get("WE"), "we-cell", tree.progressiveMatchedWE],
-//                    [slices.WNES, profColorMap.get("WNES"), "wnes-cell", tree.progressiveMatchedWNES]
-//                ];
 
                 var maximumH = 0;
                 var maxHeight = d3.max(sliceData, function (d) {
@@ -80,7 +74,8 @@ Andrea Antonello
                                 );
                 if (treeData.diam && treeData.idMatched) {
                     chart.centerTreeProg(treeData.progressive, treeData.height);
-                    chart.centerMatchedTreeProg(treeData.progressiveMatched, treeData.heightMatched);
+                    var key = "progressiveMatched"+directionKey;
+                    chart.centerMatchedTreeProg(treeData[key], treeData.heightMatched);
                 } else if (treeData.diam) {
                     chart.centerTreeProg(treeData.progressive, treeData.height);
                 } else {

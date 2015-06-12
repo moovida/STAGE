@@ -19,7 +19,6 @@ Andrea Antonello
             // GLOBAL VARS START
             var body = d3.select("body");
             var selectedTreeData;
-            var doMajor175 = true;
 
             var plot;
             var plots;
@@ -66,12 +65,7 @@ Andrea Antonello
                 mapTreesG = mapSvg.append("g");
             }
 
-            function setMajor175(doSet) {
-                doMajor175 = doSet;
-                updateData();
-            }
-
-            function updateData(minH, maxH, minD, maxD, plotData) {
+            function updateData(doMajor175, minH, maxH, minD, maxD, plotData) {
                 minHeight = minH;
                 maxHeight = maxH;
                 minDiam = minD;

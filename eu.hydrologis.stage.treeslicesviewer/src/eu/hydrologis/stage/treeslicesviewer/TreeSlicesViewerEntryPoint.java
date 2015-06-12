@@ -14,7 +14,6 @@ import static java.lang.Math.min;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -30,11 +29,8 @@ import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.browser.BrowserFunction;
 import org.eclipse.swt.browser.ProgressEvent;
 import org.eclipse.swt.browser.ProgressListener;
-import org.eclipse.swt.custom.CLabel;
-import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -80,6 +76,7 @@ public class TreeSlicesViewerEntryPoint extends AbstractEntryPoint implements Tr
     private DecimalFormat radiusFormatter = new DecimalFormat("0.0");
     private DecimalFormat llFormatter = new DecimalFormat("0.000000");
     private Display display;
+    private Text datasetNameText;
 
     @SuppressWarnings("serial")
     @Override
@@ -104,8 +101,6 @@ public class TreeSlicesViewerEntryPoint extends AbstractEntryPoint implements Tr
         Composite mainComposite = new Composite(parent, SWT.None);
         GridLayout mainLayout = new GridLayout(8, true);
         mainComposite.setLayout(mainLayout);
-        // mainLayout.marginBottom = 30;
-        // mainLayout.marginTop = 30;
 
         mainComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
@@ -124,7 +119,7 @@ public class TreeSlicesViewerEntryPoint extends AbstractEntryPoint implements Tr
         Label datasetTitleLabel = new Label(leftComposite, SWT.NONE);
         datasetTitleLabel.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
         datasetTitleLabel.setText("Dataset: ");
-        final Text datasetNameText = new Text(leftComposite, SWT.BORDER);
+        datasetNameText = new Text(leftComposite, SWT.BORDER);
         datasetNameText.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
         datasetNameText.setText("");
         datasetNameText.setEditable(false);
@@ -134,41 +129,9 @@ public class TreeSlicesViewerEntryPoint extends AbstractEntryPoint implements Tr
         datasetButton.addSelectionListener(new SelectionAdapter(){
             @Override
             public void widgetSelected( SelectionEvent e ) {
-                try {
-                    File userFolder = StageWorkspace.getInstance().getDataFolder(User.getCurrentUserName());
-                    TreeFolderSelectionDialog fileDialog = new TreeFolderSelectionDialog(parentShell, userFolder);
-                    int returnCode = fileDialog.open();
-                    if (returnCode == SWT.CANCEL) {
-                        selectedFile = null;
-                        datasetNameText.setText("");
-                        return;
-                    }
-
-                    selectedFile = fileDialog.getSelectedFile();
-                    if (selectedFile != null)
-                        datasetNameText.setText(selectedFile.getName());
-
-                    File[] plotFiles = selectedFile.listFiles(new FilenameFilter(){
-                        @Override
-                        public boolean accept( File dir, String name ) {
-                            return name.endsWith(".json");
-                        }
-                    });
-                    Arrays.sort(plotFiles);
-
-                    String[] names = new String[plotFiles.length + 1];
-                    names[0] = EMPTY;
-                    for( int i = 0; i < plotFiles.length; i++ ) {
-                        names[i + 1] = FileUtilities.getNameWithoutExtention(plotFiles[i]);
-                    }
-                    plotCombo.setItems(names);
-                    plotCombo.select(0);
-
-                    clearPlotSelection();
-                } catch (Exception e1) {
-                    e1.printStackTrace();
-                }
+                selectDataset();
             }
+
         });
 
         Label plotLabel = new Label(leftComposite, SWT.NONE);
@@ -201,9 +164,12 @@ public class TreeSlicesViewerEntryPoint extends AbstractEntryPoint implements Tr
         onlyDiametersCheckButton.addSelectionListener(new SelectionAdapter(){
             @Override
             public void widgetSelected( SelectionEvent e ) {
+                if (plotObjectTransfer == null) {
+                    return;
+                }
                 onlyDiameterMajor17 = onlyDiametersCheckButton.getSelection();
-                String tf = onlyDiameterMajor17 ? "true" : "false";
-                mapBrowser.evaluate("setMajor175(" + tf + ")");
+                mapBrowser.evaluate("updateData(" + onlyDiameterMajor17 + "," + minHeight + "," + maxHeight + "," + minDiam + ","
+                        + maxDiam + "," + plotObjectTransfer.toString() + ")");
             }
         });
 
@@ -250,6 +216,43 @@ public class TreeSlicesViewerEntryPoint extends AbstractEntryPoint implements Tr
 
     }
 
+    private void selectDataset() {
+        try {
+            File userFolder = StageWorkspace.getInstance().getDataFolder(User.getCurrentUserName());
+            TreeFolderSelectionDialog fileDialog = new TreeFolderSelectionDialog(parentShell, userFolder);
+            int returnCode = fileDialog.open();
+            if (returnCode == SWT.CANCEL) {
+                selectedFile = null;
+                datasetNameText.setText("");
+                return;
+            }
+
+            selectedFile = fileDialog.getSelectedFile();
+            if (selectedFile != null)
+                datasetNameText.setText(selectedFile.getName());
+
+            File[] plotFiles = selectedFile.listFiles(new FilenameFilter(){
+                @Override
+                public boolean accept( File dir, String name ) {
+                    return name.endsWith(".json");
+                }
+            });
+            Arrays.sort(plotFiles);
+
+            String[] names = new String[plotFiles.length + 1];
+            names[0] = EMPTY;
+            for( int i = 0; i < plotFiles.length; i++ ) {
+                names[i + 1] = FileUtilities.getNameWithoutExtention(plotFiles[i]);
+            }
+            plotCombo.setItems(names);
+            plotCombo.select(0);
+
+            clearPlotSelection();
+        } catch (Exception e1) {
+            e1.printStackTrace();
+        }
+    }
+
     private void addChartBrowser( Composite parent, String key ) {
         final Browser chartBrowser = new Browser(parent, SWT.NONE);
         GridData chartBrowserGD = new GridData(SWT.FILL, SWT.FILL, true, true);
@@ -293,7 +296,7 @@ public class TreeSlicesViewerEntryPoint extends AbstractEntryPoint implements Tr
 
     }
 
-    protected void selectPlot( String selectedText ) {
+    private void selectPlot( String selectedText ) {
         File plotFile = new File(selectedFile, selectedText + ".json");
 
         id2TreeJsonMap.clear();
@@ -385,8 +388,8 @@ public class TreeSlicesViewerEntryPoint extends AbstractEntryPoint implements Tr
                     if (hasMatch) {
                         treeObjectTransfer.put(JSON_TREE_ID_MATCHED, treeObject.getString(JSON_TREE_ID_MATCHED));
                         for( String dir : JSON_DIRECTIONS ) {
-                            treeObjectTransfer.put(JSON_TREE_PROGRESSIVE_MATCHED + dir,
-                                    treeObject.getDouble(JSON_TREE_PROGRESSIVE_MATCHED + dir));
+                            double progressiveMatched = treeObject.getDouble(JSON_TREE_PROGRESSIVE_MATCHED + dir);
+                            treeObjectTransfer.put(JSON_TREE_PROGRESSIVE_MATCHED + dir, progressiveMatched);
                         }
                         treeObjectTransfer.put(JSON_TREE_HEIGHT_MATCHED, treeObject.getDouble(JSON_TREE_HEIGHT_MATCHED));
                     }
@@ -400,8 +403,8 @@ public class TreeSlicesViewerEntryPoint extends AbstractEntryPoint implements Tr
                 String text = "<font color=\"" + StageUtils.TEXTCOLOR + "\">" + plotInfoSB.toString() + "</font>";
                 informationText.setText(text);
 
-                mapBrowser.evaluate("updateData(" + minHeight + "," + maxHeight + "," + minDiam + "," + maxDiam + ","
-                        + plotObjectTransfer.toString() + ")");
+                mapBrowser.evaluate("updateData(" + onlyDiameterMajor17 + "," + minHeight + "," + maxHeight + "," + minDiam + ","
+                        + maxDiam + "," + plotObjectTransfer.toString() + ")");
             } catch (IOException e) {
                 StageLogger.logError(this, "Error reading the plot data.", e);
             }
@@ -424,160 +427,148 @@ public class TreeSlicesViewerEntryPoint extends AbstractEntryPoint implements Tr
     }
 
     private void addMapBrowserFunctions() {
-
         new BrowserFunction(mapBrowser, "getTreedataById"){
             @Override
             public Object function( Object[] arguments ) {
-                String treeId = arguments[0].toString();
-                JSONObject treeObject = id2TreeJsonMap.get(treeId);
-                if (treeObject != null) {
-                    double treeHeight = treeObject.getDouble(JSON_TREE_HEIGHT);
-                    double lat = treeObject.getDouble(JSON_TREE_LAT);
-                    double lon = treeObject.getDouble(JSON_TREE_LON);
-
-                    StringBuilder plotInfoSB = new StringBuilder();
-                    boolean hasDiam = treeObject.has(JSON_TREE_DIAM);
-                    boolean hasMatched = treeObject.has(JSON_TREE_ID_MATCHED);
-                    boolean isTp = hasDiam && hasMatched;
-                    boolean isFn = hasDiam && !hasMatched;
-                    boolean isFp = !hasDiam;
-                    if (isTp) {
-                        plotInfoSB.append("<b>TRUE POSITIVE</b><br/>\n");
-                    } else if (isFn) {
-                        plotInfoSB.append("<b>FALSE NEGATIVE</b><br/>\n");
-                    } else if (isFp) {
-                        plotInfoSB.append("<b>FALSE POSITIVE</b><br/>\n");
-                    }
-                    if (isTp || isFn) {
-                        double diam = treeObject.getDouble(JSON_TREE_DIAM);
-                        plotInfoSB.append("<br/><b>MAPPED TREE INFORMATION</b><br/>\n");
-                        plotInfoSB.append("id = " + treeId + "<br/>");
-                        plotInfoSB.append("height [m] = " + radiusFormatter.format(treeHeight) + "<br/>");
-                        plotInfoSB.append("diameter [cm] = " + radiusFormatter.format(diam) + "<br/>");
-                        plotInfoSB.append("lat  = " + llFormatter.format(lat) + "<br/>");
-                        plotInfoSB.append("lon  = " + llFormatter.format(lon) + "<br/>");
-                    }
-                    if (isTp) {
-                        double matchedTreeHeight = treeObject.getDouble(JSON_TREE_HEIGHT_MATCHED);
-                        String matchedTreeId = treeObject.getString(JSON_TREE_ID_MATCHED);
-
-                        plotInfoSB.append("<br/><b>EXTRACTED TREE INFORMATION</b><br/>\n");
-                        plotInfoSB.append("id = " + matchedTreeId + "<br/>");
-                        plotInfoSB.append("height [m] = " + radiusFormatter.format(matchedTreeHeight) + "<br/>");
-                    }
-                    if (isFp) {
-                        plotInfoSB.append("<br/><b>EXTRACTED TREE INFORMATION</b><br/>\n");
-                        plotInfoSB.append("id = " + treeId + "<br/>");
-                        plotInfoSB.append("height [m] = " + radiusFormatter.format(treeHeight) + "<br/>");
-                    }
-
-                    String text = "<font color=\"" + StageUtils.TEXTCOLOR + "\">" + plotInfoSB.toString() + "</font>";
-                    informationText.setText(text);
-
-                    final AtomicInteger count = new AtomicInteger();
-                    for( Entry<String, Browser> browserItem : chartBrowsers.entrySet() ) {
-                        String directionKey = browserItem.getKey();
-                        final Browser browser = browserItem.getValue();
-                        Rectangle clientArea = browser.getClientArea();
-                        int w = clientArea.width;
-                        int h = clientArea.height;
-
-                        JSONObject treeObj = new JSONObject();
-                        double minP = treeObject.getDouble(JSON_TREE_MIN_P);
-                        treeObj.put(JSON_TREE_MIN_P, minP);
-                        double maxP = treeObject.getDouble(JSON_TREE_MAX_P);
-                        treeObj.put(JSON_TREE_MAX_P, maxP);
-                        if (treeObject.has(JSON_TREE_DIAM)) {
-                            double diam = treeObject.getDouble(JSON_TREE_DIAM);
-                            treeObj.put(JSON_TREE_DIAM, diam);
-                        }
-                        double progressive = treeObject.getDouble(JSON_TREE_PROGRESSIVE);
-                        treeObj.put(JSON_TREE_PROGRESSIVE, progressive);
-                        double height = treeObject.getDouble(JSON_TREE_HEIGHT);
-                        treeObj.put(JSON_TREE_HEIGHT, height);
-                        if (treeObject.has(JSON_TREE_ID_MATCHED)) {
-                            String matchedTreeId = treeObject.getString(JSON_TREE_ID_MATCHED);
-                            treeObj.put(JSON_TREE_ID_MATCHED, matchedTreeId);
-                            for( String dir : JSON_DIRECTIONS ) {
-                                treeObj.put(JSON_TREE_PROGRESSIVE_MATCHED + dir,
-                                        treeObject.getDouble(JSON_TREE_PROGRESSIVE_MATCHED + dir));
-                            }
-                            double heightMatched = treeObject.getDouble(JSON_TREE_HEIGHT_MATCHED);
-                            treeObj.put(JSON_TREE_HEIGHT_MATCHED, heightMatched);
-                        }
-
-                        // slice data
-                        // JSONObject slicesObj = treeObject.getJSONObject(JSON_TREE_SLICES);
-                        // JSONArray profileDataArray = slicesObj.getJSONArray(directionKey);
-
-                        int border = 10;
-                        StringBuilder scriptBuilder = new StringBuilder();
-                        scriptBuilder.append("doTreeCharts(");
-                        scriptBuilder.append("\"");
-                        scriptBuilder.append(treeId);
-                        scriptBuilder.append("\"");
-                        scriptBuilder.append(", ");
-                        // scriptBuilder.append(profileDataArray.toString());
-                        // scriptBuilder.append(",");
-                        // scriptBuilder.append(slicesObj.toString());
-                        // scriptBuilder.append(",");
-                        scriptBuilder.append("\"");
-                        scriptBuilder.append(directionKey);
-                        scriptBuilder.append("\"");
-                        scriptBuilder.append(", ");
-                        scriptBuilder.append(w - border);
-                        scriptBuilder.append(", ");
-                        scriptBuilder.append(h - border);
-                        scriptBuilder.append(")");
-                        final String script = scriptBuilder.toString();
-
-                        new Thread(new Runnable(){
-                            public void run() {
-                                display.asyncExec(new Runnable(){
-                                    public void run() {
-                                        // browser.execute(script);
-
-                                        try {
-                                            Field f = browser.getClass().getDeclaredField("executeScript"); // NoSuchFieldException
-                                            f.setAccessible(true);
-                                            Object exeScript = null; // IllegalAccessException
-                                            while( exeScript != null ) {
-                                                exeScript = f.get(browser);
-                                            }
-                                            BrowserUtil.evaluate(browser, script, new BrowserCallback(){
-                                                private static final long serialVersionUID = 1L;
-                                                public void evaluationSucceeded( Object result ) {
-                                                    System.out.println("Browser " + browser.getData() + " loaded");
-                                                }
-                                                public void evaluationFailed( Exception exception ) {
-                                                    throw new RuntimeException(exception);
-                                                }
-                                            });
-
-                                        } catch (Exception e) {
-                                            e.printStackTrace();
-                                        }
-                                    }
-                                });
-                            }
-                        }).start();
-                    }
-
-                    // while( count.intValue() < 4 ) {
-                    // try {
-                    // Thread.sleep(100);
-                    // } catch (InterruptedException e) {
-                    // e.printStackTrace();
-                    // }
-                    // }
-
-                    String treeJson = treeObject.toString();
-                    return treeJson;
-                }
-                return null;
+                return getTreedataById(arguments);
             }
         };
+    }
 
+    private Object getTreedataById( Object[] arguments ) {
+        String treeId = arguments[0].toString();
+        JSONObject treeObject = id2TreeJsonMap.get(treeId);
+        if (treeObject != null) {
+            double treeHeight = treeObject.getDouble(JSON_TREE_HEIGHT);
+            double lat = treeObject.getDouble(JSON_TREE_LAT);
+            double lon = treeObject.getDouble(JSON_TREE_LON);
+
+            StringBuilder plotInfoSB = new StringBuilder();
+            boolean hasDiam = treeObject.has(JSON_TREE_DIAM);
+            boolean hasMatched = treeObject.has(JSON_TREE_ID_MATCHED);
+            boolean isTp = hasDiam && hasMatched;
+            boolean isFn = hasDiam && !hasMatched;
+            boolean isFp = !hasDiam;
+            if (isTp) {
+                plotInfoSB.append("<b>TRUE POSITIVE</b><br/>\n");
+            } else if (isFn) {
+                plotInfoSB.append("<b>FALSE NEGATIVE</b><br/>\n");
+            } else if (isFp) {
+                plotInfoSB.append("<b>FALSE POSITIVE</b><br/>\n");
+            }
+            if (isTp || isFn) {
+                double diam = treeObject.getDouble(JSON_TREE_DIAM);
+                plotInfoSB.append("<br/><b>MAPPED TREE INFORMATION</b><br/>\n");
+                plotInfoSB.append("id = " + treeId + "<br/>");
+                plotInfoSB.append("height [m] = " + radiusFormatter.format(treeHeight) + "<br/>");
+                plotInfoSB.append("diameter [cm] = " + radiusFormatter.format(diam) + "<br/>");
+                plotInfoSB.append("lat  = " + llFormatter.format(lat) + "<br/>");
+                plotInfoSB.append("lon  = " + llFormatter.format(lon) + "<br/>");
+            }
+            if (isTp) {
+                double matchedTreeHeight = treeObject.getDouble(JSON_TREE_HEIGHT_MATCHED);
+                String matchedTreeId = treeObject.getString(JSON_TREE_ID_MATCHED);
+
+                plotInfoSB.append("<br/><b>EXTRACTED TREE INFORMATION</b><br/>\n");
+                plotInfoSB.append("id = " + matchedTreeId + "<br/>");
+                plotInfoSB.append("height [m] = " + radiusFormatter.format(matchedTreeHeight) + "<br/>");
+            }
+            if (isFp) {
+                plotInfoSB.append("<br/><b>EXTRACTED TREE INFORMATION</b><br/>\n");
+                plotInfoSB.append("id = " + treeId + "<br/>");
+                plotInfoSB.append("height [m] = " + radiusFormatter.format(treeHeight) + "<br/>");
+            }
+
+            String text = "<font color=\"" + StageUtils.TEXTCOLOR + "\">" + plotInfoSB.toString() + "</font>";
+            informationText.setText(text);
+
+            final AtomicInteger count = new AtomicInteger();
+            for( Entry<String, Browser> browserItem : chartBrowsers.entrySet() ) {
+                String directionKey = browserItem.getKey();
+                final Browser browser = browserItem.getValue();
+                Rectangle clientArea = browser.getClientArea();
+                int w = clientArea.width;
+                int h = clientArea.height;
+
+                JSONObject treeObj = new JSONObject();
+                double minP = treeObject.getDouble(JSON_TREE_MIN_P);
+                treeObj.put(JSON_TREE_MIN_P, minP);
+                double maxP = treeObject.getDouble(JSON_TREE_MAX_P);
+                treeObj.put(JSON_TREE_MAX_P, maxP);
+                if (treeObject.has(JSON_TREE_DIAM)) {
+                    double diam = treeObject.getDouble(JSON_TREE_DIAM);
+                    treeObj.put(JSON_TREE_DIAM, diam);
+                }
+                double progressive = treeObject.getDouble(JSON_TREE_PROGRESSIVE);
+                treeObj.put(JSON_TREE_PROGRESSIVE, progressive);
+                double height = treeObject.getDouble(JSON_TREE_HEIGHT);
+                treeObj.put(JSON_TREE_HEIGHT, height);
+                if (treeObject.has(JSON_TREE_ID_MATCHED)) {
+                    String matchedTreeId = treeObject.getString(JSON_TREE_ID_MATCHED);
+                    treeObj.put(JSON_TREE_ID_MATCHED, matchedTreeId);
+                    for( String dir : JSON_DIRECTIONS ) {
+                        treeObj.put(JSON_TREE_PROGRESSIVE_MATCHED + dir,
+                                treeObject.getDouble(JSON_TREE_PROGRESSIVE_MATCHED + dir));
+                    }
+                    double heightMatched = treeObject.getDouble(JSON_TREE_HEIGHT_MATCHED);
+                    treeObj.put(JSON_TREE_HEIGHT_MATCHED, heightMatched);
+                }
+
+                // slice data
+                // JSONObject slicesObj = treeObject.getJSONObject(JSON_TREE_SLICES);
+                // JSONArray profileDataArray = slicesObj.getJSONArray(directionKey);
+
+                int border = 10;
+                StringBuilder scriptBuilder = new StringBuilder();
+                scriptBuilder.append("doTreeCharts(");
+                scriptBuilder.append("\"");
+                scriptBuilder.append(treeId);
+                scriptBuilder.append("\"");
+                scriptBuilder.append(", ");
+                // scriptBuilder.append(profileDataArray.toString());
+                // scriptBuilder.append(",");
+                // scriptBuilder.append(slicesObj.toString());
+                // scriptBuilder.append(",");
+                scriptBuilder.append("\"");
+                scriptBuilder.append(directionKey);
+                scriptBuilder.append("\"");
+                scriptBuilder.append(", ");
+                scriptBuilder.append(w - border);
+                scriptBuilder.append(", ");
+                scriptBuilder.append(h - border);
+                scriptBuilder.append(")");
+                final String script = scriptBuilder.toString();
+
+                new Thread(new Runnable(){
+                    public void run() {
+                        display.asyncExec(new Runnable(){
+                            public void run() {
+                                try {
+                                    StageUtils.blockWhileOtherScriptIsBusy(browser);
+                                    BrowserUtil.evaluate(browser, script, new BrowserCallback(){
+                                        private static final long serialVersionUID = 1L;
+                                        public void evaluationSucceeded( Object result ) {
+                                            StageLogger.logDebug(this, "Browser " + browser.getData() + " loaded");
+                                        }
+                                        public void evaluationFailed( Exception exception ) {
+                                            StageLogger.logError(TreeSlicesViewerEntryPoint.this, null, exception);
+                                        }
+                                    });
+
+                                } catch (Exception e) {
+                                    StageLogger.logError(TreeSlicesViewerEntryPoint.this, e);
+                                }
+                            }
+
+                        });
+                    }
+                }).start();
+            }
+
+            String treeJson = treeObject.toString();
+            return treeJson;
+        }
+        return null;
     }
 
     private void addChartBrowserFunction( final Browser chartBrowser ) {
