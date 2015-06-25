@@ -73,7 +73,8 @@ public class StageEntryPoint extends AbstractEntryPoint {
         String[][] apps = new String[][]{//
         {"Spatial Toolbox", "/spatialtoolbox"}, //
                 {"Geopaparazzi Browser", "/geopapbrowser"},//
-                {"Tree Slices Viewer", "/treeslicesviewer"}//
+                {"Tree Slices Viewer", "/treeslicesviewer"},//
+                {"Spatialite Viewer", "/spatialiteviewer"}//
         };
 
         for( String[] app : apps ) {

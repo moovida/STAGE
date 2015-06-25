@@ -33,6 +33,7 @@ public class ImageCache {
     public static final String STOP = "stop_module.gif";
     public static final String GRID = "grid_obj.gif";
 	
+    public static final String NEW = "new.gif";
     public static final String OPEN = "prj_obj.gif";
     public static final String SAVE = "save_edit.gif";
     public static final String COPY = "copy_edit.gif";
@@ -44,6 +45,7 @@ public class ImageCache {
     public static final String FOLDER = "folder.gif";
 
     public static final String DATABASE = "database.gif";
+    public static final String TABLE = "table.gif";
     public static final String DBIMAGE = "db_image.gif";
     public static final String LOG = "log.gif";
 
