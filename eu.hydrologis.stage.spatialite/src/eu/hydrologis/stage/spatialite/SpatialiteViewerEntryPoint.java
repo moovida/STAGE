@@ -43,6 +43,7 @@ import org.eclipse.swt.widgets.ToolItem;
 import org.jgrasstools.gears.spatialite.SpatialiteDb;
 
 import eu.hydrologis.stage.libs.log.StageLogger;
+import eu.hydrologis.stage.libs.utils.FileUtilities;
 import eu.hydrologis.stage.libs.utils.ImageCache;
 import eu.hydrologis.stage.libs.utilsrap.LoginDialog;
 import eu.hydrologis.stage.libs.workspace.StageWorkspace;
@@ -222,7 +223,9 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
             public String getText( Object element ) {
                 if (element instanceof SpatialiteDb) {
                     SpatialiteDb db = (SpatialiteDb) element;
-                    return db.getDatabasePath();
+                    String databasePath = db.getDatabasePath();
+                    File dbFile = new File(databasePath);
+                    return dbFile.getName();
                 }
                 if (element instanceof String) {
                     return (String) element;
