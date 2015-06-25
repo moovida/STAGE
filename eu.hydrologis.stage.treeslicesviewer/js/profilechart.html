@@ -38,6 +38,7 @@ Andrea Antonello
         </style>
         <script type="text/javascript">
             // GLOBAL VARS START
+            var chart;
             var profColorMap = d3.map();
             profColorMap.set("SN", "red");
             profColorMap.set("SWNE", "blue");
@@ -65,7 +66,7 @@ Andrea Antonello
                 }
                 maximumH = maximumH + 1;
                 //console.log(item);
-                var chart = treeProfileScatterChart()
+                chart = treeProfileScatterChart()
                         .x(
                                 d3.scale.linear().domain([treeData.minP, treeData.maxP])
                                 )
@@ -94,6 +95,15 @@ Andrea Antonello
                 chart.dotsize(2);
                 chart.setData(sliceData);
                 chart.render("profilechart");
+            }
+            
+            
+            function getChartSvg(){
+//            	var tmp  = document.getElementById("ex1");
+            	var svg = document.getElementsByTagName("svg")[0];
+//            	var svg = chart.svg;
+            	var svgXml = (new XMLSerializer).serializeToString(svg);
+            	return svgXml;
             }
 
         </script>

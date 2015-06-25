@@ -29,6 +29,8 @@ import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.browser.BrowserFunction;
 import org.eclipse.swt.browser.ProgressEvent;
 import org.eclipse.swt.browser.ProgressListener;
+import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Rectangle;
@@ -48,6 +50,7 @@ import org.json.JSONObject;
 
 import eu.hydrologis.stage.libs.log.StageLogger;
 import eu.hydrologis.stage.libs.utils.StageUtils;
+import eu.hydrologis.stage.libs.utilsrap.DownloadUtils;
 import eu.hydrologis.stage.libs.utilsrap.LoginDialog;
 import eu.hydrologis.stage.libs.workspace.StageWorkspace;
 import eu.hydrologis.stage.libs.workspace.User;
@@ -265,6 +268,42 @@ public class TreeSlicesViewerEntryPoint extends AbstractEntryPoint implements Tr
             }
 
             public void changed( ProgressEvent event ) {
+            }
+        });
+        parent.addMouseListener(new MouseListener(){
+
+            @Override
+            public void mouseUp( MouseEvent e ) {
+            }
+
+            @Override
+            public void mouseDown( MouseEvent e ) {
+            }
+
+            @Override
+            public void mouseDoubleClick( MouseEvent e ) {
+                Object evaluate = chartBrowser.evaluate("return getChartSvg()");
+                if (evaluate != null) {
+                    byte[] bytes = evaluate.toString().getBytes();
+                    try {
+                        String direction = chartBrowser.getData().toString();
+                        String fileName = "chart_" + direction + ".svg";
+                        new DownloadUtils().sendDownload(parentShell, fileName, bytes);
+                    } catch (IOException e1) {
+                        StageLogger.logError(TreeSlicesViewerEntryPoint.this, e1);
+                    }
+                }
+
+                // BrowserUtil.evaluate(chartBrowser, "getChartSvg()", new BrowserCallback(){
+                // private static final long serialVersionUID = 1L;
+                // public void evaluationSucceeded( Object result ) {
+                // System.out.println(result);
+                // }
+                // public void evaluationFailed( Exception exception ) {
+                // StageLogger.logError(TreeSlicesViewerEntryPoint.this, null, exception);
+                // }
+                // });
+
             }
         });
 

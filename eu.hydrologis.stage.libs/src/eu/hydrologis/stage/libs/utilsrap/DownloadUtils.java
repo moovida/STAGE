@@ -29,6 +29,17 @@ public class DownloadUtils {
         return true;
     }
 
+    public boolean sendDownload( Shell parentShell, String fileName, byte[] data ) throws FileNotFoundException, IOException {
+        DownloadService service = new DownloadService(data, fileName);
+        service.register();
+
+        final Browser browser = new Browser(parentShell, SWT.NONE);
+        browser.setSize(0, 0);
+        browser.setUrl(service.getURL());
+
+        return true;
+    }
+
     public static final class DownloadService implements ServiceHandler {
 
         private final byte[] data;
