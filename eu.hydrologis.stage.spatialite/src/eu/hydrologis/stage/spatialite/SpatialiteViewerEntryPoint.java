@@ -14,11 +14,16 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 
+import org.eclipse.jface.viewers.ColumnLabelProvider;
+import org.eclipse.jface.viewers.ColumnViewerToolTipSupport;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
+import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
+import org.eclipse.jface.viewers.TableViewer;
+import org.eclipse.jface.viewers.TableViewerColumn;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.rap.rwt.RWT;
@@ -30,6 +35,7 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
@@ -38,12 +44,14 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.TableColumn;
+import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.ToolItem;
 import org.jgrasstools.gears.spatialite.SpatialiteDb;
+import org.jgrasstools.gears.spatialite.TableRecordMap;
 
 import eu.hydrologis.stage.libs.log.StageLogger;
-import eu.hydrologis.stage.libs.utils.FileUtilities;
 import eu.hydrologis.stage.libs.utils.ImageCache;
 import eu.hydrologis.stage.libs.utilsrap.LoginDialog;
 import eu.hydrologis.stage.libs.workspace.StageWorkspace;
@@ -53,6 +61,7 @@ import eu.hydrologis.stage.libs.workspace.User;
  * @author Andrea Antonello (www.hydrologis.com)
  */
 public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
+    private static final String SQL_EDITOR = "SQL Editor";
     private static final String DATA_VIEWER = "Data viewer";
     private static final String DATABASE_CONNECTIONS = "Database connections";
     private static final String NEW = "new";
@@ -68,6 +77,8 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
 
     private SpatialiteDb currentConnectedDatabase;
     private Shell parentShell;
+    private TableViewer dataTableViewer;
+    private Group resultsetViewerGroup;
 
     @Override
     protected void createContents( final Composite parent ) {
@@ -145,15 +156,107 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
         databaseTreeViewer = createTreeViewer(modulesListGroup);
         databaseTreeViewer.setInput(null);
 
-        Group sqlViewerGroup = new Group(mainComposite, SWT.NONE);
-        GridData sqlViewerGroupGD = new GridData(SWT.FILL, SWT.FILL, true, true);
-        sqlViewerGroupGD.horizontalSpan = 2;
-        sqlViewerGroupGD.verticalSpan = 2;
-        sqlViewerGroup.setLayoutData(sqlViewerGroupGD);
-        sqlViewerGroup.setLayout(new GridLayout(1, false));
-        sqlViewerGroup.setText(DATA_VIEWER);
+        Composite rightComposite = new Composite(mainComposite, SWT.None);
+        GridLayout rightLayout = new GridLayout(1, true);
+        rightLayout.marginWidth = 0;
+        rightLayout.marginHeight = 0;
+        rightComposite.setLayout(rightLayout);
+        GridData rightGD = new GridData(GridData.FILL, GridData.FILL, true, true);
+        rightComposite.setLayoutData(rightGD);
+
+        Group sqlEditorGroup = new Group(rightComposite, SWT.NONE);
+        GridData sqlEditorGroupGD = new GridData(SWT.FILL, SWT.FILL, true, false);
+        sqlEditorGroup.setLayoutData(sqlEditorGroupGD);
+        sqlEditorGroup.setLayout(new GridLayout(1, false));
+        sqlEditorGroup.setText(SQL_EDITOR);
+
+        Combo oldQueriesCombo = new Combo(sqlEditorGroup, SWT.DROP_DOWN);
+        oldQueriesCombo.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+        oldQueriesCombo.setItems(new String[0]);
+
+        Text sqlEditorText = new Text(sqlEditorGroup, SWT.MULTI | SWT.WRAP | SWT.V_SCROLL | SWT.BORDER);
+        GridData sqlEditorTextGD = new GridData(SWT.FILL, SWT.FILL, true, false);
+        sqlEditorTextGD.heightHint = 200;
+        sqlEditorText.setLayoutData(sqlEditorTextGD);
+        sqlEditorText.setText("");
+
+        resultsetViewerGroup = new Group(rightComposite, SWT.NONE);
+        GridData resultsetViewerGroupGD = new GridData(SWT.FILL, SWT.FILL, true, true);
+        resultsetViewerGroup.setLayoutData(resultsetViewerGroupGD);
+        resultsetViewerGroup.setLayout(new GridLayout(1, false));
+        resultsetViewerGroup.setText(DATA_VIEWER);
+
+        createTableViewer(resultsetViewerGroup);
 
         mainComposite.setWeights(new int[]{1, 3});
+    }
+
+    private void createTableViewer( Composite parent ) {
+        dataTableViewer = new TableViewer(parent, SWT.BORDER);
+        dataTableViewer.setContentProvider(new IStructuredContentProvider(){
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public void inputChanged( Viewer viewer, Object oldInput, Object newInput ) {
+                System.out.println();
+            }
+
+            @Override
+            public void dispose() {
+            }
+
+            @Override
+            public Object[] getElements( Object inputElement ) {
+//                if (inputElement instanceof List< ? >) {
+//                    List< ? > list = (List< ? >) inputElement;
+//                    Object[] array = list.toArray();
+//                    return array;
+//                }
+//                if (inputElement instanceof TableRecordMap) {
+//                    TableRecordMap record = (TableRecordMap) inputElement;
+//                    Object[] objs = new Object[record.data.size() + 1];
+//                    int index = 0;
+//                    for( Object object : record.data.values() ) {
+//                        objs[index++] = object.toString();
+//                    }
+//                    objs[index] = record.geometry.toText();
+//                    return objs;
+//                }
+                return null;
+            }
+        });
+
+        dataTableViewer.setInput(null);
+        dataTableViewer.setItemCount(0);
+        // viewer.addFilter( viewerFilter );
+        // viewer.addSelectionChangedListener( new ISelectionChangedListener() {
+        // public void selectionChanged( SelectionChangedEvent event ) {
+        // lblSelection.setText( "Selection: " + event.getSelection() );
+        // lblSelection.getParent().layout( new Control[] { lblSelection } );
+        // }
+        // } );
+        dataTableViewer.getTable().setHeaderVisible(true);
+        ColumnViewerToolTipSupport.enableFor(dataTableViewer);
+        GridData tableData = new GridData(SWT.FILL, SWT.FILL, true, true);
+        tableData.horizontalSpan = 2;
+        dataTableViewer.getTable().setLayoutData(tableData);
+    }
+
+    private TableViewerColumn createColumn( TableViewer viewer, String name ) {
+        TableViewerColumn result = new TableViewerColumn(viewer, SWT.NONE);
+        result.setLabelProvider(new RecordLabelProvider(name));
+        TableColumn column = result.getColumn();
+        column.setText(name);
+        column.setWidth(170);
+        column.setMoveable(true);
+        // column.addSelectionListener( new SelectionAdapter() {
+        // @Override
+        // public void widgetSelected( SelectionEvent event ) {
+        // int sortDirection = updateSortDirection( ( TableColumn )event.widget );
+        // sort( viewer, COL_FIRST_NAME, sortDirection == SWT.DOWN );
+        // }
+        // } );
+        return result;
     }
 
     private TreeViewer createTreeViewer( Composite modulesComposite ) {
@@ -225,7 +328,8 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                     SpatialiteDb db = (SpatialiteDb) element;
                     String databasePath = db.getDatabasePath();
                     File dbFile = new File(databasePath);
-                    return dbFile.getName();
+                    String dbPathRelative = StageWorkspace.makeRelativeToDataFolder(dbFile);
+                    return dbPathRelative;
                 }
                 if (element instanceof String) {
                     return (String) element;
@@ -245,7 +349,29 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                 Object selectedItem = sel.getFirstElement();
                 if (selectedItem instanceof String) {
                     String selectedTable = (String) selectedItem;
-                    // TODO make a select * query
+
+                    try {
+                        if (dataTableViewer != null)
+                            dataTableViewer.getControl().dispose();
+                        createTableViewer(resultsetViewerGroup);
+                        List<TableRecordMap> tableRecordsMapList = currentConnectedDatabase.getTableRecordsMapIn(selectedTable,
+                                null, false, 2);
+                        if (tableRecordsMapList.size() > 0) {
+                            TableRecordMap tableRecordMap = tableRecordsMapList.get(0);
+                            createColumn(dataTableViewer, "the_geom"); // FIXME
+                            for( String key : tableRecordMap.data.keySet() ) {
+                                createColumn(dataTableViewer, key);
+                            }
+
+                            int columns = tableRecordMap.data.size() + 1; // plus geom
+                            dataTableViewer.setItemCount(columns);
+                            dataTableViewer.setInput(tableRecordsMapList);
+                        }
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
                 }
             }
 
@@ -332,4 +458,23 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
         // }
     }
 
+    private class RecordLabelProvider extends ColumnLabelProvider {
+        private final String columnName;
+
+        public RecordLabelProvider( String columnName ) {
+            this.columnName = columnName;
+        }
+
+        @Override
+        public String getText( Object element ) {
+            if (element instanceof TableRecordMap) {
+                TableRecordMap tableRecordMap = (TableRecordMap) element;
+                if (columnName.equals("the_geom")) { // FIXME
+                    return tableRecordMap.geometry.toText();
+                }
+                return tableRecordMap.data.get(columnName).toString();
+            }
+            return " - ";
+        }
+    }
 }
