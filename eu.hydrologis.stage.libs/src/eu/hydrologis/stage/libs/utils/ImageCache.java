@@ -29,6 +29,7 @@ public class ImageCache {
     public static final String MODULE = "module.gif";
     public static final String MODULEEXP = "module_exp.gif";
     public static final String MODULE_TEMPLATE = "module_template.gif";
+    public static final String TEMPLATE = "template.gif";
     public static final String RUN = "run_module.gif";
     public static final String STOP = "stop_module.gif";
     public static final String GRID = "grid_obj.gif";
@@ -44,6 +45,10 @@ public class ImageCache {
     public static final String FILE = "file.gif";
     public static final String FOLDER = "folder.gif";
 
+    public static final String CONNECT = "connect.gif";
+    public static final String DISCONNECT = "disconnect.gif";
+    public static final String HISTORY_DB = "history_db.gif";
+    public static final String NEW_DATABASE = "new_database.gif";
     public static final String DATABASE = "database.gif";
     public static final String TABLE = "table.gif";
     public static final String TABLE_FOLDER = "table_folder.gif";

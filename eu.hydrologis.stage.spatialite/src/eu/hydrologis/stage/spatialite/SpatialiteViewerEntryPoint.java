@@ -9,10 +9,10 @@
 package eu.hydrologis.stage.spatialite;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -35,10 +35,9 @@ import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.Button;
-import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
@@ -64,6 +63,7 @@ import eu.hydrologis.stage.libs.workspace.StageWorkspace;
 import eu.hydrologis.stage.libs.workspace.User;
 import eu.hydrologis.stage.spatialite.utils.ColumnLevel;
 import eu.hydrologis.stage.spatialite.utils.DbLevel;
+import eu.hydrologis.stage.spatialite.utils.SqlTemplates;
 import eu.hydrologis.stage.spatialite.utils.TableLevel;
 import eu.hydrologis.stage.spatialite.utils.TypeLevel;
 
@@ -71,14 +71,21 @@ import eu.hydrologis.stage.spatialite.utils.TypeLevel;
  * @author Andrea Antonello (www.hydrologis.com)
  */
 public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
-    private static final String RUN_QUERY = "Run query";
+    private static final String SQL_TEMPLATES_TOOLTIP = "create a query based on a template";
+    private static final String SQL_TEMPLATES = "sql templates";
+    private static final String SQL_HISTORY_TOOLTIP = "select queries from the history";
+    private static final String SQL_HISTORY = "sql history";
+    private static final String DISCONNECT_TOOLTIP = "disconnect from current database";
+    private static final String DISCONNECT = "disconnect";
+    private static final String RUN_QUERY = "run query";
+    private static final String RUN_QUERY_TOOLTIP = "run the query in the SQL Editor";
     private static final String SQL_EDITOR = "SQL Editor";
     private static final String DATA_VIEWER = "Data viewer";
-    private static final String DATABASE_CONNECTIONS = "Database connections";
+    private static final String DATABASE_CONNECTIONS = "Database connection";
     private static final String NEW = "new";
     private static final String NEW_TOOLTIP = "create a new spatialite database";
-    private static final String OPEN = "open";
-    private static final String OPEN_TOOLTIP = "connect to an existing database";
+    private static final String CONNECT = "connect";
+    private static final String CONNECT_TOOLTIP = "connect to an existing spatialite database";
 
     private static final long serialVersionUID = 1L;
 
@@ -92,7 +99,8 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
     private Text sqlEditorText;
 
     private List<String> oldSqlCommands = new ArrayList<String>();
-    private Combo oldQueriesCombo;
+    private Menu sqlHistoryMenu;
+    private Group modulesListGroup;
 
     @Override
     protected void createContents( final Composite parent ) {
@@ -124,7 +132,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
 
         ToolItem newDatabaseButton = new ToolItem(toolBar, SWT.PUSH);
         newDatabaseButton.setText(NEW);
-        newDatabaseButton.setImage(ImageCache.getInstance().getImage(display, ImageCache.NEW));
+        newDatabaseButton.setImage(ImageCache.getInstance().getImage(display, ImageCache.NEW_DATABASE));
         newDatabaseButton.setToolTipText(NEW_TOOLTIP);
         newDatabaseButton.addSelectionListener(new SelectionAdapter(){
             private static final long serialVersionUID = 1L;
@@ -134,11 +142,11 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                 createNewDatabase(parent.getShell());
             }
         });
-        ToolItem openDatabaseButton = new ToolItem(toolBar, SWT.PUSH);
-        openDatabaseButton.setText(OPEN);
-        openDatabaseButton.setImage(ImageCache.getInstance().getImage(display, ImageCache.OPEN));
-        openDatabaseButton.setToolTipText(OPEN_TOOLTIP);
-        openDatabaseButton.addSelectionListener(new SelectionAdapter(){
+        ToolItem connectDatabaseButton = new ToolItem(toolBar, SWT.PUSH);
+        connectDatabaseButton.setText(CONNECT);
+        connectDatabaseButton.setImage(ImageCache.getInstance().getImage(display, ImageCache.CONNECT));
+        connectDatabaseButton.setToolTipText(CONNECT_TOOLTIP);
+        connectDatabaseButton.addSelectionListener(new SelectionAdapter(){
             private static final long serialVersionUID = 1L;
 
             @Override
@@ -147,48 +155,32 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
             }
         });
 
+        ToolItem disconnectDatabaseButton = new ToolItem(toolBar, SWT.PUSH);
+        disconnectDatabaseButton.setText(DISCONNECT);
+        disconnectDatabaseButton.setImage(ImageCache.getInstance().getImage(display, ImageCache.DISCONNECT));
+        disconnectDatabaseButton.setToolTipText(DISCONNECT_TOOLTIP);
+        disconnectDatabaseButton.addSelectionListener(new SelectionAdapter(){
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public void widgetSelected( SelectionEvent e ) {
+                try {
+                    closeCurrentDb();
+                } catch (Exception e1) {
+                    StageLogger.logError(this, e1);
+                }
+            }
+        });
+
         new ToolItem(toolBar, SWT.SEPARATOR);
 
-        SashForm mainComposite = new SashForm(composite, SWT.HORIZONTAL);
-        GridData mainCompositeGD = new GridData(SWT.FILL, SWT.FILL, true, true);
-        mainCompositeGD.horizontalSpan = 2;
-        mainComposite.setLayoutData(mainCompositeGD);
-
-        Composite leftComposite = new Composite(mainComposite, SWT.None);
-        GridLayout leftLayout = new GridLayout(1, true);
-        leftLayout.marginWidth = 0;
-        leftLayout.marginHeight = 0;
-        leftComposite.setLayout(leftLayout);
-        GridData leftGD = new GridData(GridData.FILL, GridData.FILL, true, true);
-        leftComposite.setLayoutData(leftGD);
-
-        Group modulesListGroup = new Group(leftComposite, SWT.NONE);
-        modulesListGroup.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
-        modulesListGroup.setLayout(new GridLayout(2, false));
-        modulesListGroup.setText(DATABASE_CONNECTIONS);
-
-        databaseTreeViewer = createTreeViewer(modulesListGroup);
-        databaseTreeViewer.setInput(null);
-
-        Composite rightComposite = new Composite(mainComposite, SWT.None);
-        GridLayout rightLayout = new GridLayout(1, true);
-        rightLayout.marginWidth = 0;
-        rightLayout.marginHeight = 0;
-        rightComposite.setLayout(rightLayout);
-        GridData rightGD = new GridData(GridData.FILL, GridData.FILL, true, true);
-        rightComposite.setLayoutData(rightGD);
-
-        Group sqlEditorGroup = new Group(rightComposite, SWT.NONE);
-        GridData sqlEditorGroupGD = new GridData(SWT.FILL, SWT.FILL, true, false);
-        sqlEditorGroup.setLayoutData(sqlEditorGroupGD);
-        sqlEditorGroup.setLayout(new GridLayout(2, false));
-        sqlEditorGroup.setText(SQL_EDITOR);
-
-        Button runQueryButton = new Button(sqlEditorGroup, SWT.PUSH);
-        runQueryButton.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
+        ToolItem runQueryButton = new ToolItem(toolBar, SWT.PUSH);
         runQueryButton.setText(RUN_QUERY);
         runQueryButton.setImage(ImageCache.getInstance().getImage(display, ImageCache.RUN));
+        runQueryButton.setToolTipText(RUN_QUERY_TOOLTIP);
         runQueryButton.addSelectionListener(new SelectionAdapter(){
+            private static final long serialVersionUID = 1L;
+
             @Override
             public void widgetSelected( SelectionEvent e ) {
                 String sqlText = sqlEditorText.getText();
@@ -207,25 +199,51 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                     }
                 }
             }
-
         });
 
-        oldQueriesCombo = new Combo(sqlEditorGroup, SWT.DROP_DOWN);
-        oldQueriesCombo.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-        oldQueriesCombo.setItems(new String[0]);
-        oldQueriesCombo.addSelectionListener(new SelectionAdapter(){
-            private static final long serialVersionUID = 1L;
-            @Override
-            public void widgetSelected( SelectionEvent e ) {
-                String query = oldQueriesCombo.getItem(oldQueriesCombo.getSelectionIndex());
-                String text = sqlEditorText.getText();
-                if (text.trim().length() != 0) {
-                    text += "\n";
-                }
-                text += query;
-                sqlEditorText.setText(text);
-            }
-        });
+        try {
+            addHistoryCombo(toolBar);
+            addTemplateCombo(toolBar);
+        } catch (IOException e2) {
+            e2.printStackTrace();
+        }
+
+        new ToolItem(toolBar, SWT.SEPARATOR);
+
+        SashForm mainComposite = new SashForm(composite, SWT.HORIZONTAL);
+        GridData mainCompositeGD = new GridData(SWT.FILL, SWT.FILL, true, true);
+        mainCompositeGD.horizontalSpan = 2;
+        mainComposite.setLayoutData(mainCompositeGD);
+
+        Composite leftComposite = new Composite(mainComposite, SWT.None);
+        GridLayout leftLayout = new GridLayout(1, true);
+        leftLayout.marginWidth = 0;
+        leftLayout.marginHeight = 0;
+        leftComposite.setLayout(leftLayout);
+        GridData leftGD = new GridData(GridData.FILL, GridData.FILL, true, true);
+        leftComposite.setLayoutData(leftGD);
+
+        modulesListGroup = new Group(leftComposite, SWT.NONE);
+        modulesListGroup.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+        modulesListGroup.setLayout(new GridLayout(2, false));
+        modulesListGroup.setText(DATABASE_CONNECTIONS);
+
+        databaseTreeViewer = createTreeViewer(modulesListGroup);
+        databaseTreeViewer.setInput(null);
+
+        Composite rightComposite = new Composite(mainComposite, SWT.None);
+        GridLayout rightLayout = new GridLayout(1, true);
+        rightLayout.marginWidth = 0;
+        rightLayout.marginHeight = 0;
+        rightComposite.setLayout(rightLayout);
+        GridData rightGD = new GridData(GridData.FILL, GridData.FILL, true, true);
+        rightComposite.setLayoutData(rightGD);
+
+        Group sqlEditorGroup = new Group(rightComposite, SWT.NONE);
+        GridData sqlEditorGroupGD = new GridData(SWT.FILL, SWT.FILL, true, false);
+        sqlEditorGroup.setLayoutData(sqlEditorGroupGD);
+        sqlEditorGroup.setLayout(new GridLayout(1, false));
+        sqlEditorGroup.setText(SQL_EDITOR);
 
         sqlEditorText = new Text(sqlEditorGroup, SWT.MULTI | SWT.WRAP | SWT.V_SCROLL | SWT.BORDER);
         GridData sqlEditorTextGD = new GridData(SWT.FILL, SWT.FILL, true, false);
@@ -241,6 +259,98 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
         resultsetViewerGroup.setText(DATA_VIEWER);
 
         mainComposite.setWeights(new int[]{1, 3});
+    }
+
+    private void addTemplateCombo( final ToolBar toolBar ) throws IOException {
+        final ToolItem templatesCombo = new ToolItem(toolBar, SWT.DROP_DOWN);
+        templatesCombo.setText(SQL_TEMPLATES);
+        templatesCombo.setToolTipText(SQL_TEMPLATES_TOOLTIP);
+        templatesCombo.setImage(ImageCache.getInstance().getImage(display, ImageCache.TEMPLATE));
+        templatesCombo.setWidth(150);
+        final Menu templatesMenu = new Menu(toolBar.getShell(), SWT.POP_UP);
+
+        for( String templateName : SqlTemplates.templatesMap.keySet() ) {
+            final MenuItem menuItem = new MenuItem(templatesMenu, SWT.PUSH);
+            menuItem.setText(templateName);
+            menuItem.addSelectionListener(new SelectionAdapter(){
+                private static final long serialVersionUID = 1L;
+
+                @Override
+                public void widgetSelected( SelectionEvent e ) {
+                    String templateName = menuItem.getText();
+                    String query = SqlTemplates.templatesMap.get(templateName);
+                    String text = sqlEditorText.getText();
+                    if (text.trim().length() != 0) {
+                        text += "\n";
+                    }
+                    text += query;
+                    sqlEditorText.setText(text);
+                }
+            });
+        }
+
+        templatesCombo.addSelectionListener(new SelectionAdapter(){
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public void widgetSelected( final SelectionEvent event ) {
+                if (event.detail == SWT.ARROW) {
+                    Point point = toolBar.toDisplay(event.x, event.y);
+                    templatesMenu.setLocation(point);
+                    templatesMenu.setVisible(true);
+                }
+            }
+        });
+    }
+
+    private void addHistoryCombo( final ToolBar toolBar ) throws IOException {
+        final ToolItem historyCombo = new ToolItem(toolBar, SWT.DROP_DOWN);
+        historyCombo.setToolTipText(SQL_HISTORY_TOOLTIP);
+        historyCombo.setImage(ImageCache.getInstance().getImage(display, ImageCache.HISTORY_DB));
+        historyCombo.setWidth(150);
+        sqlHistoryMenu = new Menu(toolBar.getShell(), SWT.POP_UP);
+        historyCombo.setText(SQL_HISTORY);
+
+        updateHistoryCombo();
+
+        historyCombo.addSelectionListener(new SelectionAdapter(){
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public void widgetSelected( final SelectionEvent event ) {
+                if (event.detail == SWT.ARROW) {
+                    Point point = toolBar.toDisplay(event.x, event.y);
+                    sqlHistoryMenu.setLocation(point);
+                    sqlHistoryMenu.setVisible(true);
+                }
+            }
+        });
+    }
+
+    private void updateHistoryCombo() {
+        MenuItem[] items = sqlHistoryMenu.getItems();
+        for( MenuItem menuItem : items ) {
+            menuItem.dispose();
+        }
+
+        for( String sqlCommand : oldSqlCommands ) {
+            final MenuItem menuItem = new MenuItem(sqlHistoryMenu, SWT.PUSH);
+            menuItem.setText(sqlCommand);
+            menuItem.addSelectionListener(new SelectionAdapter(){
+                private static final long serialVersionUID = 1L;
+
+                @Override
+                public void widgetSelected( SelectionEvent e ) {
+                    String query = menuItem.getText();
+                    String text = sqlEditorText.getText();
+                    if (text.trim().length() != 0) {
+                        text += "\n";
+                    }
+                    text += query;
+                    sqlEditorText.setText(text);
+                }
+            });
+        }
     }
 
     private void createTableViewer( Composite parent, List<TableRecordMap> tableRecordsMapList, List<String> tableColumns )
@@ -409,8 +519,8 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                     TableLevel selectedTable = (TableLevel) selectedItem;
 
                     try {
-                        List<TableRecordMap> tableRecordsMapList = currentConnectedDatabase.getTableRecordsMapIn(selectedTable.tableName,
-                                null, true, 20);
+                        List<TableRecordMap> tableRecordsMapList = currentConnectedDatabase.getTableRecordsMapIn(
+                                selectedTable.tableName, null, true, 20);
                         List<String> tableColumns = currentConnectedDatabase.getTableColumns(selectedTable.tableName);
                         createTableViewer(resultsetViewerGroup, tableRecordsMapList, tableColumns);
                     } catch (Exception e) {
@@ -452,8 +562,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
         if (oldSqlCommands.size() > 20) {
             oldSqlCommands.remove(20);
         }
-        oldQueriesCombo.setItems(oldSqlCommands.toArray(new String[0]));
-        oldQueriesCombo.select(0);
+        updateHistoryCombo();
     }
 
     private void createNewDatabase( Shell shell ) {
@@ -477,6 +586,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                     currentConnectedDatabase.open(selectedFile.getAbsolutePath());
 
                     DbLevel dbLevel = gatherDatabaseLevels(currentConnectedDatabase);
+                    modulesListGroup.setText(dbLevel.dbName);
 
                     relayout(dbLevel, true);
                 } catch (Exception e) {
@@ -522,6 +632,10 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
             currentConnectedDatabase = null;
             relayout(null, false);
         }
+        if (modulesListGroup != null)
+            modulesListGroup.setText(DATABASE_CONNECTIONS);
+        if (dataTableViewer != null)
+            dataTableViewer.getTable().dispose();
     }
 
     public void selected( boolean selected ) {
