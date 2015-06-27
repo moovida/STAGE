@@ -58,6 +58,9 @@ import com.vividsolutions.jts.geom.Geometry;
 
 import eu.hydrologis.stage.libs.log.StageLogger;
 import eu.hydrologis.stage.libs.utils.ImageCache;
+import eu.hydrologis.stage.libs.utils.StageProgressBar;
+import eu.hydrologis.stage.libs.utils.StageUtils;
+import eu.hydrologis.stage.libs.utilsrap.FileSelectionDialog;
 import eu.hydrologis.stage.libs.utilsrap.LoginDialog;
 import eu.hydrologis.stage.libs.workspace.StageWorkspace;
 import eu.hydrologis.stage.libs.workspace.User;
@@ -71,6 +74,10 @@ import eu.hydrologis.stage.spatialite.utils.TypeLevel;
  * @author Andrea Antonello (www.hydrologis.com)
  */
 public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
+    private static final String SHAPEFILE_IMPORT = "import shapefile in selected table";
+    private static final String SHAPEFILE_CCREATE_FROM_SCHEMA = "create table from shapefile schema";
+    private static final String SHAPEFILE_TOOLTIP = "tools to deal with shapefiles";
+    private static final String SHAPEFILE = "shapefile";
     private static final String SQL_TEMPLATES_TOOLTIP = "create a query based on a template";
     private static final String SQL_TEMPLATES = "sql templates";
     private static final String SQL_HISTORY_TOOLTIP = "select queries from the history";
@@ -101,6 +108,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
     private List<String> oldSqlCommands = new ArrayList<String>();
     private Menu sqlHistoryMenu;
     private Group modulesListGroup;
+    private StageProgressBar generalProgressBar;
 
     @Override
     protected void createContents( final Composite parent ) {
@@ -210,6 +218,14 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
 
         new ToolItem(toolBar, SWT.SEPARATOR);
 
+        try {
+            addShapefileCombo(toolBar);
+        } catch (IOException e1) {
+            e1.printStackTrace();
+        }
+
+        new ToolItem(toolBar, SWT.SEPARATOR);
+
         SashForm mainComposite = new SashForm(composite, SWT.HORIZONTAL);
         GridData mainCompositeGD = new GridData(SWT.FILL, SWT.FILL, true, true);
         mainCompositeGD.horizontalSpan = 2;
@@ -259,8 +275,70 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
         resultsetViewerGroup.setText(DATA_VIEWER);
 
         mainComposite.setWeights(new int[]{1, 3});
+
+        GridData progressBarGD = new GridData(SWT.FILL, SWT.FILL, true, false);
+        progressBarGD.horizontalSpan = 2;
+        generalProgressBar = new StageProgressBar(composite, SWT.HORIZONTAL | SWT.INDETERMINATE, progressBarGD);
+
     }
 
+    private void addShapefileCombo( final ToolBar toolBar ) throws IOException {
+        final ToolItem shpCombo = new ToolItem(toolBar, SWT.DROP_DOWN);
+        shpCombo.setText(SHAPEFILE);
+        shpCombo.setToolTipText(SHAPEFILE_TOOLTIP);
+        shpCombo.setImage(ImageCache.getInstance().getImage(display, ImageCache.VECTOR));
+        shpCombo.setWidth(150);
+        final Menu shpMenu = new Menu(toolBar.getShell(), SWT.POP_UP);
+
+        final MenuItem tableFromShpMenuItem = new MenuItem(shpMenu, SWT.PUSH);
+        tableFromShpMenuItem.setText(SHAPEFILE_CCREATE_FROM_SCHEMA);
+        tableFromShpMenuItem.addSelectionListener(new SelectionAdapter(){
+            private static final long serialVersionUID = 1L;
+            @Override
+            public void widgetSelected( SelectionEvent e ) {
+                File userFolder = StageWorkspace.getInstance().getDataFolder(User.getCurrentUserName());
+                FileSelectionDialog fileDialog = new FileSelectionDialog(parentShell, false, userFolder, null,
+                        StageUtils.VECTOR_EXTENTIONS_READ_WRITE, null);
+                int returnCode = fileDialog.open();
+                if (returnCode == SWT.CANCEL) {
+                    return;
+                }
+                final File selectedFile = fileDialog.getSelectedFile();
+                if (selectedFile != null) {
+                    try {
+                        currentConnectedDatabase.createTableFromShp(selectedFile);
+                        DbLevel levels = gatherDatabaseLevels(currentConnectedDatabase);
+                        relayout(levels, true);
+                    } catch (Exception e1) {
+                        e1.printStackTrace();
+                    }
+                }
+            }
+        });
+
+        final MenuItem importShpMenuItem = new MenuItem(shpMenu, SWT.PUSH);
+        importShpMenuItem.setText(SHAPEFILE_IMPORT);
+        importShpMenuItem.addSelectionListener(new SelectionAdapter(){
+            private static final long serialVersionUID = 1L;
+            @Override
+            public void widgetSelected( SelectionEvent e ) {
+                // TODO create
+            }
+        });
+
+        shpCombo.addSelectionListener(new SelectionAdapter(){
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public void widgetSelected( final SelectionEvent event ) {
+                if (event.detail == SWT.ARROW) {
+                    Point point = toolBar.toDisplay(event.x, event.y);
+                    shpMenu.setLocation(point);
+                    shpMenu.setVisible(true);
+                }
+            }
+        });
+    }
     private void addTemplateCombo( final ToolBar toolBar ) throws IOException {
         final ToolItem templatesCombo = new ToolItem(toolBar, SWT.DROP_DOWN);
         templatesCombo.setText(SQL_TEMPLATES);
@@ -565,11 +643,49 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
         updateHistoryCombo();
     }
 
-    private void createNewDatabase( Shell shell ) {
+    private void createNewDatabase( final Shell shell ) {
+        try {
+            closeCurrentDb();
+        } catch (Exception e1) {
+            StageLogger.logError(this, e1);
+        }
+        File userFolder = StageWorkspace.getInstance().getDataFolder(User.getCurrentUserName());
+        FileSelectionDialog fileDialog = new FileSelectionDialog(shell, true, userFolder, null, null, null);
+        int returnCode = fileDialog.open();
+        if (returnCode == SWT.CANCEL) {
+            return;
+        }
+        final File selectedFile = fileDialog.getSelectedFile();
+        if (selectedFile != null) {
+            generalProgressBar.setProgressText("Creating new spatialite database (this might take a few minutes)...");
+            generalProgressBar.start(0);
+            new Thread(new Runnable(){
+                public void run() {
+                    shell.getDisplay().syncExec(new Runnable(){
+                        public void run() {
+                            try {
+                                currentConnectedDatabase = new SpatialiteDb();
+                                currentConnectedDatabase.open(selectedFile.getAbsolutePath());
+                                currentConnectedDatabase.initSpatialMetadata(null);
 
+                                DbLevel dbLevel = gatherDatabaseLevels(currentConnectedDatabase);
+                                modulesListGroup.setText(dbLevel.dbName);
+
+                                relayout(dbLevel, false);
+                            } catch (Exception e) {
+                                currentConnectedDatabase = null;
+                                StageLogger.logError(SpatialiteViewerEntryPoint.this, e);
+                            } finally {
+                                generalProgressBar.stop();
+                            }
+                        }
+                    });
+                }
+            }).start();
+        }
     }
 
-    private void openDatabase( Shell shell ) {
+    private void openDatabase( final Shell shell ) {
         try {
             closeCurrentDb();
         } catch (Exception e1) {
@@ -577,24 +693,41 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
         }
         File userFolder = StageWorkspace.getInstance().getDataFolder(User.getCurrentUserName());
         SpatialiteSelectionDialog fileDialog = new SpatialiteSelectionDialog(parentShell, userFolder);
-        int returnCode = fileDialog.open();
+        final int returnCode = fileDialog.open();
         if (returnCode == SWT.OK) {
-            File selectedFile = fileDialog.getSelectedFile();
+            final File selectedFile = fileDialog.getSelectedFile();
             if (selectedFile != null) {
-                try {
-                    currentConnectedDatabase = new SpatialiteDb();
-                    currentConnectedDatabase.open(selectedFile.getAbsolutePath());
+                generalProgressBar.setProgressText("Connect to existing database");
+                generalProgressBar.start(0);
+                new Thread(new Runnable(){
+                    public void run() {
+                        shell.getDisplay().syncExec(new Runnable(){
+                            public void run() {
+                                try {
+                                    currentConnectedDatabase = new SpatialiteDb();
+                                    currentConnectedDatabase.open(selectedFile.getAbsolutePath());
 
-                    DbLevel dbLevel = gatherDatabaseLevels(currentConnectedDatabase);
-                    modulesListGroup.setText(dbLevel.dbName);
+                                    DbLevel dbLevel = gatherDatabaseLevels(currentConnectedDatabase);
+                                    modulesListGroup.setText(dbLevel.dbName);
 
-                    relayout(dbLevel, true);
-                } catch (Exception e) {
-                    currentConnectedDatabase = null;
-                    StageLogger.logError(this, e);
-                }
+                                    relayout(dbLevel, true);
+                                } catch (Exception e) {
+                                    currentConnectedDatabase = null;
+                                    StageLogger.logError(SpatialiteViewerEntryPoint.this, e);
+                                } finally {
+                                    generalProgressBar.stop();
+                                }
+                            }
+                        });
+                    }
+                }).start();
+            } else {
+                generalProgressBar.stop();
             }
+        } else {
+            generalProgressBar.stop();
         }
+
     }
 
     private DbLevel gatherDatabaseLevels( SpatialiteDb db ) throws SQLException {

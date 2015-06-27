@@ -65,6 +65,8 @@ public class ImageCache {
     
     public static final String GLOBE = "globe.gif";
     
+    public static final String VECTOR = "vector.png";
+    
 	private static ImageCache imageCache;
 
 	private HashMap<String, Image> imageMap = new HashMap<String, Image>();
