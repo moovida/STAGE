@@ -30,14 +30,30 @@ import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.rap.rwt.RWT;
 import org.eclipse.rap.rwt.application.AbstractEntryPoint;
+import org.eclipse.rap.rwt.client.ClientFile;
+import org.eclipse.rap.rwt.dnd.ClientFileTransfer;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.SWTError;
 import org.eclipse.swt.custom.SashForm;
+import org.eclipse.swt.dnd.DND;
+import org.eclipse.swt.dnd.DragSource;
+import org.eclipse.swt.dnd.DragSourceEvent;
+import org.eclipse.swt.dnd.DragSourceListener;
+import org.eclipse.swt.dnd.DropTarget;
+import org.eclipse.swt.dnd.DropTargetEvent;
+import org.eclipse.swt.dnd.DropTargetListener;
+import org.eclipse.swt.dnd.FileTransfer;
+import org.eclipse.swt.dnd.HTMLTransfer;
+import org.eclipse.swt.dnd.RTFTransfer;
+import org.eclipse.swt.dnd.TextTransfer;
+import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
@@ -46,10 +62,14 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
+import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.ToolItem;
+import org.eclipse.swt.widgets.Tree;
+import org.eclipse.swt.widgets.TreeItem;
 import org.jgrasstools.gears.spatialite.SpatialiteDb;
 import org.jgrasstools.gears.spatialite.SpatialiteGeometryColumns;
 import org.jgrasstools.gears.spatialite.SpatialiteGeometryType;
@@ -196,14 +216,22 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
 
             @Override
             public void widgetSelected( SelectionEvent e ) {
-                currentSelectedTable = null;
                 String sqlText = sqlEditorText.getText();
-                if (currentConnectedDatabase != null && sqlText.trim().length() > 0) {
+                sqlText = sqlText.trim();
+                if (currentConnectedDatabase != null && sqlText.length() > 0) {
                     try {
                         List<String> columnNames = new ArrayList<String>();
-                        List<TableRecordMap> tableRecordsMapFromRawSql = currentConnectedDatabase.getTableRecordsMapFromRawSql(
-                                sqlText, 1000, columnNames);
-                        createTableViewer(resultsetViewerGroup, tableRecordsMapFromRawSql, columnNames);
+                        int limit = -1;
+                        if (sqlText.toLowerCase().startsWith("select")) {
+                            // limit = 1000;
+                            List<TableRecordMap> tableRecordsMapFromRawSql = currentConnectedDatabase
+                                    .getTableRecordsMapFromRawSql(sqlText, limit, columnNames);
+                            createTableViewer(resultsetViewerGroup, tableRecordsMapFromRawSql, columnNames);
+                        } else {
+                            int resultCode = currentConnectedDatabase.executeInsertUpdateDeleteSql(sqlText);
+                            columnNames.add("Result = " + resultCode);
+                            createTableViewer(resultsetViewerGroup, null, columnNames);
+                        }
 
                         addQueryToHistoryCombo(sqlText);
 
@@ -273,6 +301,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
         sqlEditorTextGD.horizontalSpan = 2;
         sqlEditorText.setLayoutData(sqlEditorTextGD);
         sqlEditorText.setText("");
+        addDropTarget(sqlEditorText);
 
         resultsetViewerGroup = new Group(rightComposite, SWT.NONE);
         GridData resultsetViewerGroupGD = new GridData(SWT.FILL, SWT.FILL, true, true);
@@ -285,6 +314,37 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
         GridData progressBarGD = new GridData(SWT.FILL, SWT.FILL, true, false);
         progressBarGD.horizontalSpan = 2;
         generalProgressBar = new StageProgressBar(composite, SWT.HORIZONTAL | SWT.INDETERMINATE, progressBarGD);
+
+    }
+    private void addDropTarget( final Text text ) {
+        DropTarget dropTarget = new DropTarget(text, DND.DROP_MOVE);
+        dropTarget.setTransfer(new Transfer[]{TextTransfer.getInstance()});
+        dropTarget.addDropListener(new DropTargetListener(){
+            private static final long serialVersionUID = 1L;
+            public void dragEnter( final DropTargetEvent event ) {
+            }
+
+            public void dragLeave( final DropTargetEvent event ) {
+            }
+
+            public void dragOperationChanged( final DropTargetEvent event ) {
+            }
+
+            public void dragOver( final DropTargetEvent event ) {
+            }
+
+            public void drop( final DropTargetEvent event ) {
+                String string = null;
+                if (TextTransfer.getInstance().isSupportedType(event.currentDataType)) {
+                    string = (String) event.data;
+                }
+                if (string != null) {
+                    text.append(string);
+                }
+            }
+            public void dropAccept( final DropTargetEvent event ) {
+            }
+        });
 
     }
 
@@ -338,7 +398,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                 FileSelectionDialog fileDialog = new FileSelectionDialog(parentShell, false, userFolder, null,
                         StageUtils.VECTOR_EXTENTIONS_READ_WRITE, null);
                 int returnCode = fileDialog.open();
-                if (returnCode == SWT.CANCEL) {
+                if (returnCode != SWT.OK) {
                     return;
                 }
                 final File selectedFile = fileDialog.getSelectedFile();
@@ -484,7 +544,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
 
         String geomFieldName = getGeometryFieldName();
 
-        if (tableRecordsMapList.size() > 0) {
+        if (tableRecordsMapList != null && tableRecordsMapList.size() > 0) {
             TableRecordMap tableRecordMap = tableRecordsMapList.get(0);
             if (tableRecordMap.geometry != null) {
                 createColumn(dataTableViewer, geomFieldName);
@@ -693,6 +753,37 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                 }
             }
 
+        });
+
+        Tree tree = modulesViewer.getTree();
+        DragSource dragSource = new DragSource(tree, DND.DROP_MOVE);
+        dragSource.setTransfer(new Transfer[]{TextTransfer.getInstance()});
+        dragSource.addDragListener(new DragSourceListener(){
+            private static final long serialVersionUID = 1L;
+            private String dragDataText;
+
+            public void dragFinished( final DragSourceEvent event ) {
+                dragDataText = "";
+                if (event.detail == DND.DROP_MOVE) {
+                    if (currentSelectedTable != null)
+                        dragDataText = currentSelectedTable.tableName;
+                }
+            }
+
+            public void dragSetData( final DragSourceEvent event ) {
+                if (TextTransfer.getInstance().isSupportedType(event.dataType)) {
+                    event.data = dragDataText;
+                }
+            }
+
+            public void dragStart( final DragSourceEvent event ) {
+                if (currentSelectedTable != null) {
+                    dragDataText = currentSelectedTable.tableName;
+                    event.doit = true;
+                } else {
+                    event.doit = false;
+                }
+            }
         });
 
         return modulesViewer;
