@@ -8,10 +8,15 @@
  */
 package eu.hydrologis.stage.modules.ui;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 
+import org.eclipse.jface.dialogs.IInputValidator;
+import org.eclipse.jface.dialogs.InputDialog;
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.window.Window;
 import org.eclipse.rap.fileupload.DiskFileUploadReceiver;
 import org.eclipse.rap.fileupload.FileDetails;
 import org.eclipse.rap.fileupload.FileUploadEvent;
@@ -34,14 +39,17 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
+import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 
+import eu.hydrologis.stage.libs.log.StageLogger;
 import eu.hydrologis.stage.libs.utilsrap.DownloadUtils;
 import eu.hydrologis.stage.libs.utilsrap.ExampleUtil;
 import eu.hydrologis.stage.libs.utilsrap.FileSelectionDialog;
 import eu.hydrologis.stage.libs.utilsrap.FolderSelectionDialog;
 import eu.hydrologis.stage.libs.workspace.StageWorkspace;
 import eu.hydrologis.stage.libs.workspace.User;
+import eu.hydrologis.stage.modules.utils.FileUtilities;
 
 /**
  * The stage file management view.
@@ -275,6 +283,28 @@ public class SpatialToolboxFilemanagementView {
                     StageWorkspace.getInstance().setCustomDataFolder(selectedFolder);
                     MessageDialog.openInformation(shell, "INFO", "Custom data path set to: " + selectedFolder);
                 }
+            } else if (returnCode == SWT.CANCEL) {
+                final IInputValidator val = new IInputValidator(){
+                    public String isValid( final String newText ) {
+                        File pathFile = new File(newText);
+                        String result = pathFile.getAbsolutePath();
+                        if (pathFile.exists() && pathFile.isDirectory() && pathFile.canWrite()) {
+                            result = null;
+                        }
+                        return result;
+                    }
+                };
+                String title = "CUSTOM DATA PATH";
+                String mesg = "Enter an existing data path:";
+                InputDialog inputDialog = new InputDialog(shell, title, mesg, "", val);
+                int returnCode1 = inputDialog.open();
+                if (returnCode1 == Window.OK) {
+                    String filePath = inputDialog.getValue();
+                    File pathFile = new File(filePath);
+                    StageWorkspace.getInstance().setCustomDataFolder(pathFile);
+                    MessageDialog.openInformation(shell, "INFO", "Custom data path set to: " + pathFile);
+                }
+
             }
         }
     }
