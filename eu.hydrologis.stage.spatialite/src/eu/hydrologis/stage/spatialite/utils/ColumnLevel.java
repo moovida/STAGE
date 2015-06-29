@@ -8,10 +8,10 @@
  */
 package eu.hydrologis.stage.spatialite.utils;
 
-import org.geotools.geometry.jts.Geometries;
+import org.jgrasstools.gears.spatialite.SpatialiteGeometryColumns;
 
 public class ColumnLevel {
     public String columnName;
     public boolean isPK = false;
-    public Geometries geometryType;
+    public SpatialiteGeometryColumns geomColumn;
 }

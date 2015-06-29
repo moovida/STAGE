@@ -66,6 +66,10 @@ public class ImageCache {
     public static final String GLOBE = "globe.gif";
     
     public static final String VECTOR = "vector.png";
+
+    public static final String GEOM_POINT = "geom_point.png";
+    public static final String GEOM_LINE = "geom_line.png";
+    public static final String GEOM_POLYGON = "geom_polygon.png";
     
 	private static ImageCache imageCache;
 
