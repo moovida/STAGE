@@ -148,7 +148,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
         }
 
         // TODO fix this
-        System.setProperty("java.io.tmpdir", "D:/TMP/");
+        // System.setProperty("java.io.tmpdir", "D:/TMP/");
 
         parentShell = parent.getShell();
         display = parent.getDisplay();
@@ -742,8 +742,8 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                     currentSelectedTable = (TableLevel) selectedItem;
 
                     try {
-                        List<TableRecordMap> tableRecordsMapList = currentConnectedDatabase.getTableRecordsMapIn(
-                                currentSelectedTable.tableName, null, true, 20);
+                        List<TableRecordMap> tableRecordsMapList = currentConnectedDatabase
+                                .getTableRecordsMapIn(currentSelectedTable.tableName, null, true, 20);
                         List<String> tableColumns = currentConnectedDatabase.getTableColumns(currentSelectedTable.tableName);
                         createTableViewer(resultsetViewerGroup, tableRecordsMapList, tableColumns);
                     } catch (Exception e) {
@@ -798,7 +798,8 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
      * @throws InterruptedException
      * @throws InvocationTargetException
      */
-    public void relayout( final DbLevel dbLevel, final boolean expandAll ) throws InvocationTargetException, InterruptedException {
+    public void relayout( final DbLevel dbLevel, final boolean expandAll )
+            throws InvocationTargetException, InterruptedException {
         Display.getDefault().syncExec(new Runnable(){
             public void run() {
                 databaseTreeViewer.setInput(dbLevel);
