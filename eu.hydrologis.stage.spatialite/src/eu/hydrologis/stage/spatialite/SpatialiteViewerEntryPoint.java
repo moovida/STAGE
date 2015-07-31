@@ -16,6 +16,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.IMenuListener;
+import org.eclipse.jface.action.IMenuManager;
+import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.ColumnLabelProvider;
@@ -524,12 +528,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                 @Override
                 public void widgetSelected( SelectionEvent e ) {
                     String query = menuItem.getText();
-                    String text = sqlEditorText.getText();
-                    if (text.trim().length() != 0) {
-                        text += "\n";
-                    }
-                    text += query;
-                    sqlEditorText.setText(text);
+                    addTextToQueryEditor(query);
                 }
             });
         }
@@ -569,6 +568,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
         dataTableViewer.getTable().setLayoutData(tableData);
 
         dataTableViewer.setInput(tableRecordsMapList);
+
         parent.layout();
     }
 
@@ -786,6 +786,31 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
             }
         });
 
+        // add right click menu
+        MenuManager manager = new MenuManager();
+        modulesViewer.getControl().setMenu(manager.createContextMenu(modulesViewer.getControl()));
+        manager.addMenuListener(new IMenuListener(){
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public void menuAboutToShow( IMenuManager manager ) {
+                if (modulesViewer.getSelection() instanceof IStructuredSelection) {
+                    IStructuredSelection selection = (IStructuredSelection) modulesViewer.getSelection();
+                    final Object selectedItem = selection.getFirstElement();
+                    if (selectedItem == null || selection.isEmpty()) {
+                        return;
+                    }
+
+                    if (selectedItem instanceof TableLevel) {
+                        TableLevel selectedTable = (TableLevel) selectedItem;
+                        manager.add(makeTableAction(selectedTable));
+                    }
+                }
+            }
+
+        });
+        manager.setRemoveAllWhenShown(true);
+
         return modulesViewer;
     }
 
@@ -1001,5 +1026,47 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
             }
             return " - ";
         }
+    }
+
+    private void addTextToQueryEditor( String newText ) {
+        String text = sqlEditorText.getText();
+        if (text.trim().length() != 0) {
+            text += "\n";
+        }
+        text += newText;
+        sqlEditorText.setText(text);
+    }
+
+    private Action makeTableAction( final TableLevel selectedTable ) {
+        return new Action("Create select statement", null){
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public void run() {
+
+                // selectedTable.tableName
+                try {
+                    List<String> tableColumns = currentConnectedDatabase.getTableColumns(selectedTable.tableName);
+                    SpatialiteGeometryColumns geometryColumns = currentConnectedDatabase
+                            .getGeometryColumnsForTable(selectedTable.tableName);
+                    String query = "SELECT ";
+                    for( int i = 0; i < tableColumns.size(); i++ ) {
+                        if (i > 0)
+                            query += ",";
+                        String colName = tableColumns.get(i);
+                        if (geometryColumns != null && colName.equals(geometryColumns.f_geometry_column)) {
+                            colName = "ST_AsBinary(" + colName + ") as " + colName;
+                        }
+                        query += colName;
+                    }
+                    query += " FROM " + selectedTable.tableName;
+                    addTextToQueryEditor(query);
+
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+
+            }
+        };
     }
 }
