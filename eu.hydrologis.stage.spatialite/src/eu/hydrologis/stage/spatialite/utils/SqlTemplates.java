@@ -24,6 +24,7 @@ public class SqlTemplates {
         templatesMap.put("where select", "select * from TABLENAME where FIELD > VALUE");
         templatesMap.put("limited select", "select * from TABLENAME limit 10");
         templatesMap.put("sorted select", "select * from TABLENAME order by FIELD asc");
+        templatesMap.put("unix epoch timestamp select", "strftime('%Y-%m-%d %H:%M:%S', timestampcolumn / 1000, 'unixepoch')");
         templatesMap.put("unix epoch timestamp where select", "select * from TABLENAME where longtimestamp >= cast(strftime('%s','YYYY-MM-YY HH:mm:ss') as long)*1000");
     }
 

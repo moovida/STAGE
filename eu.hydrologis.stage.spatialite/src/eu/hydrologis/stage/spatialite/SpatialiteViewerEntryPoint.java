@@ -138,6 +138,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
     private Menu sqlHistoryMenu;
     private Group modulesListGroup;
     private StageProgressBar generalProgressBar;
+    private Label messageLabel;
 
     @Override
     protected void createContents( final Composite parent ) {
@@ -150,9 +151,6 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
             errorLabel.setText("<span style='font:bold 24px Arial;'>" + errorMessage + "</span>");
             return;
         }
-
-        // TODO fix this
-        // System.setProperty("java.io.tmpdir", "D:/TMP/");
 
         parentShell = parent.getShell();
         display = parent.getDisplay();
@@ -227,10 +225,17 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                         List<String> columnNames = new ArrayList<String>();
                         int limit = -1;
                         if (sqlText.toLowerCase().startsWith("select")) {
-                            // limit = 1000;
+                            limit = 1000;
                             List<TableRecordMap> tableRecordsMapFromRawSql = currentConnectedDatabase
                                     .getTableRecordsMapFromRawSql(sqlText, limit, columnNames);
                             createTableViewer(resultsetViewerGroup, tableRecordsMapFromRawSql, columnNames);
+
+                            int size = tableRecordsMapFromRawSql.size();
+                            String msg = "Records: " + size;
+                            if (size == limit) {
+                                msg += " (table output limited to " + limit + " records)";
+                            }
+                            messageLabel.setText(msg);
                         } else {
                             int resultCode = currentConnectedDatabase.executeInsertUpdateDeleteSql(sqlText);
                             columnNames.add("Result = " + resultCode);
@@ -307,6 +312,10 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
         sqlEditorText.setText("");
         addDropTarget(sqlEditorText);
 
+        messageLabel = new Label(rightComposite, SWT.NONE);
+        messageLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+        messageLabel.setText("");
+
         resultsetViewerGroup = new Group(rightComposite, SWT.NONE);
         GridData resultsetViewerGroupGD = new GridData(SWT.FILL, SWT.FILL, true, true);
         resultsetViewerGroup.setLayoutData(resultsetViewerGroupGD);
@@ -320,6 +329,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
         generalProgressBar = new StageProgressBar(composite, SWT.HORIZONTAL | SWT.INDETERMINATE, progressBarGD);
 
     }
+
     private void addDropTarget( final Text text ) {
         DropTarget dropTarget = new DropTarget(text, DND.DROP_MOVE);
         dropTarget.setTransfer(new Transfer[]{TextTransfer.getInstance()});
@@ -538,6 +548,8 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
             throws Exception {
         if (dataTableViewer != null)
             dataTableViewer.getControl().dispose();
+        messageLabel.setText("");
+
         dataTableViewer = new TableViewer(parent, SWT.BORDER | SWT.FULL_SELECTION | SWT.MULTI);
         dataTableViewer.setContentProvider(ArrayContentProvider.getInstance());
 
