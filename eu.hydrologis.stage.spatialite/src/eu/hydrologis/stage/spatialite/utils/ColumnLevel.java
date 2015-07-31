@@ -12,6 +12,13 @@ import org.jgrasstools.gears.spatialite.SpatialiteGeometryColumns;
 
 public class ColumnLevel {
     public String columnName;
+    public String columnType;
     public boolean isPK = false;
     public SpatialiteGeometryColumns geomColumn;
+
+    /**
+     * if not null, it describes the table(colname) it references as foreign key.
+     */
+    public String references;
+
 }

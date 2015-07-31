@@ -74,6 +74,7 @@ import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.ToolItem;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
+import org.jgrasstools.gears.spatialite.ForeignKey;
 import org.jgrasstools.gears.spatialite.SpatialiteDb;
 import org.jgrasstools.gears.spatialite.SpatialiteGeometryColumns;
 import org.jgrasstools.gears.spatialite.SpatialiteGeometryType;
@@ -224,7 +225,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                     try {
                         List<String> columnNames = new ArrayList<String>();
                         int limit = -1;
-                        if (sqlText.toLowerCase().startsWith("select")) {
+                        if (sqlText.toLowerCase().startsWith("select") || sqlText.toLowerCase().startsWith("pragma")) {
                             limit = 1000;
                             List<TableRecordMap> tableRecordsMapFromRawSql = currentConnectedDatabase
                                     .getTableRecordsMapFromRawSql(sqlText, limit, columnNames);
@@ -684,6 +685,8 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                     ColumnLevel columnLevel = (ColumnLevel) element;
                     if (columnLevel.isPK) {
                         return ImageCache.getInstance().getImage(display, ImageCache.TABLE_COLUMN_PRIMARYKEY);
+                    } else if (columnLevel.references != null) {
+                        return ImageCache.getInstance().getImage(display, ImageCache.TABLE_COLUMN_INDEX);
                     } else if (columnLevel.geomColumn != null) {
                         SpatialiteGeometryType gType = SpatialiteGeometryType.forValue(columnLevel.geomColumn.geometry_type);
                         switch( gType ) {
@@ -730,7 +733,11 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                     ColumnLevel columnLevel = (ColumnLevel) element;
                     SpatialiteGeometryColumns gc = columnLevel.geomColumn;
                     if (gc == null) {
-                        return columnLevel.columnName;
+                        String col = columnLevel.columnName + " (" + columnLevel.columnType + ")";
+                        if (columnLevel.references != null) {
+                            col += " " + columnLevel.references;
+                        }
+                        return col;
                     } else {
                         String gType = SpatialiteGeometryType.forValue(gc.geometry_type).getDescription();
                         boolean indexEnabled = gc.spatial_index_enabled == 1 ? true : false;
@@ -756,7 +763,11 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                     try {
                         List<TableRecordMap> tableRecordsMapList = currentConnectedDatabase
                                 .getTableRecordsMapIn(currentSelectedTable.tableName, null, true, 20);
-                        List<String> tableColumns = currentConnectedDatabase.getTableColumns(currentSelectedTable.tableName);
+                        List<String[]> tableInfo = currentConnectedDatabase.getTableColumns(currentSelectedTable.tableName);
+                        List<String> tableColumns = new ArrayList<>();
+                        for( String[] info : tableInfo ) {
+                            tableColumns.add(info[0]);
+                        }
                         createTableViewer(resultsetViewerGroup, tableRecordsMapList, tableColumns);
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -961,13 +972,28 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                 tableLevel.tableName = tableName;
 
                 SpatialiteGeometryColumns geometryColumns = db.getGeometryColumnsForTable(tableName);
+                List<ForeignKey> foreignKeys = new ArrayList<>();
+                try {
+                    foreignKeys = db.getForeignKeys(tableName);
+                } catch (Exception e) {
+                }
                 tableLevel.isGeo = geometryColumns != null;
-                List<String> tableColumns = db.getTableColumns(tableName);
-                for( String columnName : tableColumns ) {
+                List<String[]> tableInfo = db.getTableColumns(tableName);
+                for( String[] columnInfo : tableInfo ) {
                     ColumnLevel columnLevel = new ColumnLevel();
+                    String columnName = columnInfo[0];
+                    String columnType = columnInfo[1];
+                    String columnPk = columnInfo[2];
                     columnLevel.columnName = columnName;
+                    columnLevel.columnType = columnType;
+                    columnLevel.isPK = columnPk.equals("1") ? true : false;
                     if (geometryColumns != null && columnName.equals(geometryColumns.f_geometry_column)) {
                         columnLevel.geomColumn = geometryColumns;
+                    }
+                    for( ForeignKey fKey : foreignKeys ) {
+                        if (fKey.from.equals(columnName)) {
+                            columnLevel.references = " -> " + fKey.table + "(" + fKey.to + ")";
+                        }
                     }
                     tableLevel.columnsList.add(columnLevel);
                 }
@@ -1058,14 +1084,14 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
 
                 // selectedTable.tableName
                 try {
-                    List<String> tableColumns = currentConnectedDatabase.getTableColumns(selectedTable.tableName);
+                    List<String[]> tableColumns = currentConnectedDatabase.getTableColumns(selectedTable.tableName);
                     SpatialiteGeometryColumns geometryColumns = currentConnectedDatabase
                             .getGeometryColumnsForTable(selectedTable.tableName);
                     String query = "SELECT ";
                     for( int i = 0; i < tableColumns.size(); i++ ) {
                         if (i > 0)
                             query += ",";
-                        String colName = tableColumns.get(i);
+                        String colName = tableColumns.get(i)[0];
                         if (geometryColumns != null && colName.equals(geometryColumns.f_geometry_column)) {
                             colName = "ST_AsBinary(" + colName + ") as " + colName;
                         }
