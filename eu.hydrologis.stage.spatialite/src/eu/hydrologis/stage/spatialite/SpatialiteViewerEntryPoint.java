@@ -995,7 +995,9 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
-                return tableRecordMap.data.get(columnName).toString();
+                Object object = tableRecordMap.data.get(columnName);
+                if (object != null)
+                    return object.toString();
             }
             return " - ";
         }
