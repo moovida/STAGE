@@ -28,12 +28,12 @@ public class StageUtils {
     /**
      * Supported file formats in read and write mode.
      */
-    public static String[] EXTENTIONS_READ_WRITE = {"asc", "tiff", "tif", "shp"};
+    public static String[] EXTENTIONS_READ_WRITE = {"asc", "tiff", "tif", "shp", "las", "laz"};
 
     /**
      * Supported vector formats in read and write mode.
      */
-    public static String[] VECTOR_EXTENTIONS_READ_WRITE = {"shp"};
+    public static String[] VECTOR_EXTENTIONS_READ_WRITE = {"shp", "las", "laz"};
 
     /**
      * Supported raster formats in read and write mode.
