@@ -51,6 +51,7 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
@@ -130,6 +131,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
     private StageProgressBar generalProgressBar;
     private Label messageLabel;
 
+    @SuppressWarnings("serial")
     @Override
     protected void createContents( final Composite parent ) {
         // Login screen
@@ -291,13 +293,25 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
         Group sqlEditorGroup = new Group(rightComposite, SWT.NONE);
         GridData sqlEditorGroupGD = new GridData(SWT.FILL, SWT.FILL, true, false);
         sqlEditorGroup.setLayoutData(sqlEditorGroupGD);
-        sqlEditorGroup.setLayout(new GridLayout(1, false));
+        sqlEditorGroup.setLayout(new GridLayout(2, false));
         sqlEditorGroup.setText(SQL_EDITOR);
+
+        Button clearSqlEditorButton = new Button(sqlEditorGroup, SWT.PUSH);
+        clearSqlEditorButton.setLayoutData(new GridData(SWT.BEGINNING, SWT.TOP, false, false));
+        clearSqlEditorButton.setImage(ImageCache.getInstance().getImage(display, ImageCache.TRASH));
+        // clearSqlEditorButton.setText("");
+        clearSqlEditorButton.setToolTipText("clear SQL editor");
+        clearSqlEditorButton.addSelectionListener(new SelectionAdapter(){
+            @Override
+            public void widgetSelected( SelectionEvent e ) {
+                sqlEditorText.setText("");
+            }
+        });
 
         sqlEditorText = new Text(sqlEditorGroup, SWT.MULTI | SWT.WRAP | SWT.V_SCROLL | SWT.BORDER);
         GridData sqlEditorTextGD = new GridData(SWT.FILL, SWT.FILL, true, false);
         sqlEditorTextGD.heightHint = 100;
-        sqlEditorTextGD.horizontalSpan = 2;
+        // sqlEditorTextGD.horizontalSpan = 2;
         sqlEditorText.setLayoutData(sqlEditorTextGD);
         sqlEditorText.setText("");
         addDropTarget(sqlEditorText);

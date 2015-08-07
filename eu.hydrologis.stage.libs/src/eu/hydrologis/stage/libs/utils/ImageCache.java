@@ -24,6 +24,8 @@ import eu.hydrologis.stage.libs.utilsrap.ImageUtil;
  */
 @SuppressWarnings("nls")
 public class ImageCache {
+    public static final String HOME = "home.gif";
+    public static final String TRASH = "trash.gif";
 
     public static final String CATEGORY = "category.gif";
     public static final String MODULE = "module.gif";
