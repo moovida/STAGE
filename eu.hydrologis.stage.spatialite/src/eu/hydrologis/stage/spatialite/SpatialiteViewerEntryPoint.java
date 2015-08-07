@@ -597,7 +597,8 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
         result.setLabelProvider(new RecordLabelProvider(dataIndex));
         TableColumn column = result.getColumn();
         column.setText(name);
-        column.setWidth(200);
+        column.setToolTipText(name);
+        column.setWidth(100);
         column.setMoveable(true);
         // column.addSelectionListener( new SelectionAdapter() {
         // @Override
@@ -1148,6 +1149,22 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                         String query = "SELECT t1.*, t2.* FROM " + tableName + " t1, " + refTable + " t2" + "\nWHERE t1."
                                 + selectedColumn.columnName + "=t2." + refColumn;
                         addTextToQueryEditor(query);
+
+                    }
+                }, //
+                new Action("Quick view other table", null){
+                    @Override
+                    public void run() {
+                        try {
+                            String references = selectedColumn.references;
+                            references = references.replaceFirst("->", "").trim();
+                            String[] split = references.split("\\(|\\)");
+                            String refTable = split[0];
+                            QueryResult queryResult = currentConnectedDatabase.getTableRecordsMapIn(refTable, null, true, 20);
+                            createTableViewer(resultsetViewerGroup, queryResult);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
 
                     }
                 }, //
