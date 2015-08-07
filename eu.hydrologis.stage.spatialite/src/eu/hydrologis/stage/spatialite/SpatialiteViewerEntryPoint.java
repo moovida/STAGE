@@ -34,10 +34,7 @@ import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.rap.rwt.RWT;
 import org.eclipse.rap.rwt.application.AbstractEntryPoint;
-import org.eclipse.rap.rwt.client.ClientFile;
-import org.eclipse.rap.rwt.dnd.ClientFileTransfer;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.SWTError;
 import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.dnd.DND;
 import org.eclipse.swt.dnd.DragSource;
@@ -46,9 +43,6 @@ import org.eclipse.swt.dnd.DragSourceListener;
 import org.eclipse.swt.dnd.DropTarget;
 import org.eclipse.swt.dnd.DropTargetEvent;
 import org.eclipse.swt.dnd.DropTargetListener;
-import org.eclipse.swt.dnd.FileTransfer;
-import org.eclipse.swt.dnd.HTMLTransfer;
-import org.eclipse.swt.dnd.RTFTransfer;
 import org.eclipse.swt.dnd.TextTransfer;
 import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -57,7 +51,6 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
@@ -66,23 +59,18 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
-import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.ToolItem;
 import org.eclipse.swt.widgets.Tree;
-import org.eclipse.swt.widgets.TreeItem;
 import org.jgrasstools.gears.spatialite.ForeignKey;
+import org.jgrasstools.gears.spatialite.QueryResult;
 import org.jgrasstools.gears.spatialite.SpatialiteDb;
 import org.jgrasstools.gears.spatialite.SpatialiteGeometryColumns;
 import org.jgrasstools.gears.spatialite.SpatialiteGeometryType;
 import org.jgrasstools.gears.spatialite.SpatialiteImportUtils;
 import org.jgrasstools.gears.spatialite.SpatialiteTableNames;
-import org.jgrasstools.gears.spatialite.TableRecordMap;
-
-import com.vividsolutions.jts.geom.Geometry;
 
 import eu.hydrologis.stage.libs.log.StageLogger;
 import eu.hydrologis.stage.libs.utils.ImageCache;
@@ -223,15 +211,14 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                 sqlText = sqlText.trim();
                 if (currentConnectedDatabase != null && sqlText.length() > 0) {
                     try {
-                        List<String> columnNames = new ArrayList<String>();
                         int limit = -1;
+
                         if (sqlText.toLowerCase().startsWith("select") || sqlText.toLowerCase().startsWith("pragma")) {
                             limit = 1000;
-                            List<TableRecordMap> tableRecordsMapFromRawSql = currentConnectedDatabase
-                                    .getTableRecordsMapFromRawSql(sqlText, limit, columnNames);
-                            createTableViewer(resultsetViewerGroup, tableRecordsMapFromRawSql, columnNames);
+                            QueryResult queryResult = currentConnectedDatabase.getTableRecordsMapFromRawSql(sqlText, limit);
+                            createTableViewer(resultsetViewerGroup, queryResult);
 
-                            int size = tableRecordsMapFromRawSql.size();
+                            int size = queryResult.data.size();
                             String msg = "Records: " + size;
                             if (size == limit) {
                                 msg += " (table output limited to " + limit + " records)";
@@ -239,8 +226,9 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                             messageLabel.setText(msg);
                         } else {
                             int resultCode = currentConnectedDatabase.executeInsertUpdateDeleteSql(sqlText);
-                            columnNames.add("Result = " + resultCode);
-                            createTableViewer(resultsetViewerGroup, null, columnNames);
+                            QueryResult dummyQueryResult = new QueryResult();
+                            dummyQueryResult.names.add("Result = " + resultCode);
+                            createTableViewer(resultsetViewerGroup, dummyQueryResult);
                         }
 
                         addQueryToHistoryCombo(sqlText);
@@ -545,8 +533,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
         }
     }
 
-    private void createTableViewer( Composite parent, List<TableRecordMap> tableRecordsMapList, List<String> tableColumns )
-            throws Exception {
+    private void createTableViewer( Composite parent, QueryResult queryResult ) throws Exception {
         if (dataTableViewer != null)
             dataTableViewer.getControl().dispose();
         messageLabel.setText("");
@@ -554,25 +541,9 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
         dataTableViewer = new TableViewer(parent, SWT.BORDER | SWT.FULL_SELECTION | SWT.MULTI);
         dataTableViewer.setContentProvider(ArrayContentProvider.getInstance());
 
-        String geomFieldName = getGeometryFieldName();
-
-        if (tableRecordsMapList != null && tableRecordsMapList.size() > 0) {
-            TableRecordMap tableRecordMap = tableRecordsMapList.get(0);
-            if (tableRecordMap.geometry != null) {
-                createColumn(dataTableViewer, geomFieldName);
-            }
-            for( String key : tableRecordMap.data.keySet() ) {
-                createColumn(dataTableViewer, key);
-            }
-        } else {
-            // supply a header anyways
-            if (tableColumns.contains(geomFieldName)) {
-                createColumn(dataTableViewer, geomFieldName);
-            }
-            for( String column : tableColumns ) {
-                if (!column.equals(geomFieldName))
-                    createColumn(dataTableViewer, column);
-            }
+        for( int i = 0; i < queryResult.names.size(); i++ ) {
+            String name = queryResult.names.get(i);
+            createColumn(dataTableViewer, name, i);
         }
 
         dataTableViewer.getTable().setHeaderVisible(true);
@@ -580,7 +551,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
         GridData tableData = new GridData(SWT.FILL, SWT.FILL, true, true);
         dataTableViewer.getTable().setLayoutData(tableData);
 
-        dataTableViewer.setInput(tableRecordsMapList);
+        dataTableViewer.setInput(queryResult.data);
 
         parent.layout();
     }
@@ -597,9 +568,9 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
         return geomFieldName;
     }
 
-    private TableViewerColumn createColumn( TableViewer viewer, String name ) {
+    private TableViewerColumn createColumn( TableViewer viewer, String name, int dataIndex ) {
         TableViewerColumn result = new TableViewerColumn(viewer, SWT.NONE);
-        result.setLabelProvider(new RecordLabelProvider(name));
+        result.setLabelProvider(new RecordLabelProvider(dataIndex));
         TableColumn column = result.getColumn();
         column.setText(name);
         column.setWidth(200);
@@ -761,14 +732,9 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                     currentSelectedTable = (TableLevel) selectedItem;
 
                     try {
-                        List<TableRecordMap> tableRecordsMapList = currentConnectedDatabase
-                                .getTableRecordsMapIn(currentSelectedTable.tableName, null, true, 20);
-                        List<String[]> tableInfo = currentConnectedDatabase.getTableColumns(currentSelectedTable.tableName);
-                        List<String> tableColumns = new ArrayList<>();
-                        for( String[] info : tableInfo ) {
-                            tableColumns.add(info[0]);
-                        }
-                        createTableViewer(resultsetViewerGroup, tableRecordsMapList, tableColumns);
+                        QueryResult queryResult = currentConnectedDatabase.getTableRecordsMapIn(currentSelectedTable.tableName,
+                                null, true, 20);
+                        createTableViewer(resultsetViewerGroup, queryResult);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -1040,27 +1006,18 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
 
     private class RecordLabelProvider extends ColumnLabelProvider {
         private static final long serialVersionUID = 1L;
-        private String columnName;
-        public RecordLabelProvider( String columnName ) {
-            this.columnName = columnName;
+        private int dataIndex;
+        public RecordLabelProvider( int dataIndex ) {
+            this.dataIndex = dataIndex;
         }
         @Override
         public String getText( Object element ) {
-            if (element instanceof TableRecordMap) {
-                TableRecordMap tableRecordMap = (TableRecordMap) element;
-                try {
-                    if (columnName.equals(getGeometryFieldName())) {
-                        Geometry geometry = tableRecordMap.geometry;
-                        if (geometry == null)
-                            return "";
-                        return geometry.toText();
-                    }
-                } catch (SQLException e) {
-                    e.printStackTrace();
+            if (element instanceof Object[]) {
+                Object[] data = (Object[]) element;
+                Object obj = data[dataIndex];
+                if (obj != null) {
+                    return obj.toString();
                 }
-                Object object = tableRecordMap.data.get(columnName);
-                if (object != null)
-                    return object.toString();
             }
             return "";
         }
