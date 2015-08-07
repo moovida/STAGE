@@ -602,7 +602,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
         result.setLabelProvider(new RecordLabelProvider(name));
         TableColumn column = result.getColumn();
         column.setText(name);
-        column.setWidth(100);
+        column.setWidth(200);
         column.setMoveable(true);
         // column.addSelectionListener( new SelectionAdapter() {
         // @Override
@@ -1062,7 +1062,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                 if (object != null)
                     return object.toString();
             }
-            return " - ";
+            return "";
         }
     }
 
