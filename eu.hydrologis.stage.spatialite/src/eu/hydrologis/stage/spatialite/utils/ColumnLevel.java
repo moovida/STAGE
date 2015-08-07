@@ -11,6 +11,8 @@ package eu.hydrologis.stage.spatialite.utils;
 import org.jgrasstools.gears.spatialite.SpatialiteGeometryColumns;
 
 public class ColumnLevel {
+    public TableLevel parent;
+    
     public String columnName;
     public String columnType;
     public boolean isPK = false;

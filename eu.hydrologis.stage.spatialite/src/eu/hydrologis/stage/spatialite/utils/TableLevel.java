@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TableLevel {
+    public DbLevel parent;
     public String tableName;
     public boolean isGeo = false;
 

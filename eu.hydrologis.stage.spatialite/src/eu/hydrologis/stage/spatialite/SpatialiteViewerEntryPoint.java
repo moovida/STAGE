@@ -117,6 +117,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
 
     private SpatialiteDb currentConnectedDatabase;
     private TableLevel currentSelectedTable;
+    private ColumnLevel currentSelectedColumn;
 
     private Shell parentShell;
     private TableViewer dataTableViewer;
@@ -342,7 +343,16 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                     string = (String) event.data;
                 }
                 if (string != null) {
-                    text.append(string);
+                    int caretPosition = text.getCaretPosition();
+                    String textStr = text.getText();
+                    if (textStr.length() == 0 || textStr.length() == caretPosition) {
+                        text.append(string);
+                    } else {
+                        String pre = textStr.substring(0, caretPosition);
+                        String post = textStr.substring(caretPosition);
+                        text.setText(pre + string + post);
+                    }
+
                 }
             }
             public void dropAccept( final DropTargetEvent event ) {
@@ -727,6 +737,9 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                 }
                 IStructuredSelection sel = (IStructuredSelection) event.getSelection();
 
+                currentSelectedTable = null;
+                currentSelectedColumn = null;
+
                 Object selectedItem = sel.getFirstElement();
                 if (selectedItem instanceof TableLevel) {
                     currentSelectedTable = (TableLevel) selectedItem;
@@ -738,7 +751,8 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-
+                } else if (selectedItem instanceof ColumnLevel) {
+                    currentSelectedColumn = (ColumnLevel) selectedItem;
                 }
             }
 
@@ -754,8 +768,11 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
             public void dragFinished( final DragSourceEvent event ) {
                 dragDataText = "";
                 if (event.detail == DND.DROP_MOVE) {
-                    if (currentSelectedTable != null)
+                    if (currentSelectedTable != null) {
                         dragDataText = currentSelectedTable.tableName;
+                    } else if (currentSelectedColumn != null) {
+                        dragDataText = currentSelectedColumn.columnName;
+                    }
                 }
             }
 
@@ -768,6 +785,9 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
             public void dragStart( final DragSourceEvent event ) {
                 if (currentSelectedTable != null) {
                     dragDataText = currentSelectedTable.tableName;
+                    event.doit = true;
+                } else if (currentSelectedColumn != null) {
+                    dragDataText = currentSelectedColumn.columnName;
                     event.doit = true;
                 } else {
                     event.doit = false;
@@ -792,7 +812,18 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
 
                     if (selectedItem instanceof TableLevel) {
                         TableLevel selectedTable = (TableLevel) selectedItem;
-                        manager.add(makeTableAction(selectedTable));
+                        Action[] tableActions = makeTableAction(selectedTable);
+                        for( Action action : tableActions ) {
+                            manager.add(action);
+                        }
+                    } else if (selectedItem instanceof ColumnLevel) {
+                        ColumnLevel selectedColumn = (ColumnLevel) selectedItem;
+                        if (selectedColumn.references != null) {
+                            Action[] columnActions = makeFKColumnAction(selectedColumn);
+                            for( Action action : columnActions ) {
+                                manager.add(action);
+                            }
+                        }
                     }
                 }
             }
@@ -935,6 +966,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
             List<String> tablesList = currentDatabaseTablesMap.get(typeName);
             for( String tableName : tablesList ) {
                 TableLevel tableLevel = new TableLevel();
+                tableLevel.parent = dbLevel;
                 tableLevel.tableName = tableName;
 
                 SpatialiteGeometryColumns geometryColumns = db.getGeometryColumnsForTable(tableName);
@@ -947,6 +979,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                 List<String[]> tableInfo = db.getTableColumns(tableName);
                 for( String[] columnInfo : tableInfo ) {
                     ColumnLevel columnLevel = new ColumnLevel();
+                    columnLevel.parent = tableLevel;
                     String columnName = columnInfo[0];
                     String columnType = columnInfo[1];
                     String columnPk = columnInfo[2];
@@ -1017,6 +1050,8 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                 Object obj = data[dataIndex];
                 if (obj != null) {
                     return obj.toString();
+                } else {
+                    return "NULL";
                 }
             }
             return "";
@@ -1032,36 +1067,77 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
         sqlEditorText.setText(text);
     }
 
-    private Action makeTableAction( final TableLevel selectedTable ) {
-        return new Action("Create select statement", null){
-            private static final long serialVersionUID = 1L;
+    @SuppressWarnings("serial")
+    private Action[] makeTableAction( final TableLevel selectedTable ) {
+        Action[] actions = {//
+                new Action("Create select statement", null){
+                    @Override
+                    public void run() {
 
-            @Override
-            public void run() {
+                        try {
+                            String tableName = selectedTable.tableName;
+                            String letter = tableName.substring(0, 1);
+                            List<String[]> tableColumns = currentConnectedDatabase.getTableColumns(tableName);
+                            SpatialiteGeometryColumns geometryColumns = currentConnectedDatabase
+                                    .getGeometryColumnsForTable(tableName);
+                            String query = "SELECT ";
+                            for( int i = 0; i < tableColumns.size(); i++ ) {
+                                if (i > 0)
+                                    query += ",";
+                                String colName = tableColumns.get(i)[0];
+                                if (geometryColumns != null && colName.equals(geometryColumns.f_geometry_column)) {
+                                    colName = "ST_AsBinary(" + letter + "." + colName + ") as " + colName;
+                                }
+                                query += letter + "." + colName;
+                            }
+                            query += " FROM " + tableName + " " + letter;
+                            addTextToQueryEditor(query);
 
-                // selectedTable.tableName
-                try {
-                    List<String[]> tableColumns = currentConnectedDatabase.getTableColumns(selectedTable.tableName);
-                    SpatialiteGeometryColumns geometryColumns = currentConnectedDatabase
-                            .getGeometryColumnsForTable(selectedTable.tableName);
-                    String query = "SELECT ";
-                    for( int i = 0; i < tableColumns.size(); i++ ) {
-                        if (i > 0)
-                            query += ",";
-                        String colName = tableColumns.get(i)[0];
-                        if (geometryColumns != null && colName.equals(geometryColumns.f_geometry_column)) {
-                            colName = "ST_AsBinary(" + colName + ") as " + colName;
+                        } catch (SQLException e) {
+                            e.printStackTrace();
                         }
-                        query += colName;
+
                     }
-                    query += " FROM " + selectedTable.tableName;
-                    addTextToQueryEditor(query);
+                }, //
 
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
+                new Action("Count table records", null){
+                    @Override
+                    public void run() {
+                        try {
+                            String tableName = selectedTable.tableName;
+                            long count = currentConnectedDatabase.getCount(tableName);
+                            MessageDialog.openInformation(parentShell, "INFO", "Count: " + count);
+                        } catch (SQLException e) {
+                            e.printStackTrace();
+                        }
 
-            }
+                    }
+                },//
         };
+        return actions;
+    }
+
+    @SuppressWarnings("serial")
+    private Action[] makeFKColumnAction( final ColumnLevel selectedColumn ) {
+        Action[] actions = {//
+                new Action("Create combined select statement", null){
+                    @Override
+                    public void run() {
+
+                        String references = selectedColumn.references;
+                        references = references.replaceFirst("->", "").trim();
+                        String[] split = references.split("\\(|\\)");
+                        String refTable = split[0];
+                        String refColumn = split[1];
+
+                        String tableName = selectedColumn.parent.tableName;
+                        String query = "SELECT t1.*, t2.* FROM " + tableName + " t1, " + refTable + " t2" + "\nWHERE t1."
+                                + selectedColumn.columnName + "=t2." + refColumn;
+                        addTextToQueryEditor(query);
+
+                    }
+                }, //
+        };
+        return actions;
     }
 }

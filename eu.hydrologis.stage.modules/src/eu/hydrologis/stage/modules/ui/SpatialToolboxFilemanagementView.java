@@ -8,9 +8,7 @@
  */
 package eu.hydrologis.stage.modules.ui;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 
 import org.eclipse.jface.dialogs.IInputValidator;
@@ -39,17 +37,14 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
-import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 
-import eu.hydrologis.stage.libs.log.StageLogger;
 import eu.hydrologis.stage.libs.utilsrap.DownloadUtils;
 import eu.hydrologis.stage.libs.utilsrap.ExampleUtil;
 import eu.hydrologis.stage.libs.utilsrap.FileSelectionDialog;
 import eu.hydrologis.stage.libs.utilsrap.FolderSelectionDialog;
 import eu.hydrologis.stage.libs.workspace.StageWorkspace;
 import eu.hydrologis.stage.libs.workspace.User;
-import eu.hydrologis.stage.modules.utils.FileUtilities;
 
 /**
  * The stage file management view.
