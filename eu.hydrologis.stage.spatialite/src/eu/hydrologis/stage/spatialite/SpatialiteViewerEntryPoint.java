@@ -103,6 +103,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
     private static final String DISCONNECT = "disconnect";
     private static final String RUN_QUERY = "run query";
     private static final String RUN_QUERY_TOOLTIP = "run the query in the SQL Editor";
+    private static final String RUN_QUERY_TO_FILE_TOOLTIP = "run the query in the SQL Editor and store result in file";
     private static final String SQL_EDITOR = "SQL Editor";
     private static final String DATA_VIEWER = "Data viewer";
     private static final String DATABASE_CONNECTIONS = "Database connection";
@@ -201,49 +202,6 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
 
         new ToolItem(toolBar, SWT.SEPARATOR);
 
-        ToolItem runQueryButton = new ToolItem(toolBar, SWT.PUSH);
-        runQueryButton.setText(RUN_QUERY);
-        runQueryButton.setImage(ImageCache.getInstance().getImage(display, ImageCache.RUN));
-        runQueryButton.setToolTipText(RUN_QUERY_TOOLTIP);
-        runQueryButton.addSelectionListener(new SelectionAdapter(){
-            private static final long serialVersionUID = 1L;
-
-            @Override
-            public void widgetSelected( SelectionEvent e ) {
-                String sqlText = sqlEditorText.getText();
-                sqlText = sqlText.trim();
-                if (currentConnectedDatabase != null && sqlText.length() > 0) {
-                    try {
-                        int limit = -1;
-
-                        if (sqlText.toLowerCase().startsWith("select") || sqlText.toLowerCase().startsWith("pragma")) {
-                            limit = 1000;
-                            QueryResult queryResult = currentConnectedDatabase.getTableRecordsMapFromRawSql(sqlText, limit);
-                            createTableViewer(resultsetViewerGroup, queryResult);
-
-                            int size = queryResult.data.size();
-                            String msg = "Records: " + size;
-                            if (size == limit) {
-                                msg += " (table output limited to " + limit + " records)";
-                            }
-                            messageLabel.setText(msg);
-                        } else {
-                            int resultCode = currentConnectedDatabase.executeInsertUpdateDeleteSql(sqlText);
-                            QueryResult dummyQueryResult = new QueryResult();
-                            dummyQueryResult.names.add("Result = " + resultCode);
-                            createTableViewer(resultsetViewerGroup, dummyQueryResult);
-                        }
-
-                        addQueryToHistoryCombo(sqlText);
-
-                    } catch (Exception e1) {
-                        String localizedMessage = e1.getLocalizedMessage();
-                        MessageDialog.openError(parentShell, "ERROR", "An error occurred: " + localizedMessage);
-                    }
-                }
-            }
-        });
-
         try {
             addHistoryCombo(toolBar);
             addTemplateCombo(toolBar);
@@ -296,6 +254,39 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
         sqlEditorGroup.setLayout(new GridLayout(2, false));
         sqlEditorGroup.setText(SQL_EDITOR);
 
+        Button runQueryButton = new Button(sqlEditorGroup, SWT.PUSH);
+        runQueryButton.setLayoutData(new GridData(SWT.BEGINNING, SWT.TOP, false, false));
+        // runQueryButton.setText(RUN_QUERY);
+        runQueryButton.setImage(ImageCache.getInstance().getImage(display, ImageCache.RUN));
+        runQueryButton.setToolTipText(RUN_QUERY_TOOLTIP);
+        runQueryButton.addSelectionListener(new SelectionAdapter(){
+            @Override
+            public void widgetSelected( SelectionEvent e ) {
+                runQuery();
+            }
+        });
+
+        sqlEditorText = new Text(sqlEditorGroup, SWT.MULTI | SWT.WRAP | SWT.V_SCROLL | SWT.BORDER);
+        GridData sqlEditorTextGD = new GridData(SWT.FILL, SWT.FILL, true, false);
+        sqlEditorTextGD.heightHint = 200;
+        // sqlEditorTextGD.horizontalSpan = 2;
+        sqlEditorTextGD.verticalSpan = 3;
+        sqlEditorText.setLayoutData(sqlEditorTextGD);
+        sqlEditorText.setText("");
+        addDropTarget(sqlEditorText);
+
+        Button runQueryToFileButton = new Button(sqlEditorGroup, SWT.PUSH);
+        runQueryToFileButton.setLayoutData(new GridData(SWT.BEGINNING, SWT.TOP, false, false));
+        // runQueryButton.setText(RUN_QUERY);
+        runQueryToFileButton.setImage(ImageCache.getInstance().getImage(display, ImageCache.RUN_TO_FILE));
+        runQueryToFileButton.setToolTipText(RUN_QUERY_TO_FILE_TOOLTIP);
+        runQueryToFileButton.addSelectionListener(new SelectionAdapter(){
+            @Override
+            public void widgetSelected( SelectionEvent e ) {
+                runQueryToFile();
+            }
+        });
+
         Button clearSqlEditorButton = new Button(sqlEditorGroup, SWT.PUSH);
         clearSqlEditorButton.setLayoutData(new GridData(SWT.BEGINNING, SWT.TOP, false, false));
         clearSqlEditorButton.setImage(ImageCache.getInstance().getImage(display, ImageCache.TRASH));
@@ -307,14 +298,6 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                 sqlEditorText.setText("");
             }
         });
-
-        sqlEditorText = new Text(sqlEditorGroup, SWT.MULTI | SWT.WRAP | SWT.V_SCROLL | SWT.BORDER);
-        GridData sqlEditorTextGD = new GridData(SWT.FILL, SWT.FILL, true, false);
-        sqlEditorTextGD.heightHint = 100;
-        // sqlEditorTextGD.horizontalSpan = 2;
-        sqlEditorText.setLayoutData(sqlEditorTextGD);
-        sqlEditorText.setText("");
-        addDropTarget(sqlEditorText);
 
         messageLabel = new Label(rightComposite, SWT.NONE);
         messageLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
@@ -1082,6 +1065,88 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
         sqlEditorText.setText(text);
     }
 
+    private void runQuery() {
+        String sqlText = sqlEditorText.getText();
+        sqlText = sqlText.trim();
+        if (currentConnectedDatabase != null && sqlText.length() > 0) {
+            try {
+                int limit = -1;
+
+                if (sqlText.toLowerCase().startsWith("select") || sqlText.toLowerCase().startsWith("pragma")) {
+                    limit = 1000;
+                    QueryResult queryResult = currentConnectedDatabase.getTableRecordsMapFromRawSql(sqlText, limit);
+                    createTableViewer(resultsetViewerGroup, queryResult);
+
+                    int size = queryResult.data.size();
+                    String msg = "Records: " + size;
+                    if (size == limit) {
+                        msg += " (table output limited to " + limit + " records)";
+                    }
+                    messageLabel.setText(msg);
+                } else {
+                    int resultCode = currentConnectedDatabase.executeInsertUpdateDeleteSql(sqlText);
+                    QueryResult dummyQueryResult = new QueryResult();
+                    dummyQueryResult.names.add("Result = " + resultCode);
+                    createTableViewer(resultsetViewerGroup, dummyQueryResult);
+                }
+
+                addQueryToHistoryCombo(sqlText);
+
+            } catch (Exception e1) {
+                String localizedMessage = e1.getLocalizedMessage();
+                MessageDialog.openError(parentShell, "ERROR", "An error occurred: " + localizedMessage);
+            }
+        }
+    }
+
+    private void runQueryToFile() {
+
+        final String sqlText = sqlEditorText.getText().trim();
+        if (currentConnectedDatabase != null && sqlText.length() > 0) {
+            try {
+
+                if (sqlText.toLowerCase().startsWith("select") || sqlText.toLowerCase().startsWith("pragma")) {
+                    File dataFolder = StageWorkspace.getInstance().getDataFolder(User.getCurrentUserName());
+                    FileSelectionDialog fileDialog = new FileSelectionDialog(parentShell, true, dataFolder, null,
+                            new String[]{"csv"}, null);
+                    int returnCode = fileDialog.open();
+                    if (returnCode == SWT.CANCEL) {
+                        return;
+                    }
+                    final File selectedFile = fileDialog.getSelectedFile();
+                    if (selectedFile != null) {
+                        generalProgressBar.setProgressText("Running query...");
+                        generalProgressBar.start(0);
+                        new Thread(new Runnable(){
+                            public void run() {
+                                parentShell.getDisplay().syncExec(new Runnable(){
+                                    public void run() {
+                                        try {
+                                            currentConnectedDatabase.runRawSqlToCsv(sqlText, selectedFile, true, ";");
+                                            messageLabel.setText("Data written to: " + selectedFile.getName());
+                                            addQueryToHistoryCombo(sqlText);
+                                        } catch (Exception e) {
+                                            StageLogger.logError(SpatialiteViewerEntryPoint.this, e);
+                                        } finally {
+                                            generalProgressBar.stop();
+                                        }
+                                    }
+                                });
+                            }
+                        }).start();
+                    }
+                } else {
+                    MessageDialog.openWarning(parentShell, "WARNING",
+                            "Writing to files is allowed only for SELECT statements and PRAGMAs.");
+                    return;
+                }
+            } catch (Exception e1) {
+                String localizedMessage = e1.getLocalizedMessage();
+                MessageDialog.openError(parentShell, "ERROR", "An error occurred: " + localizedMessage);
+            }
+        }
+    }
+
     @SuppressWarnings("serial")
     private Action[] makeTableAction( final TableLevel selectedTable ) {
         Action[] actions = {//
@@ -1102,8 +1167,10 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                                 String colName = tableColumns.get(i)[0];
                                 if (geometryColumns != null && colName.equals(geometryColumns.f_geometry_column)) {
                                     colName = "ST_AsBinary(" + letter + "." + colName + ") as " + colName;
+                                    query += colName;
+                                } else {
+                                    query += letter + "." + colName;
                                 }
-                                query += letter + "." + colName;
                             }
                             query += " FROM " + tableName + " " + letter;
                             addTextToQueryEditor(query);
