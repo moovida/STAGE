@@ -72,6 +72,8 @@ import org.jgrasstools.gears.spatialite.SpatialiteGeometryColumns;
 import org.jgrasstools.gears.spatialite.SpatialiteGeometryType;
 import org.jgrasstools.gears.spatialite.SpatialiteImportUtils;
 import org.jgrasstools.gears.spatialite.SpatialiteTableNames;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import eu.hydrologis.stage.libs.log.StageLogger;
 import eu.hydrologis.stage.libs.utils.ImageCache;
@@ -808,17 +810,27 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                         return;
                     }
 
-                    if (selectedItem instanceof TableLevel) {
-                        TableLevel selectedTable = (TableLevel) selectedItem;
-                        Action[] tableActions = makeTableAction(selectedTable);
-                        for( Action action : tableActions ) {
-                            manager.add(action);
+                    if (selection.size() == 1) {
+                        if (selectedItem instanceof TableLevel) {
+                            TableLevel selectedTable = (TableLevel) selectedItem;
+                            Action[] tableActions = makeTableAction(selectedTable);
+                            for( Action action : tableActions ) {
+                                manager.add(action);
+                            }
+                        } else if (selectedItem instanceof ColumnLevel) {
+                            ColumnLevel selectedColumn = (ColumnLevel) selectedItem;
+                            if (selectedColumn.references != null) {
+                                Action[] columnActions = makeFKColumnAction(selectedColumn);
+                                for( Action action : columnActions ) {
+                                    manager.add(action);
+                                }
+                            }
                         }
-                    } else if (selectedItem instanceof ColumnLevel) {
-                        ColumnLevel selectedColumn = (ColumnLevel) selectedItem;
-                        if (selectedColumn.references != null) {
-                            Action[] columnActions = makeFKColumnAction(selectedColumn);
-                            for( Action action : columnActions ) {
+                    } else {
+                        if (selectedItem instanceof TableLevel) {
+                            List<TableLevel> selectedTables = selection.toList();
+                            Action[] multiTableActions = makeMultiTablesAction(selectedTables);
+                            for( Action action : multiTableActions ) {
                                 manager.add(action);
                             }
                         }
@@ -841,8 +853,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
      * @throws InterruptedException
      * @throws InvocationTargetException
      */
-    public void relayout( final DbLevel dbLevel, final boolean expandAll )
-            throws InvocationTargetException, InterruptedException {
+    public void relayout( final DbLevel dbLevel, final boolean expandAll ) throws InvocationTargetException, InterruptedException {
         Display.getDefault().syncExec(new Runnable(){
             public void run() {
                 databaseTreeViewer.setInput(dbLevel);
@@ -989,7 +1000,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                     }
                     for( ForeignKey fKey : foreignKeys ) {
                         if (fKey.from.equals(columnName)) {
-                            columnLevel.references = " -> " + fKey.table + "(" + fKey.to + ")";
+                            columnLevel.setFkReferences(fKey);
                         }
                     }
                     tableLevel.columnsList.add(columnLevel);
@@ -1150,37 +1161,36 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
     @SuppressWarnings("serial")
     private Action[] makeTableAction( final TableLevel selectedTable ) {
         Action[] actions = {//
-                new Action("Create select statement", null){
-                    @Override
-                    public void run() {
+        new Action("Create select statement", null){
+            @Override
+            public void run() {
 
-                        try {
-                            String tableName = selectedTable.tableName;
-                            String letter = tableName.substring(0, 1);
-                            List<String[]> tableColumns = currentConnectedDatabase.getTableColumns(tableName);
-                            SpatialiteGeometryColumns geometryColumns = currentConnectedDatabase
-                                    .getGeometryColumnsForTable(tableName);
-                            String query = "SELECT ";
-                            for( int i = 0; i < tableColumns.size(); i++ ) {
-                                if (i > 0)
-                                    query += ",";
-                                String colName = tableColumns.get(i)[0];
-                                if (geometryColumns != null && colName.equals(geometryColumns.f_geometry_column)) {
-                                    colName = "ST_AsBinary(" + letter + "." + colName + ") as " + colName;
-                                    query += colName;
-                                } else {
-                                    query += letter + "." + colName;
-                                }
-                            }
-                            query += " FROM " + tableName + " " + letter;
-                            addTextToQueryEditor(query);
-
-                        } catch (SQLException e) {
-                            e.printStackTrace();
+                try {
+                    String tableName = selectedTable.tableName;
+                    String letter = tableName.substring(0, 1);
+                    List<String[]> tableColumns = currentConnectedDatabase.getTableColumns(tableName);
+                    SpatialiteGeometryColumns geometryColumns = currentConnectedDatabase.getGeometryColumnsForTable(tableName);
+                    String query = "SELECT ";
+                    for( int i = 0; i < tableColumns.size(); i++ ) {
+                        if (i > 0)
+                            query += ",";
+                        String colName = tableColumns.get(i)[0];
+                        if (geometryColumns != null && colName.equals(geometryColumns.f_geometry_column)) {
+                            colName = "ST_AsBinary(" + letter + "." + colName + ") as " + colName;
+                            query += colName;
+                        } else {
+                            query += letter + "." + colName;
                         }
-
                     }
-                }, //
+                    query += " FROM " + tableName + " " + letter;
+                    addTextToQueryEditor(query);
+
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+
+            }
+        }, //
 
                 new Action("Count table records", null){
                     @Override
@@ -1200,41 +1210,94 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
     }
 
     @SuppressWarnings("serial")
+    private Action[] makeMultiTablesAction( final List<TableLevel> selectedTables ) {
+        Action[] actions = {//
+        new Action("Create tables graph", null){
+            @Override
+            public void run() {
+                try {
+                    int runningY = 10;
+                    int runningX = 0;
+                    int indent = 10;
+                    int width = 200;
+                    int height = 300;
+                    JSONArray root = new JSONArray();
+                    for( int i = 1; i <= selectedTables.size(); i++ ) {
+                        JSONObject tableJson = new JSONObject();
+                        root.put(tableJson);
+                        TableLevel curTable = selectedTables.get(i - 1);
+                        int id = i;
+                        if (i % 6 == 0) {
+                            runningY += height + indent;
+                            runningX = 10;
+                        }
+                        runningX = runningX + (i - 1) * width + 10;
+
+                        tableJson.append("id", id);
+                        tableJson.append("x", runningX);
+                        tableJson.append("y", runningY);
+
+                        String fromTable = curTable.tableName;
+                        tableJson.append("name", fromTable);
+                        JSONArray fieldsArray = new JSONArray();
+                        tableJson.put("fields", fieldsArray);
+                        List<ColumnLevel> cols = curTable.columnsList;
+                        for( ColumnLevel col : cols ) {
+                            JSONObject colObject = new JSONObject();
+                            fieldsArray.put(colObject);
+                            colObject.put("fname", col.columnName);
+                            if (col.references != null) {
+                                String[] tableColsFromFK = col.tableColsFromFK();
+                                String toTable = tableColsFromFK[0];
+                                String toColumn = tableColsFromFK[1];
+                                colObject.put("fk_name", toTable);
+                                colObject.put("fk_field", toColumn);
+                            }
+                        }
+                    }
+                    String string = root.toString(2);
+                    System.out.println(string);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+            }
+        },//
+        };
+        return actions;
+    }
+    @SuppressWarnings("serial")
     private Action[] makeFKColumnAction( final ColumnLevel selectedColumn ) {
         Action[] actions = {//
-                new Action("Create combined select statement", null){
-                    @Override
-                    public void run() {
+        new Action("Create combined select statement", null){
+            @Override
+            public void run() {
 
-                        String references = selectedColumn.references;
-                        references = references.replaceFirst("->", "").trim();
-                        String[] split = references.split("\\(|\\)");
-                        String refTable = split[0];
-                        String refColumn = split[1];
+                String[] tableColsFromFK = selectedColumn.tableColsFromFK();
+                String refTable = tableColsFromFK[0];
+                String refColumn = tableColsFromFK[1];
 
-                        String tableName = selectedColumn.parent.tableName;
-                        String query = "SELECT t1.*, t2.* FROM " + tableName + " t1, " + refTable + " t2" + "\nWHERE t1."
-                                + selectedColumn.columnName + "=t2." + refColumn;
-                        addTextToQueryEditor(query);
+                String tableName = selectedColumn.parent.tableName;
+                String query = "SELECT t1.*, t2.* FROM " + tableName + " t1, " + refTable + " t2" + "\nWHERE t1."
+                        + selectedColumn.columnName + "=t2." + refColumn;
+                addTextToQueryEditor(query);
 
-                    }
-                }, //
-                new Action("Quick view other table", null){
-                    @Override
-                    public void run() {
-                        try {
-                            String references = selectedColumn.references;
-                            references = references.replaceFirst("->", "").trim();
-                            String[] split = references.split("\\(|\\)");
-                            String refTable = split[0];
-                            QueryResult queryResult = currentConnectedDatabase.getTableRecordsMapIn(refTable, null, true, 20);
-                            createTableViewer(resultsetViewerGroup, queryResult);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
+            }
+        }, //
+        new Action("Quick view other table", null){
+            @Override
+            public void run() {
+                try {
+                    String[] tableColsFromFK = selectedColumn.tableColsFromFK();
+                    String refTable = tableColsFromFK[0];
+                    QueryResult queryResult = currentConnectedDatabase.getTableRecordsMapIn(refTable, null, true, 20);
+                    createTableViewer(resultsetViewerGroup, queryResult);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
 
-                    }
-                }, //
+            }
+        }, //
         };
         return actions;
     }

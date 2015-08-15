@@ -8,11 +8,12 @@
  */
 package eu.hydrologis.stage.spatialite.utils;
 
+import org.jgrasstools.gears.spatialite.ForeignKey;
 import org.jgrasstools.gears.spatialite.SpatialiteGeometryColumns;
 
 public class ColumnLevel {
     public TableLevel parent;
-    
+
     public String columnName;
     public String columnType;
     public boolean isPK = false;
@@ -22,5 +23,17 @@ public class ColumnLevel {
      * if not null, it describes the table(colname) it references as foreign key.
      */
     public String references;
+
+    public String[] tableColsFromFK() {
+        String tmpReferences = references.replaceFirst("->", "").trim();
+        String[] split = tmpReferences.split("\\(|\\)");
+        String refTable = split[0];
+        String refColumn = split[1];
+        return new String[]{refTable, refColumn};
+    }
+
+    public void setFkReferences( ForeignKey fKey ) {
+        references = " -> " + fKey.table + "(" + fKey.to + ")";
+    }
 
 }
