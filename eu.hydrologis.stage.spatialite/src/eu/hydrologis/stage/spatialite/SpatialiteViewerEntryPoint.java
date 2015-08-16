@@ -13,6 +13,8 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 
@@ -1216,44 +1218,66 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
             @Override
             public void run() {
                 try {
-                    int runningY = 10;
-                    int runningX = 0;
+                    int tablesNum = selectedTables.size();
+
+                    int gridCols = 4;
+                    int gridRows = tablesNum / gridCols + 1;
+
                     int indent = 10;
-                    int width = 200;
-                    int height = 300;
+                    int tableWidth = 300;
+                    int tableHeight = 300;
+
                     JSONArray root = new JSONArray();
-                    for( int i = 1; i <= selectedTables.size(); i++ ) {
-                        JSONObject tableJson = new JSONObject();
-                        root.put(tableJson);
-                        TableLevel curTable = selectedTables.get(i - 1);
-                        int id = i;
-                        if (i % 6 == 0) {
-                            runningY += height + indent;
-                            runningX = 10;
-                        }
-                        runningX = runningX + (i - 1) * width + 10;
-
-                        tableJson.append("id", id);
-                        tableJson.append("x", runningX);
-                        tableJson.append("y", runningY);
-
-                        String fromTable = curTable.tableName;
-                        tableJson.append("name", fromTable);
-                        JSONArray fieldsArray = new JSONArray();
-                        tableJson.put("fields", fieldsArray);
-                        List<ColumnLevel> cols = curTable.columnsList;
-                        for( ColumnLevel col : cols ) {
-                            JSONObject colObject = new JSONObject();
-                            fieldsArray.put(colObject);
-                            colObject.put("fname", col.columnName);
-                            if (col.references != null) {
-                                String[] tableColsFromFK = col.tableColsFromFK();
-                                String toTable = tableColsFromFK[0];
-                                String toColumn = tableColsFromFK[1];
-                                colObject.put("fk_name", toTable);
-                                colObject.put("fk_field", toColumn);
+                    int tabesIndex = 0;
+                    int runningX = 0;
+                    int runningY = 10;
+                    for( int gridRow = 0; gridRow < gridRows; gridRow++ ) {
+                        runningX = indent;
+                        for( int gridCol = 0; gridCol < gridCols; gridCol++ ) {
+                            if (tabesIndex == tablesNum) {
+                                break;
                             }
+                            
+                            JSONObject tableJson = new JSONObject();
+                            root.put(tableJson);
+                            TableLevel curTable = selectedTables.get(tabesIndex);
+                            int id = tabesIndex;
+                            tabesIndex++;
+
+                            tableJson.put("id", id);
+                            tableJson.put("x", runningX);
+                            tableJson.put("y", runningY);
+
+                            String fromTable = curTable.tableName;
+                            tableJson.put("name", fromTable);
+                            JSONArray fieldsArray = new JSONArray();
+                            tableJson.put("fields", fieldsArray);
+                            List<ColumnLevel> cols = curTable.columnsList;
+                            
+                            List<ColumnLevel> sortedCols = new ArrayList<ColumnLevel>();
+                            sortedCols.addAll(cols);
+                            Collections.sort(sortedCols, new Comparator<ColumnLevel>(){
+                                public int compare( ColumnLevel o1, ColumnLevel o2 ) {
+                                    return o1.columnName.compareToIgnoreCase(o2.columnName);
+                                }
+                            });
+                            
+                            for( ColumnLevel col : sortedCols ) {
+                                JSONObject colObject = new JSONObject();
+                                fieldsArray.put(colObject);
+                                colObject.put("fname", col.columnName);
+                                if (col.references != null) {
+                                    String[] tableColsFromFK = col.tableColsFromFK();
+                                    String toTable = tableColsFromFK[0];
+                                    String toColumn = tableColsFromFK[1];
+                                    colObject.put("fk_name", toTable);
+                                    colObject.put("fk_field", toColumn);
+                                }
+                            }
+                            
+                            runningX += indent + tableWidth;
                         }
+                        runningY += tableHeight + indent;
                     }
                     String string = root.toString(2);
                     System.out.println(string);
