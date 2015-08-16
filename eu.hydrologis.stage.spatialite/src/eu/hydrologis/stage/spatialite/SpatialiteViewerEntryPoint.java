@@ -1224,7 +1224,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                     int gridRows = tablesNum / gridCols + 1;
 
                     int indent = 10;
-                    int tableWidth = 300;
+                    int tableWidth = 350;
                     int tableHeight = 300;
 
                     JSONArray root = new JSONArray();
@@ -1237,7 +1237,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                             if (tabesIndex == tablesNum) {
                                 break;
                             }
-                            
+
                             JSONObject tableJson = new JSONObject();
                             root.put(tableJson);
                             TableLevel curTable = selectedTables.get(tabesIndex);
@@ -1253,7 +1253,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                             JSONArray fieldsArray = new JSONArray();
                             tableJson.put("fields", fieldsArray);
                             List<ColumnLevel> cols = curTable.columnsList;
-                            
+
                             List<ColumnLevel> sortedCols = new ArrayList<ColumnLevel>();
                             sortedCols.addAll(cols);
                             Collections.sort(sortedCols, new Comparator<ColumnLevel>(){
@@ -1261,7 +1261,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                                     return o1.columnName.compareToIgnoreCase(o2.columnName);
                                 }
                             });
-                            
+
                             for( ColumnLevel col : sortedCols ) {
                                 JSONObject colObject = new JSONObject();
                                 fieldsArray.put(colObject);
@@ -1274,13 +1274,15 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                                     colObject.put("fk_field", toColumn);
                                 }
                             }
-                            
+
                             runningX += indent + tableWidth;
                         }
                         runningY += tableHeight + indent;
                     }
-                    String string = root.toString(2);
-                    System.out.println(string);
+                    String json = root.toString();
+                    // String string = root.toString(2);
+                    TableGraphDialog d = new TableGraphDialog(parentShell, "Table Graph", json);
+                    d.open();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
