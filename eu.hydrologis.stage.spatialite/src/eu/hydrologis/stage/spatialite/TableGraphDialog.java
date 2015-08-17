@@ -60,7 +60,7 @@ public class TableGraphDialog extends Dialog {
     @Override
     protected Control createDialogArea( Composite parent ) {
         Composite composite = (Composite) super.createDialogArea(parent);
-        composite.setLayout(new GridLayout(2, false));
+        composite.setLayout(new GridLayout(3, false));
 
         try {
             Button downloadButton = new Button(composite, SWT.PUSH);
@@ -82,6 +82,16 @@ public class TableGraphDialog extends Dialog {
                 }
             });
 
+            Button resetZoomButton = new Button(composite, SWT.PUSH);
+            resetZoomButton.setLayoutData(new GridData(SWT.BEGINNING, SWT.FILL, false, false));
+            resetZoomButton.setText("Reset Zoom");
+            resetZoomButton.addSelectionListener(new SelectionAdapter(){
+                @Override
+                public void widgetSelected( SelectionEvent e ) {
+                    tablesGraphBrowser.evaluate("resetZoom()");
+                }
+            });
+
             final Button zoomToggleButton = new Button(composite, SWT.CHECK);
             zoomToggleButton.setLayoutData(new GridData(SWT.BEGINNING, SWT.FILL, false, false));
             zoomToggleButton.setText("Toggle zoom behaviour");
@@ -98,7 +108,7 @@ public class TableGraphDialog extends Dialog {
 
             tablesGraphBrowser = new Browser(composite, SWT.NONE);
             GridData tablesGraphBrowserGD = new GridData(SWT.FILL, SWT.FILL, true, true);
-            tablesGraphBrowserGD.horizontalSpan = 2;
+            tablesGraphBrowserGD.horizontalSpan = 3;
             tablesGraphBrowser.setLayoutData(tablesGraphBrowserGD);
             tablesGraphBrowser.setUrl(graphUrl);
             tablesGraphBrowser.addProgressListener(new ProgressListener(){

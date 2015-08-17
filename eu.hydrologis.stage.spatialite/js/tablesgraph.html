@@ -1,623 +1,606 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-        <style type="text/css">
-            svg {
-                border: solid 1px #aaa;
-            }
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<style type="text/css">
+svg {
+	border: solid 1px #aaa;
+}
 
-            #checks {
-                margin: 10px;
-            }
-        </style>
-    </head>
-    <body>
-        <script type="text/javascript" src="libs/d3.min.js"></script>
-        <!-- <script type='text/javascript' src='libs/jquery.min.js'></script> -->	
+#checks {
+	margin: 10px;
+}
+</style>
+</head>
+<body>
+ <script type="text/javascript" src="libs/d3.min.js"></script>
+ <!-- <script type='text/javascript' src='libs/jquery.min.js'></script> -->
 
-        <script>
-            var h;
-            var w;
-            var r = 120;
-            var lineHeight = 20;
-            var xInd = 5;
-            var yInd = 15;
-            var selectedTable;
-            var dragbarleft;
-            var dragbarright;
-            var dragbartop;
-            var dragbarbottom;
-            var width = 350;
-            var height = 300, dragbarw = 20;
-            var drag;
-            var dragright;
-            var dragleft;
-            var dragtop;
-            var dragbottom;
-            var linksGroup;
-            var rectGroup;
-            var handlesGroup;
-            var dragRect;
-            var svg;
-            var svgExport;
-            var zoomEnabled = false;
+ <script>
+        var h;
+        var w;
+        var r = 120;
+        var lineHeight = 20;
+        var xInd = 5;
+        var yInd = 15;
+        var selectedTable;
+        var dragbarleft;
+        var dragbarright;
+        var dragbartop;
+        var dragbarbottom;
+        var width = 350;
+        var height = 300, dragbarw = 20;
+        var drag;
+        var dragright;
+        var dragleft;
+        var dragtop;
+        var dragbottom;
+        var linksGroup;
+        var rectGroup;
+        var handlesGroup;
+        var dragRect;
+        var svg;
+        var svgExport;
+        var zoomEnabled = false;
 
-            //loadScript();
+        //loadScript();
 
-            function loadScript() {
-                h = maximumDocumentSizes(50).height;
-                w = maximumDocumentSizes(50).width;
-                //            if (!h)
-                h = 3000;
-                //            if (!w)
-                w = 2000;
+        function loadScript() {
+            h = maximumDocumentSizes(50).height;
+            w = maximumDocumentSizes(50).width;
+            //            if (!h)
+            h = 3000;
+            //            if (!w)
+            w = 2000;
 
-              //  var data = getFakeData();
-                var dataStr = getData();
-                var data = JSON.parse(dataStr);
-                
-                drag = d3.behavior.drag().origin(Object).on("drag", dragmove);
+            //  var data = getFakeData();
+            var dataStr = getData();
+            var data = JSON.parse(dataStr);
 
-                dragright = d3.behavior.drag().origin(Object).on("drag",
-                        rdragresize);
+            drag = d3.behavior.drag().origin(Object).on("drag", dragmove);
 
-                dragleft = d3.behavior.drag().origin(Object).on("drag",
-                        ldragresize);
+            dragright = d3.behavior.drag().origin(Object).on("drag", rdragresize);
 
-                dragtop = d3.behavior.drag().origin(Object).on("drag",
-                        tdragresize);
+            dragleft = d3.behavior.drag().origin(Object).on("drag", ldragresize);
 
-                dragbottom = d3.behavior.drag().origin(Object).on("drag",
-                        bdragresize);
+            dragtop = d3.behavior.drag().origin(Object).on("drag", tdragresize);
 
-               svgExport = d3.select("body")
-	                .append("svg")
-	                .attr("width", w)
-	                .attr( "height", h)
-	           svg = svgExport
-	                .append("g")
-	                .call(d3.behavior.zoom().scaleExtent([-8, 8]).on("zoom", zoom))
-	                .append("g");
-                
-                var defs = svg.append("defs");
-                defs.append('marker').attr({
-                    'id': 'midarrow',
-                    viewBox: '0 0 10 10',
-                    'refX': 10,
-                    'refY': 5,
-                    'markerWidth': 10,
-                    'markerHeight': 10,
-                    'orient': 'auto'
-                }).append('path').attr({
-                    d: 'M10 5 0 0 0 10Z',
-                    'fill-rule': 'evenodd',
-                    stroke: 'none',
-                    fill: 'black'
-                });
+            dragbottom = d3.behavior.drag().origin(Object).on("drag", bdragresize);
 
-                linksGroup = svg.append("g");
-                rectGroup = svg.append("g");
-                handlesGroup = svg.append("g");
+            svgExport = d3.select("body").append("svg").attr("width", w).attr("height", h)
+            svg = svgExport.append("g").call(d3.behavior.zoom().scaleExtent([ -8, 8 ]).on("zoom", zoom)).append("g");
 
-                dragrect = rectGroup.selectAll("rect").data(data).enter()
-                        .append("rect").attr("id", "active").attr("x", function (d) {
-                    return d.x;
-                }).attr("y", function (d) {
-                    return d.y;
-                }).attr("height", function (d) {
-                    var lines = d.fields.length + 1;
-                    return lines * lineHeight + 3 * lineHeight;
-                }).attr("width", width).attr("fill", "white").attr(
-                        'stroke', 'black').attr('stroke-width', 1).attr(
-                        "cursor", "move")
-                .on("mousedown", function () {
-                    if (!selectedTable && !zoomEnabled) {
-                        selectedTable = d3.select(this);
+            var defs = svg.append("defs");
+            defs.append('marker').attr({
+                'id' : 'midarrow',
+                viewBox : '0 0 10 10',
+                'refX' : 10,
+                'refY' : 5,
+                'markerWidth' : 10,
+                'markerHeight' : 10,
+                'orient' : 'auto'
+            }).append('path').attr({
+                d : 'M10 5 0 0 0 10Z',
+                'fill-rule' : 'evenodd',
+                stroke : 'none',
+                fill : 'black'
+            });
+
+            linksGroup = svg.append("g");
+            rectGroup = svg.append("g");
+            handlesGroup = svg.append("g");
+
+            dragrect = rectGroup.selectAll("rect").data(data).enter().append("rect").attr("id", "active").attr("x", function(d) {
+                return d.x;
+            }).attr("y", function(d) {
+                return d.y;
+            }).attr("height", function(d) {
+                var lines = d.fields.length + 1;
+                return lines * lineHeight + 3 * lineHeight;
+            }).attr("width", width).attr("fill", "white").attr('stroke', 'black').attr('stroke-width', 1).attr("cursor", "move")//
+            .on("mousedown", function() {
+                if (!selectedTable && !zoomEnabled) {
+                    selectedTable = d3.select(this);
+                }
+
+            }).on("mouseup", function() {
+                if (selectedTable) {
+                    selectedTable = null;
+                }
+            }).on('mouseover', function() {
+                d3.select(this).transition().duration(500).attr('stroke-width', 3)
+            }).on('mouseout', function() {
+                d3.select(this).transition().duration(500).attr('stroke-width', 1)
+                selected = false;
+            }).call(drag);
+
+            var allTexts = rectGroup.selectAll("text").data(data).enter().append("text");
+
+            allTexts.attr("x", function(d) {
+                return d.x + 3;
+            }).attr("y", function(d) {
+                return d.y + lineHeight;
+            }).text(function(d) {
+                var text = d.name;
+                var isFirst = true;
+                d.fields.forEach(function(field) {
+                    if (isFirst) {
+                        text += "\n";
+                        isFirst = false;
                     }
-                }).on("mouseup", function () {
-                    if (selectedTable) {
-                        selectedTable = null;
+                    text = text + "\n" + field.fname;
+                    if (field.fk_name) {
+                        text += " *";
                     }
-                }).on(
-                        'mouseover',
-                        function () {
-                            d3.select(this).transition().duration(500)
-                                    .attr('stroke-width', 3)
-                        }).on(
-                        'mouseout',
-                        function () {
-                            d3.select(this).transition().duration(500)
-                                    .attr('stroke-width', 1)
-                            selected = false;
-                        }).call(drag);
 
-                var allTexts = rectGroup.selectAll("text").data(data).enter()
-                        .append("text");
-
-                allTexts.attr("x", function (d) {
-                    return d.x + 3;
-                }).attr("y", function (d) {
-                    return d.y + lineHeight;
-                }).text(function (d) {
-                    var text = d.name;
-                    var isFirst = true;
-                    d.fields.forEach(function (field) {
-                        if (isFirst) {
-                            text += "\n";
-                            isFirst = false;
-                        }
-                        text = text + "\n" + field.fname;
-                        if (field.fk_name) {
-                            text += " *";
-                        }
-
-                    });
-                    return text;
                 });
+                return text;
+            });
 
-                rectGroup.selectAll("text").call(wrap);
+            rectGroup.selectAll("text").call(wrap);
 
-                // CREATE LINES
-                data.forEach(function (d) {
-                    var fromName = d.name;
-                    var fromRectList = dragrect.filter(function (d) {
-                        return d.name === fromName;
-                    });
-                    var x1 = +fromRectList.attr("x") + +fromRectList.attr("width")
-                            / 2;
-                    var y1 = +fromRectList.attr("y") + +fromRectList.attr("height")
-                            / 2;
-                    for (var i = 0; i < d.fields.length; i++) {
-                        var field = d.fields[i];
-                        if (field.fk_name) {
-                            // do line
-                            var toName = field.fk_name;
-                            var toRectList = dragrect.filter(function (d) {
-                                return d.name === toName;
-                            });
-                            if (toRectList[0].length > 0) {
-                                var x2 = +toRectList.attr("x")
-                                        + +toRectList.attr("width") / 2;
-                                var y2 = +toRectList.attr("y")
-                                        + +toRectList.attr("height") / 2;
-                                linksGroup.append("line").attr("x1", x1).attr("y1",
-                                        y1).attr("from", fromName).attr("to",
-                                        field.fk_name).attr("x2", x2)
-                                        .attr("y2", y2).attr('stroke', 'black')
-                                        .attr('stroke-width', 1).attr("marker-mid",
-                                        "url(#midarrow)");
-                            }
-                        }
-                    }
+            // CREATE LINES
+            data.forEach(function(d) {
+                var fromName = d.name;
+                var fromRectList = dragrect.filter(function(d) {
+                    return d.name === fromName;
                 });
-
-            }
-
-            // FUCNTIONS
-            function enableZoom(){
-            	zoomEnabled = true;
-            }
-            function disableZoom(){
-            	zoomEnabled = false;
-            }
-            
-            function moveLines(lines) {
-            	if (zoomEnabled) {
-            		return;
-            	}
-                lines
-                        .each(function () {
-                            var thisLine = d3.select(this)
-
-                            var fromName = thisLine.attr("from");
-                            var fromRectList = dragrect.filter(function (d) {
-                                return d.name === fromName;
-                            });
-                            var x1 = +fromRectList.attr("x")
-                                    + +fromRectList.attr("width") / 2;
-                            var y1 = +fromRectList.attr("y")
-                                    + +fromRectList.attr("height") / 2;
-
-                            var toName = thisLine.attr("to");
-                            var toRectList = dragrect.filter(function (d) {
-                                return d.name === toName;
-                            });
-                            var x2 = +toRectList.attr("x")
-                                    + +toRectList.attr("width") / 2;
-                            var y2 = +toRectList.attr("y")
-                                    + +toRectList.attr("height") / 2;
-
-                            thisLine.attr("x1", x1).attr("y1", y1).attr("x2", x2)
-                                    .attr("y2", y2);
+                var x1 = +fromRectList.attr("x") + +fromRectList.attr("width") / 2;
+                var y1 = +fromRectList.attr("y") + +fromRectList.attr("height") / 2;
+                for (var i = 0; i < d.fields.length; i++) {
+                    var field = d.fields[i];
+                    if (field.fk_name) {
+                        // do line
+                        var toName = field.fk_name;
+                        var toRectList = dragrect.filter(function(d) {
+                            return d.name === toName;
                         });
-            }
-
-            function wrap(text) {
-                text.each(function (d) {
-                    var thisText = d3.select(this);
-                    var fontSize = thisText.style("font-size");
-                    fontSize = +fontSize.replace('px', '');
-                    var lines = thisText.text().split("\n");
-                    thisText.text(null);
-
-                    var lineNumber = 0;
-                    for (var i = 0; i < lines.length; i++) {
-                        var line = lines[i];
-                        if (i === 0) {
-                            var ddyy = lineNumber++ * 1.3 + 0.35;
-                            thisText.append("tspan").attr("x", d.x + xInd).attr(
-                                    "y", d.y + yInd).attr("dy", ddyy + "em").attr(
-                                    "id", d.id).text(line).style("font-weight",
-                                    "bold").style("font-size",
-                                    (fontSize + 6) + "px");
-                        } else {
-                            var ddyy = lineNumber++ * 1.3 + 0.35;
-                            var tspan = thisText.append("tspan");
-
-                            tspan.attr("x", d.x + xInd).attr("y", d.y + yInd + 5)
-                                    .attr("dy", ddyy + "em").attr("id", d.id).text(
-                                    line);
-                            if (line.indexOf('*') !== -1) {
-                                tspan.style("font-style", "italic");
-                                tspan.style("font-weight", "bold");
-                                tspan.style("fill", "rgb(43,0,0)");
-                            }
-
+                        if (toRectList[0].length > 0) {
+                            var x3 = +toRectList.attr("x") + +toRectList.attr("width") / 2;
+                            var y3 = +toRectList.attr("y") + +toRectList.attr("height") / 2;
+                            
+                            var dx = Math.abs(x3-x1)/2.0;
+                            var dy = Math.abs(y3-y1)/2.0;
+                            var x2 = Math.min(x1,x3) + dx;
+                            var y2 = Math.min(y1,y3) + dy;
+                            
+                            var points = x1 + "," + y1 + ", " + x2 + "," + y2 + ", " + x3 + "," + y3;
+                            
+                            linksGroup.append("polyline")//
+                            .attr("from", fromName)//
+                            .attr("to", field.fk_name)//
+                            .attr("points", points)
+                            .attr('stroke', 'black')//
+                            .attr('stroke-width', 1)//
+                            .attr("marker-mid", "url(#midarrow)");
+                            
+                            /*
+                            linksGroup.append("line")//
+                            .attr("x1", x1)//
+                            .attr("y1", y1)//
+                            .attr("from", fromName)//
+                            .attr("to", field.fk_name)//
+                            .attr("x2", x2)//
+                            .attr("y2", y2)//
+                            .attr('stroke', 'black')//
+                            .attr('stroke-width', 1)//
+                            .attr("marker-mid", "url(#midarrow)");
+                            */
                         }
                     }
+                }
+            });
 
+        }
+
+        // FUCNTIONS
+        function enableZoom() {
+            zoomEnabled = true;
+        }
+        function disableZoom() {
+            zoomEnabled = false;
+        }
+
+        function moveLines(lines) {
+            if (zoomEnabled) {
+                return;
+            }
+            lines.each(function() {
+                var thisLine = d3.select(this)
+
+                var fromName = thisLine.attr("from");
+                var fromRectList = dragrect.filter(function(d) {
+                    return d.name === fromName;
                 });
-            }
+                var x1 = +fromRectList.attr("x") + +fromRectList.attr("width") / 2;
+                var y1 = +fromRectList.attr("y") + +fromRectList.attr("height") / 2;
 
-            function removeHandles() {
-                handlesGroup.selectAll("rect").remove();
-            }
+                var toName = thisLine.attr("to");
+                var toRectList = dragrect.filter(function(d) {
+                    return d.name === toName;
+                });
+                var x3 = +toRectList.attr("x") + +toRectList.attr("width") / 2;
+                var y3 = +toRectList.attr("y") + +toRectList.attr("height") / 2;
+                
+                
+                var dx = Math.abs(x3-x1)/2.0;
+                var dy = Math.abs(y3-y1)/2.0;
+                var x2 = Math.min(x1,x3) + dx;
+                var y2 = Math.min(y1,y3) + dy;
+                
+                var points = x1 + "," + y1 + ", " + x2 + "," + y2 + ", " + x3 + "," + y3;
+                
+                thisLine.attr("points", points);
+            });
+        }
 
-            function addHandles(selected) {
-                var currX = +selected.attr("x");
-                var currY = +selected.attr("y");
-                var currW = +selected.attr("width");
-                var currH = +selected.attr("height");
-                dragbarleft = handlesGroup.append("rect").attr("x", function (d) {
+        function wrap(text) {
+            text.each(function(d) {
+                var thisText = d3.select(this);
+                var fontSize = thisText.style("font-size");
+                fontSize = +fontSize.replace('px', '');
+                var lines = thisText.text().split("\n");
+                thisText.text(null);
+
+                var lineNumber = 0;
+                for (var i = 0; i < lines.length; i++) {
+                    var line = lines[i];
+                    if (i === 0) {
+                        var ddyy = lineNumber++ * 1.3 + 0.35;
+                        thisText.append("tspan").attr("x", d.x + xInd).attr("y", d.y + yInd).attr("dy", ddyy + "em").attr("id", d.id).text(
+                                line).style("font-weight", "bold").style("font-size", (fontSize + 6) + "px");
+                    } else {
+                        var ddyy = lineNumber++ * 1.3 + 0.35;
+                        var tspan = thisText.append("tspan");
+
+                        tspan.attr("x", d.x + xInd).attr("y", d.y + yInd + 5).attr("dy", ddyy + "em").attr("id", d.id).text(line);
+                        if (line.indexOf('*') !== -1) {
+                            tspan.style("font-style", "italic");
+                            tspan.style("font-weight", "bold");
+                            tspan.style("fill", "rgb(43,0,0)");
+                        }
+
+                    }
+                }
+
+            });
+        }
+
+        function removeHandles() {
+            handlesGroup.selectAll("rect").remove();
+        }
+
+        function addHandles(selected) {
+            var currX = +selected.attr("x");
+            var currY = +selected.attr("y");
+            var currW = +selected.attr("width");
+            var currH = +selected.attr("height");
+            dragbarleft = handlesGroup.append("rect").attr("x", function(d) {
+                return currX - (dragbarw / 2);
+            }).attr("y", function(d) {
+                return currY + (dragbarw / 2);
+            }).attr("height", currH - dragbarw).attr("id", "dragleft").attr("width", dragbarw).attr("rx", 5).attr("fill", "lightblue")
+                    .attr("fill-opacity", .5).attr("cursor", "ew-resize").call(dragleft);
+
+            dragbarright = handlesGroup.append("rect").attr("x", function(d) {
+                return currX + currW - (dragbarw / 2);
+            }).attr("y", function(d) {
+                return currY + (dragbarw / 2);
+            }).attr("id", "dragright").attr("height", currH - dragbarw).attr("width", dragbarw).attr("rx", 5).attr("fill", "lightblue")
+                    .attr("fill-opacity", .5).attr("cursor", "ew-resize").call(dragright);
+
+            dragbartop = handlesGroup.append("rect").attr("x", function(d) {
+                return currX + (dragbarw / 2);
+            }).attr("y", function(d) {
+                return currY - (dragbarw / 2);
+            }).attr("height", dragbarw).attr("rx", 5).attr("id", "dragleft").attr("width", currW - dragbarw).attr("fill", "lightgreen")
+                    .attr("fill-opacity", .5).attr("cursor", "ns-resize").call(dragtop);
+
+            dragbarbottom = handlesGroup.append("rect").attr("x", function(d) {
+                return currX + (dragbarw / 2);
+            }).attr("y", function(d) {
+                return currY + currH - (dragbarw / 2);
+            }).attr("id", "dragright").attr("height", dragbarw).attr("rx", 5).attr("width", currW - dragbarw).attr("fill", "lightgreen")
+                    .attr("fill-opacity", .5).attr("cursor", "ns-resize").call(dragbottom);
+        }
+
+        function dragmove(d) {
+            if (!selectedTable)
+                return;
+            if (zoomEnabled) {
+                return;
+            }
+            var selectedId = d.id;
+            var currW = +selectedTable.attr("width");
+            var currH = +selectedTable.attr("height");
+            selectedTable.attr("x", d.x = Math.max(0, Math.min(w - currW, d3.event.x)))
+            selectedTable.attr("y", d.y = Math.max(0, Math.min(h - currH, d3.event.y)));
+
+            rectGroup.selectAll("tspan").filter(function(d) {
+                return d.id === selectedId;
+            }).attr("y", d.y = yInd + Math.max(0, Math.min(h - currH, d3.event.y)));
+            rectGroup.selectAll("tspan").filter(function(d) {
+                return d.id === selectedId;
+            }).attr("x", d.x = xInd + Math.max(0, Math.min(w - currW, d3.event.x)));
+
+            var currX = +selectedTable.attr("x");
+            var currY = +selectedTable.attr("y");
+            if (dragbarleft) {
+                dragbarleft.attr("x", function(d) {
                     return currX - (dragbarw / 2);
-                }).attr("y", function (d) {
+                }).attr("y", function(d) {
                     return currY + (dragbarw / 2);
-                }).attr("height", currH - dragbarw).attr("id", "dragleft").attr(
-                        "width", dragbarw).attr("rx", 5).attr("fill", "lightblue")
-                        .attr("fill-opacity", .5).attr("cursor", "ew-resize").call(
-                        dragleft);
-
-                dragbarright = handlesGroup.append("rect").attr("x", function (d) {
+                });
+                dragbarright.attr("x", function(d) {
                     return currX + currW - (dragbarw / 2);
-                }).attr("y", function (d) {
+                }).attr("y", function(d) {
                     return currY + (dragbarw / 2);
-                }).attr("id", "dragright").attr("height", currH - dragbarw).attr(
-                        "width", dragbarw).attr("rx", 5).attr("fill", "lightblue")
-                        .attr("fill-opacity", .5).attr("cursor", "ew-resize").call(
-                        dragright);
-
-                dragbartop = handlesGroup.append("rect").attr("x", function (d) {
+                });
+                dragbartop.attr("x", function(d) {
                     return currX + (dragbarw / 2);
-                }).attr("y", function (d) {
+                }).attr("y", function(d) {
                     return currY - (dragbarw / 2);
-                }).attr("height", dragbarw).attr("rx", 5).attr("id", "dragleft")
-                        .attr("width", currW - dragbarw).attr("fill", "lightgreen")
-                        .attr("fill-opacity", .5).attr("cursor", "ns-resize").call(
-                        dragtop);
-
-                dragbarbottom = handlesGroup.append("rect").attr("x", function (d) {
+                });
+                dragbarbottom.attr("x", function(d) {
                     return currX + (dragbarw / 2);
-                }).attr("y", function (d) {
+                }).attr("y", function(d) {
                     return currY + currH - (dragbarw / 2);
-                }).attr("id", "dragright").attr("height", dragbarw).attr("rx", 5)
-                        .attr("width", currW - dragbarw).attr("fill", "lightgreen")
-                        .attr("fill-opacity", .5).attr("cursor", "ns-resize").call(
-                        dragbottom);
-            }
-
-            function dragmove(d) {
-                if (!selectedTable)
-                    return;
-                if (zoomEnabled) {
-            		return;
-            	}
-                var selectedId = d.id;
-                var currW = +selectedTable.attr("width");
-                var currH = +selectedTable.attr("height");
-                selectedTable.attr("x", d.x = Math.max(0, Math.min(w - currW,
-                        d3.event.x)))
-                selectedTable.attr("y", d.y = Math.max(0, Math.min(h - currH,
-                        d3.event.y)));
-
-                rectGroup.selectAll("tspan").filter(function (d) {
-                    return d.id === selectedId;
-                }).attr("y",
-                        d.y = yInd + Math.max(0, Math.min(h - currH, d3.event.y)));
-                rectGroup.selectAll("tspan").filter(function (d) {
-                    return d.id === selectedId;
-                }).attr("x",
-                        d.x = xInd + Math.max(0, Math.min(w - currW, d3.event.x)));
-
-                var currX = +selectedTable.attr("x");
-                var currY = +selectedTable.attr("y");
-                if (dragbarleft) {
-                    dragbarleft.attr("x", function (d) {
-                        return currX - (dragbarw / 2);
-                    }).attr("y", function (d) {
-                        return currY + (dragbarw / 2);
-                    });
-                    dragbarright.attr("x", function (d) {
-                        return currX + currW - (dragbarw / 2);
-                    }).attr("y", function (d) {
-                        return currY + (dragbarw / 2);
-                    });
-                    dragbartop.attr("x", function (d) {
-                        return currX + (dragbarw / 2);
-                    }).attr("y", function (d) {
-                        return currY - (dragbarw / 2);
-                    });
-                    dragbarbottom.attr("x", function (d) {
-                        return currX + (dragbarw / 2);
-                    }).attr("y", function (d) {
-                        return currY + currH - (dragbarw / 2);
-                    });
-                }
-                moveLines(linksGroup.selectAll("line"));
-            }
-
-            function ldragresize(d) {
-                if (!selectedTable)
-                    return;
-                console.log(d3.event.x);
-                //                    var oldx = d.x;
-                var oldx = +selectedTable.attr("x");
-                var dx = oldx;
-                var currW = +selectedTable.attr("width");
-                //Max x on the right is x + width - dragbarw
-                //Max x on the left is 0 - (dragbarw/2)
-
-                dx = Math.max(0, Math.min(dx + currW - (dragbarw / 2), d3.event.x));
-                currW = currW + (oldx - dx);
-
-                dragbarleft.attr("x", function (d) {
-                    return dx - (dragbarw / 2);
                 });
-
-                dragrect.attr("x", function (d) {
-                    return dx;
-                }).attr("width", currW);
-
-                dragbartop.attr("x", function (d) {
-                    return dx + (dragbarw / 2);
-                }).attr("width", currW - dragbarw)
-                dragbarbottom.attr("x", function (d) {
-                    return dx + (dragbarw / 2);
-                }).attr("width", currW - dragbarw)
             }
+            moveLines(linksGroup.selectAll("polyline"));
+        }
 
-            function rdragresize(d) {
-                if (!selectedTable)
-                    return;
-                //Max x on the left is x - width 
-                //Max x on the right is width of screen + (dragbarw/2)
-                var dragx = Math.max(d.x + (dragbarw / 2), Math.min(w, d.x + width
-                        + d3.event.dx));
+        function ldragresize(d) {
+            if (!selectedTable)
+                return;
+            console.log(d3.event.x);
+            //                    var oldx = d.x;
+            var oldx = +selectedTable.attr("x");
+            var dx = oldx;
+            var currW = +selectedTable.attr("width");
+            //Max x on the right is x + width - dragbarw
+            //Max x on the left is 0 - (dragbarw/2)
 
-                //recalculate width
-                width = dragx - d.x;
+            dx = Math.max(0, Math.min(dx + currW - (dragbarw / 2), d3.event.x));
+            currW = currW + (oldx - dx);
 
-                //move the right drag handle
-                dragbarright.attr("x", function (d) {
-                    return dragx - (dragbarw / 2)
-                });
+            dragbarleft.attr("x", function(d) {
+                return dx - (dragbarw / 2);
+            });
 
-                //resize the drag rectangle
-                //as we are only resizing from the right, the x coordinate does not need to change
-                dragrect.attr("width", width);
-                dragbartop.attr("width", width - dragbarw)
-                dragbarbottom.attr("width", width - dragbarw)
+            dragrect.attr("x", function(d) {
+                return dx;
+            }).attr("width", currW);
+
+            dragbartop.attr("x", function(d) {
+                return dx + (dragbarw / 2);
+            }).attr("width", currW - dragbarw)
+            dragbarbottom.attr("x", function(d) {
+                return dx + (dragbarw / 2);
+            }).attr("width", currW - dragbarw)
+        }
+
+        function rdragresize(d) {
+            if (!selectedTable)
+                return;
+            //Max x on the left is x - width 
+            //Max x on the right is width of screen + (dragbarw/2)
+            var dragx = Math.max(d.x + (dragbarw / 2), Math.min(w, d.x + width + d3.event.dx));
+
+            //recalculate width
+            width = dragx - d.x;
+
+            //move the right drag handle
+            dragbarright.attr("x", function(d) {
+                return dragx - (dragbarw / 2)
+            });
+
+            //resize the drag rectangle
+            //as we are only resizing from the right, the x coordinate does not need to change
+            dragrect.attr("width", width);
+            dragbartop.attr("width", width - dragbarw)
+            dragbarbottom.attr("width", width - dragbarw)
+        }
+
+        function tdragresize(d) {
+            if (!selectedTable)
+                return;
+            var oldy = d.y;
+            //Max x on the right is x + width - dragbarw
+            //Max x on the left is 0 - (dragbarw/2)
+            d.y = Math.max(0, Math.min(d.y + height - (dragbarw / 2), d3.event.y));
+            height = height + (oldy - d.y);
+            dragbartop.attr("y", function(d) {
+                return d.y - (dragbarw / 2);
+            });
+
+            dragrect.attr("y", function(d) {
+                return d.y;
+            }).attr("height", height);
+
+            dragbarleft.attr("y", function(d) {
+                return d.y + (dragbarw / 2);
+            }).attr("height", height - dragbarw);
+            dragbarright.attr("y", function(d) {
+                return d.y + (dragbarw / 2);
+            }).attr("height", height - dragbarw);
+        }
+
+        function bdragresize(d) {
+            if (!selectedTable)
+                return;
+            //Max x on the left is x - width 
+            //Max x on the right is width of screen + (dragbarw/2)
+            var dragy = Math.max(d.y + (dragbarw / 2), Math.min(h, d.y + height + d3.event.dy));
+
+            //recalculate width
+            height = dragy - d.y;
+
+            //move the right drag handle
+            dragbarbottom.attr("y", function(d) {
+                return dragy - (dragbarw / 2)
+            });
+
+            //resize the drag rectangle
+            //as we are only resizing from the right, the x coordinate does not need to change
+            dragrect.attr("height", height);
+            dragbarleft.attr("height", height - dragbarw);
+            dragbarright.attr("height", height - dragbarw);
+        }
+
+        function maximumDocumentSizes(margins) {
+            var instance = {};
+            var width = 500, height = 500;
+            if (document.body && document.body.offsetWidth) {
+                width = document.body.offsetWidth;
+                height = document.body.offsetHeight;
             }
-
-            function tdragresize(d) {
-                if (!selectedTable)
-                    return;
-                var oldy = d.y;
-                //Max x on the right is x + width - dragbarw
-                //Max x on the left is 0 - (dragbarw/2)
-                d.y = Math.max(0, Math.min(d.y + height - (dragbarw / 2),
-                        d3.event.y));
-                height = height + (oldy - d.y);
-                dragbartop.attr("y", function (d) {
-                    return d.y - (dragbarw / 2);
-                });
-
-                dragrect.attr("y", function (d) {
-                    return d.y;
-                }).attr("height", height);
-
-                dragbarleft.attr("y", function (d) {
-                    return d.y + (dragbarw / 2);
-                }).attr("height", height - dragbarw);
-                dragbarright.attr("y", function (d) {
-                    return d.y + (dragbarw / 2);
-                }).attr("height", height - dragbarw);
+            if (document.compatMode === 'CSS1Compat' && document.documentElement && document.documentElement.offsetWidth) {
+                width = document.documentElement.offsetWidth;
+                height = document.documentElement.offsetHeight;
             }
-
-            function bdragresize(d) {
-                if (!selectedTable)
-                    return;
-                //Max x on the left is x - width 
-                //Max x on the right is width of screen + (dragbarw/2)
-                var dragy = Math.max(d.y + (dragbarw / 2), Math.min(h, d.y + height
-                        + d3.event.dy));
-
-                //recalculate width
-                height = dragy - d.y;
-
-                //move the right drag handle
-                dragbarbottom.attr("y", function (d) {
-                    return dragy - (dragbarw / 2)
-                });
-
-                //resize the drag rectangle
-                //as we are only resizing from the right, the x coordinate does not need to change
-                dragrect.attr("height", height);
-                dragbarleft.attr("height", height - dragbarw);
-                dragbarright.attr("height", height - dragbarw);
+            if (window.innerWidth && window.innerHeight) {
+                width = window.innerWidth;
+                height = window.innerHeight;
             }
+            instance.height = height - margins.top - margins.bottom;
+            instance.width = width - margins.left - margins.right;
+            return instance;
+        }
 
-            function maximumDocumentSizes(margins) {
-                var instance = {};
-                var width = 500, height = 500;
-                if (document.body && document.body.offsetWidth) {
-                    width = document.body.offsetWidth;
-                    height = document.body.offsetHeight;
-                }
-                if (document.compatMode === 'CSS1Compat'
-                        && document.documentElement
-                        && document.documentElement.offsetWidth) {
-                    width = document.documentElement.offsetWidth;
-                    height = document.documentElement.offsetHeight;
-                }
-                if (window.innerWidth && window.innerHeight) {
-                    width = window.innerWidth;
-                    height = window.innerHeight;
-                }
-                instance.height = height - margins.top - margins.bottom;
-                instance.width = width - margins.left - margins.right;
-                return instance;
-            }
-            
-            function zoom() {
-            	if (zoomEnabled) 
-           	  		svg.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
-           	}
-            
-            function getSvg(){
-            	var svgTag = document.getElementsByTagName("svg")[0];
-            	var svgXml = (new XMLSerializer).serializeToString(svgTag);
-            	return svgXml;
-            }
+        function zoom() {
+            if (zoomEnabled)
+                svg.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+        }
 
-            function getFakeData() {
-                var fakeData = [{
-                        "id": 0,
-                        "name": "serbatoi",
-                        "y": 10,
-                        "fields": [{
-                                "fname": "data_concessione"
-                            }, {
-                                "fname": "ente_gestore"
-                            }, {
-                                "fname": "id"
-                            }, {
-                                "fname": "num_concessione"
-                            }, {
-                                "fname": "potenza_nominale_kW"
-                            }, {
-                                "fk_field": "id",
-                                "fk_name": "punti_monitoraggio",
-                                "fname": "punti_monitoraggio_id"
-                            }, {
-                                "fk_field": "id",
-                                "fk_name": "punti_monitoraggio",
-                                "fname": "punti_monitoraggio_restituzione_id"
-                            }, {
-                                "fname": "q_media_turb"
-                            }, {
-                                "fname": "quota_coronamento"
-                            }, {
-                                "fname": "quota_max_invaso"
-                            }, {
-                                "fname": "quota_max_regolazione_estiva"
-                            }, {
-                                "fname": "quota_max_regolazione_invernale"
-                            }, {
-                                "fname": "quota_min_regolazione_estiva"
-                            }, {
-                                "fname": "quota_min_regolazione_invernale"
-                            }, {
-                                "fname": "scadenza_concessione"
-                            }, {
-                                "fname": "sup_bacino_allacciato"
-                            }, {
-                                "fname": "sup_bacino_sotteso"
-                            }, {
-                                "fname": "vol_invaso_estivo"
-                            }, {
-                                "fname": "vol_invaso_invernale"
-                            }, {
-                                "fname": "vol_laminaz_estivo"
-                            }, {
-                                "fname": "vol_laminaz_invernale"
-                            }, {
-                                "fname": "volume_totale_invaso"
-                            }],
-                        "x": 10
-                    }, {
-                        "id": 1,
-                        "name": "punti_monitoraggio",
-                        "y": 10,
-                        "fields": [{
-                                "fname": "attivo"
-                            }, {
-                                "fname": "bacino"
-                            }, {
-                                "fname": "codice_ente"
-                            }, {
-                                "fname": "commento"
-                            }, {
-                                "fname": "comune"
-                            }, {
-                                "fk_field": "id",
-                                "fk_name": "concessioni",
-                                "fname": "concessioni_id"
-                            }, {
-                                "fname": "corsi_acqua_artificiale_id"
-                            }, {
-                                "fname": "corsi_acqua_id"
-                            }, {
-                                "fname": "esiste_serie_dati"
-                            }, {
-                                "fname": "finevalidita"
-                            }, {
-                                "fname": "id"
-                            }, {
-                                "fname": "id_punti_monitoraggio"
-                            }, {
-                                "fname": "iniziovalidita"
-                            }, {
-                                "fk_field": "id",
-                                "fk_name": "laghi",
-                                "fname": "laghi_id"
-                            }, {
-                                "fname": "localita"
-                            }, {
-                                "fname": "nome"
-                            }, {
-                                "fname": "provincia"
-                            }, {
-                                "fname": "punti_monitoraggio_restituzione_id"
-                            }, {
-                                "fname": "quota"
-                            }, {
-                                "fname": "regione"
-                            }, {
-                                "fname": "sottobacino"
-                            }, {
-                                "fname": "the_geom"
-                            }, {
-                                "fk_field": "id",
-                                "fk_name": "tipologia_nodi",
-                                "fname": "tipologia_nodi_id"
-                            }],
-                        "x": 370
-                    }]
+        function resetZoom() {
+            svg.attr("transform", "translate(0, 0)scale(1)");
+        }
 
-                        ;
-                return fakeData;
-            }
-        </script>
-    </body>
+        function getSvg() {
+            var svgTag = document.getElementsByTagName("svg")[0];
+            var svgXml = (new XMLSerializer).serializeToString(svgTag);
+            return svgXml;
+        }
+
+        function getFakeData() {
+            var fakeData = [ {
+                "id" : 0,
+                "name" : "serbatoi",
+                "y" : 10,
+                "fields" : [ {
+                    "fname" : "data_concessione"
+                }, {
+                    "fname" : "ente_gestore"
+                }, {
+                    "fname" : "id"
+                }, {
+                    "fname" : "num_concessione"
+                }, {
+                    "fname" : "potenza_nominale_kW"
+                }, {
+                    "fk_field" : "id",
+                    "fk_name" : "punti_monitoraggio",
+                    "fname" : "punti_monitoraggio_id"
+                }, {
+                    "fk_field" : "id",
+                    "fk_name" : "punti_monitoraggio",
+                    "fname" : "punti_monitoraggio_restituzione_id"
+                }, {
+                    "fname" : "q_media_turb"
+                }, {
+                    "fname" : "quota_coronamento"
+                }, {
+                    "fname" : "quota_max_invaso"
+                }, {
+                    "fname" : "quota_max_regolazione_estiva"
+                }, {
+                    "fname" : "quota_max_regolazione_invernale"
+                }, {
+                    "fname" : "quota_min_regolazione_estiva"
+                }, {
+                    "fname" : "quota_min_regolazione_invernale"
+                }, {
+                    "fname" : "scadenza_concessione"
+                }, {
+                    "fname" : "sup_bacino_allacciato"
+                }, {
+                    "fname" : "sup_bacino_sotteso"
+                }, {
+                    "fname" : "vol_invaso_estivo"
+                }, {
+                    "fname" : "vol_invaso_invernale"
+                }, {
+                    "fname" : "vol_laminaz_estivo"
+                }, {
+                    "fname" : "vol_laminaz_invernale"
+                }, {
+                    "fname" : "volume_totale_invaso"
+                } ],
+                "x" : 10
+            }, {
+                "id" : 1,
+                "name" : "punti_monitoraggio",
+                "y" : 10,
+                "fields" : [ {
+                    "fname" : "attivo"
+                }, {
+                    "fname" : "bacino"
+                }, {
+                    "fname" : "codice_ente"
+                }, {
+                    "fname" : "commento"
+                }, {
+                    "fname" : "comune"
+                }, {
+                    "fk_field" : "id",
+                    "fk_name" : "concessioni",
+                    "fname" : "concessioni_id"
+                }, {
+                    "fname" : "corsi_acqua_artificiale_id"
+                }, {
+                    "fname" : "corsi_acqua_id"
+                }, {
+                    "fname" : "esiste_serie_dati"
+                }, {
+                    "fname" : "finevalidita"
+                }, {
+                    "fname" : "id"
+                }, {
+                    "fname" : "id_punti_monitoraggio"
+                }, {
+                    "fname" : "iniziovalidita"
+                }, {
+                    "fk_field" : "id",
+                    "fk_name" : "laghi",
+                    "fname" : "laghi_id"
+                }, {
+                    "fname" : "localita"
+                }, {
+                    "fname" : "nome"
+                }, {
+                    "fname" : "provincia"
+                }, {
+                    "fname" : "punti_monitoraggio_restituzione_id"
+                }, {
+                    "fname" : "quota"
+                }, {
+                    "fname" : "regione"
+                }, {
+                    "fname" : "sottobacino"
+                }, {
+                    "fname" : "the_geom"
+                }, {
+                    "fk_field" : "id",
+                    "fk_name" : "tipologia_nodi",
+                    "fname" : "tipologia_nodi_id"
+                } ],
+                "x" : 370
+            } ]
+
+            ;
+            return fakeData;
+        }
+    </script>
+</body>
 </html>
