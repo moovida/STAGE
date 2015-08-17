@@ -474,6 +474,10 @@ svg {
         function resetZoom() {
             svg.attr("transform", "translate(0, 0)scale(1)");
         }
+        
+        function setScale(scale) {
+            svg.attr("transform", "scale("+scale+")");
+        }
 
         function getSvg() {
             var svgTag = document.getElementsByTagName("svg")[0];

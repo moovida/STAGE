@@ -4,6 +4,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.swt.SWT;
@@ -13,13 +15,18 @@ import org.eclipse.swt.browser.ProgressEvent;
 import org.eclipse.swt.browser.ProgressListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
+
+import com.sun.media.imageioimpl.plugins.jpeg2000.ComponentMappingBox;
 
 import eu.hydrologis.stage.libs.log.StageLogger;
 import eu.hydrologis.stage.libs.utilsrap.DownloadUtils;
@@ -60,10 +67,17 @@ public class TableGraphDialog extends Dialog {
     @Override
     protected Control createDialogArea( Composite parent ) {
         Composite composite = (Composite) super.createDialogArea(parent);
-        composite.setLayout(new GridLayout(3, false));
+        composite.setLayout(new GridLayout(1, false));
 
         try {
-            Button downloadButton = new Button(composite, SWT.PUSH);
+
+            Composite buttonsComposite = new Composite(composite, SWT.NONE);
+            buttonsComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, false));
+            GridLayout buttonsCompositeLayout = new GridLayout(8, false);
+            buttonsCompositeLayout.marginWidth = 5;
+            buttonsComposite.setLayout(buttonsCompositeLayout);
+
+            Button downloadButton = new Button(buttonsComposite, SWT.PUSH);
             downloadButton.setLayoutData(new GridData(SWT.BEGINNING, SWT.FILL, false, false));
             downloadButton.setText("Download svg");
             downloadButton.addSelectionListener(new SelectionAdapter(){
@@ -82,7 +96,7 @@ public class TableGraphDialog extends Dialog {
                 }
             });
 
-            Button resetZoomButton = new Button(composite, SWT.PUSH);
+            Button resetZoomButton = new Button(buttonsComposite, SWT.PUSH);
             resetZoomButton.setLayoutData(new GridData(SWT.BEGINNING, SWT.FILL, false, false));
             resetZoomButton.setText("Reset Zoom");
             resetZoomButton.addSelectionListener(new SelectionAdapter(){
@@ -92,23 +106,54 @@ public class TableGraphDialog extends Dialog {
                 }
             });
 
-            final Button zoomToggleButton = new Button(composite, SWT.CHECK);
-            zoomToggleButton.setLayoutData(new GridData(SWT.BEGINNING, SWT.FILL, false, false));
-            zoomToggleButton.setText("Toggle zoom behaviour");
-            zoomToggleButton.addSelectionListener(new SelectionAdapter(){
+//            final Button zoomToggleButton = new Button(buttonsComposite, SWT.CHECK | SWT.BORDER);
+//            GridData zoomToggleButtonGD = new GridData(SWT.BEGINNING, SWT.FILL, false, false);
+//            zoomToggleButtonGD.horizontalIndent = 5;
+//            zoomToggleButton.setLayoutData(zoomToggleButtonGD);
+//            zoomToggleButton.setText("Toggle Pan");
+//            zoomToggleButton.addSelectionListener(new SelectionAdapter(){
+//                @Override
+//                public void widgetSelected( SelectionEvent e ) {
+//                    if (zoomToggleButton.getSelection()) {
+//                        tablesGraphBrowser.evaluate("enableZoom();");
+//                    } else {
+//                        tablesGraphBrowser.evaluate("disableZoom();");
+//                    }
+//                }
+//            });
+
+            Label scaleLabel = new Label(buttonsComposite, SWT.NONE);
+            scaleLabel.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
+            scaleLabel.setText("Scale");
+
+            List<String> scalesList = new ArrayList<>();
+            for( int i = 1; i <= 10; i++ ) {
+                double scale = i / 10.0;
+                scalesList.add("" + scale);
+            }
+            for( int i = 2; i < 10; i++ ) {
+                scalesList.add("" + i);
+            }
+
+            final Combo scalesCombo = new Combo(buttonsComposite, SWT.DROP_DOWN);
+            scalesCombo.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
+            scalesCombo.setItems(scalesList.toArray(new String[0]));
+            scalesCombo.addSelectionListener(new SelectionListener(){
                 @Override
                 public void widgetSelected( SelectionEvent e ) {
-                    if (zoomToggleButton.getSelection()) {
-                        tablesGraphBrowser.evaluate("enableZoom();");
-                    } else {
-                        tablesGraphBrowser.evaluate("disableZoom();");
-                    }
+                    int selectionIndex = scalesCombo.getSelectionIndex();
+                    String selectedScale = scalesCombo.getItem(selectionIndex);
+                    tablesGraphBrowser.evaluate("setScale(" + selectedScale + ");");
+                }
+
+                @Override
+                public void widgetDefaultSelected( SelectionEvent e ) {
                 }
             });
+            scalesCombo.select(9);
 
             tablesGraphBrowser = new Browser(composite, SWT.NONE);
             GridData tablesGraphBrowserGD = new GridData(SWT.FILL, SWT.FILL, true, true);
-            tablesGraphBrowserGD.horizontalSpan = 3;
             tablesGraphBrowser.setLayoutData(tablesGraphBrowserGD);
             tablesGraphBrowser.setUrl(graphUrl);
             tablesGraphBrowser.addProgressListener(new ProgressListener(){

@@ -566,6 +566,32 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
 
         dataTableViewer.setInput(queryResult.data);
 
+        // add right click menu
+        MenuManager manager = new MenuManager();
+        dataTableViewer.getControl().setMenu(manager.createContextMenu(dataTableViewer.getControl()));
+        manager.addMenuListener(new IMenuListener(){
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public void menuAboutToShow( IMenuManager manager ) {
+                if (dataTableViewer.getSelection() instanceof IStructuredSelection) {
+                    IStructuredSelection selection = (IStructuredSelection) dataTableViewer.getSelection();
+                    final Object selectedItem = selection.getFirstElement();
+                    if (selectedItem == null || selection.isEmpty()) {
+                        return;
+                    }
+
+                    List<Object[]> selectedData = selection.toList();
+//                    Action[] multiTableActions = makeMultiTablesAction(selectedTables);
+//                    for( Action action : multiTableActions ) {
+//                        manager.add(action);
+//                    }
+                }
+            }
+
+        });
+        manager.setRemoveAllWhenShown(true);
+
         parent.layout();
     }
 
@@ -1367,7 +1393,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                                     for( ColumnLevel col : sortedCols ) {
                                         JSONObject colObject = new JSONObject();
                                         fieldsArray.put(colObject);
-                                        colObject.put("fname", col.columnName);
+                                        colObject.put("fname", col.columnName + " (" + col.columnType + ")");
                                         if (col.references != null) {
                                             String[] tableColsFromFK = col.tableColsFromFK();
                                             String toTable = tableColsFromFK[0];
