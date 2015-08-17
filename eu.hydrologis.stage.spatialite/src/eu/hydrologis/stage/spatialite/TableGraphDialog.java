@@ -124,29 +124,10 @@ public class TableGraphDialog extends Dialog {
                 public void changed( ProgressEvent event ) {
                 }
             });
-
-            // String treeHtml = getTreeHtml();
-            // treeSlicerBrowser.setText(treeHtml);
-
-            // new GetSelectedPlotFilesFunction(treeSlicerBrowser);
         } catch (Exception e) {
             e.printStackTrace();
         }
         return composite;
-    }
-    public static String getTreeHtml() throws Exception {
-        InputStream inputStream = JsResources.class.getClassLoader().getResourceAsStream("js/trees_info.html");
-
-        if (inputStream != null) {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-            StringBuilder sb = new StringBuilder();
-            String line;
-            while( (line = reader.readLine()) != null ) {
-                sb.append(line).append("\n");
-            }
-            return sb.toString();
-        }
-        return "";
     }
 
     @Override
