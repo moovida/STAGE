@@ -42,6 +42,8 @@ public class TableGraphDialog extends Dialog {
     private String graphUrl;
     private String json;
 
+    private double currentZoom = 1.0;
+
     private Browser tablesGraphBrowser;
 
     public TableGraphDialog( Shell parent, String title, String json ) {
@@ -103,54 +105,54 @@ public class TableGraphDialog extends Dialog {
                 @Override
                 public void widgetSelected( SelectionEvent e ) {
                     tablesGraphBrowser.evaluate("resetZoom()");
+                    currentZoom = 1;
                 }
             });
 
-//            final Button zoomToggleButton = new Button(buttonsComposite, SWT.CHECK | SWT.BORDER);
-//            GridData zoomToggleButtonGD = new GridData(SWT.BEGINNING, SWT.FILL, false, false);
-//            zoomToggleButtonGD.horizontalIndent = 5;
-//            zoomToggleButton.setLayoutData(zoomToggleButtonGD);
-//            zoomToggleButton.setText("Toggle Pan");
-//            zoomToggleButton.addSelectionListener(new SelectionAdapter(){
-//                @Override
-//                public void widgetSelected( SelectionEvent e ) {
-//                    if (zoomToggleButton.getSelection()) {
-//                        tablesGraphBrowser.evaluate("enableZoom();");
-//                    } else {
-//                        tablesGraphBrowser.evaluate("disableZoom();");
-//                    }
-//                }
-//            });
-
-            Label scaleLabel = new Label(buttonsComposite, SWT.NONE);
-            scaleLabel.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
-            scaleLabel.setText("Scale");
-
-            List<String> scalesList = new ArrayList<>();
-            for( int i = 1; i <= 10; i++ ) {
-                double scale = i / 10.0;
-                scalesList.add("" + scale);
-            }
-            for( int i = 2; i < 10; i++ ) {
-                scalesList.add("" + i);
-            }
-
-            final Combo scalesCombo = new Combo(buttonsComposite, SWT.DROP_DOWN);
-            scalesCombo.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
-            scalesCombo.setItems(scalesList.toArray(new String[0]));
-            scalesCombo.addSelectionListener(new SelectionListener(){
+            Button zoomInButton = new Button(buttonsComposite, SWT.PUSH);
+            zoomInButton.setLayoutData(new GridData(SWT.BEGINNING, SWT.FILL, false, false));
+            zoomInButton.setText(" + ");
+            zoomInButton.addSelectionListener(new SelectionAdapter(){
                 @Override
                 public void widgetSelected( SelectionEvent e ) {
-                    int selectionIndex = scalesCombo.getSelectionIndex();
-                    String selectedScale = scalesCombo.getItem(selectionIndex);
-                    tablesGraphBrowser.evaluate("setScale(" + selectedScale + ");");
-                }
 
-                @Override
-                public void widgetDefaultSelected( SelectionEvent e ) {
+                    if (currentZoom == 8) {
+                        return;
+                    }
+                    currentZoom += 0.1;
+                    tablesGraphBrowser.evaluate("setScale(" + currentZoom + ")");
                 }
             });
-            scalesCombo.select(9);
+            Button zoomOutButton = new Button(buttonsComposite, SWT.PUSH);
+            zoomOutButton.setLayoutData(new GridData(SWT.BEGINNING, SWT.FILL, false, false));
+            zoomOutButton.setText(" - ");
+            zoomOutButton.addSelectionListener(new SelectionAdapter(){
+                @Override
+                public void widgetSelected( SelectionEvent e ) {
+
+                    if (currentZoom == 0.1) {
+                        return;
+                    }
+                    currentZoom -= 0.1;
+                    tablesGraphBrowser.evaluate("setScale(" + currentZoom + ")");
+                }
+            });
+
+            // final Button zoomToggleButton = new Button(buttonsComposite, SWT.CHECK | SWT.BORDER);
+            // GridData zoomToggleButtonGD = new GridData(SWT.BEGINNING, SWT.FILL, false, false);
+            // zoomToggleButtonGD.horizontalIndent = 5;
+            // zoomToggleButton.setLayoutData(zoomToggleButtonGD);
+            // zoomToggleButton.setText("Toggle Pan");
+            // zoomToggleButton.addSelectionListener(new SelectionAdapter(){
+            // @Override
+            // public void widgetSelected( SelectionEvent e ) {
+            // if (zoomToggleButton.getSelection()) {
+            // tablesGraphBrowser.evaluate("enableZoom();");
+            // } else {
+            // tablesGraphBrowser.evaluate("disableZoom();");
+            // }
+            // }
+            // });
 
             tablesGraphBrowser = new Browser(composite, SWT.NONE);
             GridData tablesGraphBrowserGD = new GridData(SWT.FILL, SWT.FILL, true, true);

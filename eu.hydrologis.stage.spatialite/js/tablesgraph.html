@@ -99,19 +99,18 @@ svg {
                 return lines * lineHeight + 3 * lineHeight;
             }).attr("width", width).attr("fill", "white").attr('stroke', 'black').attr('stroke-width', 1).attr("cursor", "move")//
             .on("mousedown", function() {
-                if (!selectedTable && !zoomEnabled) {
-                    selectedTable = d3.select(this);
-                }
-
+                if (selectedTable) 
+                    selectedTable.transition().duration(100).attr('stroke-width', 1);
+                selectedTable = d3.select(this);
+                selectedTable.transition().duration(500).attr('stroke-width', 3)
+//                    selected = true;
+//                }else{
+//                    selectedTable = null;
+//                    d3.select(this).transition().duration(500).attr('stroke-width', 1)
+//                    selected = false;
+//                }
             }).on("mouseup", function() {
-                if (selectedTable) {
-                    selectedTable = null;
-                }
-            }).on('mouseover', function() {
-                d3.select(this).transition().duration(500).attr('stroke-width', 3)
-            }).on('mouseout', function() {
-                d3.select(this).transition().duration(500).attr('stroke-width', 1)
-                selected = false;
+                
             }).call(drag);
 
             var allTexts = rectGroup.selectAll("text").data(data).enter().append("text");
