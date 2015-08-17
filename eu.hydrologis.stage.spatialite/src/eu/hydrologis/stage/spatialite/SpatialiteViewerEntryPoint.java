@@ -608,7 +608,6 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                                 int epsg = currentSelectedColumn.geomColumn.srid;
 
                                 CoordinateReferenceSystem sourceCRS = CRS.decode("EPSG:" + epsg);
-                                // CoordinateReferenceSystem targetCRS = CRS.decode("EPSG:4326");
 
                                 Hints hints = new Hints(Hints.FORCE_LONGITUDE_FIRST_AXIS_ORDER, Boolean.TRUE);
                                 CRSAuthorityFactory factory = ReferencingFactoryFinder.getCRSAuthorityFactory("EPSG", hints);
@@ -619,31 +618,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                                 SimpleFeatureTypeBuilder b = new SimpleFeatureTypeBuilder();
                                 b.setName("geojson");
                                 b.setCRS(targetCRS);
-                                SpatialiteGeometryType gType = SpatialiteGeometryType
-                                        .forValue(currentSelectedColumn.geomColumn.geometry_type);
-                                switch( gType ) {
-                                case POINT_XY:
-                                case POINT_XYM:
-                                case POINT_XYZ:
-                                case POINT_XYZM:
-                                    b.add("geometry", com.vividsolutions.jts.geom.Point.class);
-                                    break;
-                                case LINESTRING_XY:
-                                case LINESTRING_XYM:
-                                case LINESTRING_XYZ:
-                                case LINESTRING_XYZM:
-                                    b.add("geometry", LineString.class);
-                                    break;
-                                case POLYGON_XY:
-                                case POLYGON_XYM:
-                                case POLYGON_XYZ:
-                                case POLYGON_XYZM:
-                                    b.add("geometry", Polygon.class);
-                                    break;
-                                default:
-                                    b.add("geometry", Geometry.class);
-                                    break;
-                                }
+                                b.add("geometry", Geometry.class);
 
                                 b.add("cat", String.class);
 
@@ -681,10 +656,10 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                                 fjson.writeFeatureCollection(fc, writer);
                                 String geojson = writer.toString();
 
-                                System.out.println(geojson);
+                                // System.out.println(geojson);
 
-//                                QuickGeometryViewDialog d = new QuickGeometryViewDialog(parentShell, "Table Graph", geojson);
-//                                d.open();
+                                QuickGeometryViewDialog d = new QuickGeometryViewDialog(parentShell, "Table Graph", geojson);
+                                d.open();
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
@@ -1225,7 +1200,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                 int limit = -1;
 
                 if (sqlText.toLowerCase().startsWith("select") || sqlText.toLowerCase().startsWith("pragma")) {
-                    limit = 1000;
+                    limit = 5000;
                     QueryResult queryResult = currentConnectedDatabase.getTableRecordsMapFromRawSql(sqlText, limit);
                     createTableViewer(resultsetViewerGroup, queryResult);
 
