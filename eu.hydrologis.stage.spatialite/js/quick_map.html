@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<!--
+Andrea Antonello
+-->
+<html>
+<head>
+<title>Trees info</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script type="text/javascript" src="libs/d3.min.js"></script>
+<!-- 
+<script type="text/javascript" src="libs/hylib.js"></script>
+<script type="text/javascript" src="libs/leaflet.js"></script>
+<link rel="stylesheet" href="libs/leaflet.css" />
+<script type='text/javascript' src='libs/jquery.min.js'></script>
+ -->
+</head>
+<body>
+ <div id="map"></div>
+ <script type="text/javascript">
+        //Width and height
+        var w = 500;
+        var h = 300;
+
+        function loadScript() {
+            //Define path generator
+            var path = d3.geo.path();
+
+            //Create SVG element
+            var svg = d3.select("body").append("svg").attr({
+                width : w,
+                height : h
+            });
+
+            //Load in GeoJSON data
+            var jsonStr = getJsonData();
+            var json = JSON.parse(jsonStr);
+            svg.selectAll("path").data(json.features).enter().append("path").attr("d", path).attr("fill", "#666666");
+        }
+    </script>
+</body>
+</html>

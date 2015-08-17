@@ -10,13 +10,11 @@ package eu.hydrologis.stage.spatialite;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 
 import org.eclipse.jface.action.Action;
@@ -68,6 +66,14 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.ToolItem;
 import org.eclipse.swt.widgets.Tree;
+import org.geotools.factory.Hints;
+import org.geotools.feature.DefaultFeatureCollection;
+import org.geotools.feature.simple.SimpleFeatureBuilder;
+import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
+import org.geotools.geojson.feature.FeatureJSON;
+import org.geotools.geometry.jts.JTS;
+import org.geotools.referencing.CRS;
+import org.geotools.referencing.ReferencingFactoryFinder;
 import org.jgrasstools.gears.spatialite.ForeignKey;
 import org.jgrasstools.gears.spatialite.QueryResult;
 import org.jgrasstools.gears.spatialite.SpatialiteDb;
@@ -77,6 +83,15 @@ import org.jgrasstools.gears.spatialite.SpatialiteImportUtils;
 import org.jgrasstools.gears.spatialite.SpatialiteTableNames;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.opengis.feature.simple.SimpleFeature;
+import org.opengis.feature.simple.SimpleFeatureType;
+import org.opengis.referencing.crs.CRSAuthorityFactory;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.opengis.referencing.operation.MathTransform;
+
+import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.LineString;
+import com.vividsolutions.jts.geom.Polygon;
 
 import eu.hydrologis.stage.libs.log.StageLogger;
 import eu.hydrologis.stage.libs.utils.ImageCache;
@@ -575,17 +590,112 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
             @Override
             public void menuAboutToShow( IMenuManager manager ) {
                 if (dataTableViewer.getSelection() instanceof IStructuredSelection) {
-                    IStructuredSelection selection = (IStructuredSelection) dataTableViewer.getSelection();
-                    final Object selectedItem = selection.getFirstElement();
-                    if (selectedItem == null || selection.isEmpty()) {
+                    final IStructuredSelection selection = (IStructuredSelection) dataTableViewer.getSelection();
+                    if (selection.isEmpty()) {
                         return;
                     }
 
-                    List<Object[]> selectedData = selection.toList();
-//                    Action[] multiTableActions = makeMultiTablesAction(selectedTables);
-//                    for( Action action : multiTableActions ) {
-//                        manager.add(action);
-//                    }
+                    manager.add(new Action("Quick View Geometries", null){
+                        @Override
+                        public void run() {
+                            try {
+                                if (currentSelectedColumn == null || currentSelectedColumn.geomColumn == null) {
+                                    MessageDialog.openInformation(parentShell, "INFO",
+                                            "Select in the tables view the column of the geoetry represented.");
+                                    return;
+                                }
+
+                                int epsg = currentSelectedColumn.geomColumn.srid;
+
+                                CoordinateReferenceSystem sourceCRS = CRS.decode("EPSG:" + epsg);
+                                // CoordinateReferenceSystem targetCRS = CRS.decode("EPSG:4326");
+
+                                Hints hints = new Hints(Hints.FORCE_LONGITUDE_FIRST_AXIS_ORDER, Boolean.TRUE);
+                                CRSAuthorityFactory factory = ReferencingFactoryFinder.getCRSAuthorityFactory("EPSG", hints);
+                                CoordinateReferenceSystem targetCRS = factory.createCoordinateReferenceSystem("EPSG:4326");
+
+                                MathTransform transform = CRS.findMathTransform(sourceCRS, targetCRS);
+
+                                SimpleFeatureTypeBuilder b = new SimpleFeatureTypeBuilder();
+                                b.setName("geojson");
+                                b.setCRS(targetCRS);
+                                SpatialiteGeometryType gType = SpatialiteGeometryType
+                                        .forValue(currentSelectedColumn.geomColumn.geometry_type);
+                                switch( gType ) {
+                                case POINT_XY:
+                                case POINT_XYM:
+                                case POINT_XYZ:
+                                case POINT_XYZM:
+                                    b.add("geometry", com.vividsolutions.jts.geom.Point.class);
+                                    break;
+                                case LINESTRING_XY:
+                                case LINESTRING_XYM:
+                                case LINESTRING_XYZ:
+                                case LINESTRING_XYZM:
+                                    b.add("geometry", LineString.class);
+                                    break;
+                                case POLYGON_XY:
+                                case POLYGON_XYM:
+                                case POLYGON_XYZ:
+                                case POLYGON_XYZM:
+                                    b.add("geometry", Polygon.class);
+                                    break;
+                                default:
+                                    b.add("geometry", Geometry.class);
+                                    break;
+                                }
+
+                                b.add("cat", String.class);
+
+                                SimpleFeatureType type = b.buildFeatureType();
+                                SimpleFeatureBuilder builder = new SimpleFeatureBuilder(type);
+
+                                DefaultFeatureCollection fc = new DefaultFeatureCollection();
+                                List<Geometry> geomsList = new ArrayList<>();
+                                List<Object[]> selectedData = selection.toList();
+                                int index = 0;
+                                for( Object[] objects : selectedData ) {
+                                    for( int i = 0; i < objects.length; i++ ) {
+                                        Object object1 = objects[i];
+                                        if (object1 instanceof Geometry) {
+                                            Geometry geom = (Geometry) object1;
+                                            Geometry targetGeometry = JTS.transform(geom, transform);
+                                            geomsList.add(targetGeometry);
+
+                                            String catValue = "" + index;
+                                            if (i + 1 < objects.length) {
+                                                if (objects[i + 1] != null)
+                                                    catValue = objects[i + 1].toString();
+                                            }
+                                            Object[] values = new Object[]{targetGeometry, catValue};
+                                            index++;
+                                            builder.addAll(values);
+                                            SimpleFeature feature = builder.buildFeature(null);
+                                            fc.add(feature);
+                                        }
+                                    }
+                                }
+
+                                FeatureJSON fjson = new FeatureJSON();
+                                StringWriter writer = new StringWriter();
+                                fjson.writeFeatureCollection(fc, writer);
+                                String geojson = writer.toString();
+
+                                System.out.println(geojson);
+
+//                                QuickGeometryViewDialog d = new QuickGeometryViewDialog(parentShell, "Table Graph", geojson);
+//                                d.open();
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+
+                        }
+                    });
+
+                    // Action[] multiTableActions = makeMultiTablesAction(selectedTables);
+                    // for( Action action : multiTableActions ) {
+                    // manager.add(action);
+                    // }
                 }
             }
 

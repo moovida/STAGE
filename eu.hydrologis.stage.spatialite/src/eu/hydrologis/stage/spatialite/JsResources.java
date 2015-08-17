@@ -13,12 +13,13 @@ import org.eclipse.rap.rwt.service.ResourceManager;
 public class JsResources {
 
     private static final String[][] javascriptFiles = new String[][]{//
-    {"libs/jquery.min.js", "jquery.min.js"}, //
+            {"libs/jquery.min.js", "jquery.min.js"}, //
             {"libs/d3.min.js", "d3.min.js"}, //
     };
 
     private static List<String> toRequireList = new ArrayList<String>();
-    private static String toRequireChartmap;
+    private static String toRequireGraphMap;
+    private static String toRequireQuickMap;
 
     private static final ResourceLoader resourceLoader = new ResourceLoader(){
         public InputStream getResourceAsStream( String resourceName ) throws IOException {
@@ -60,17 +61,40 @@ public class JsResources {
                     throw new NullPointerException();
                 }
                 String registered = register(resourceManager, fileName, resourceAsStream);
-                if (toRequireChartmap == null)
-                    toRequireChartmap = registered;
+                if (toRequireGraphMap == null)
+                    toRequireGraphMap = registered;
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
-        if (toRequireChartmap != null) {
+        if (toRequireGraphMap != null) {
             JavaScriptLoader loader = RWT.getClient().getService(JavaScriptLoader.class);
-            loader.require(toRequireChartmap);
+            loader.require(toRequireGraphMap);
         }
-        return toRequireChartmap;
+        return toRequireGraphMap;
+    }
+
+    public static String ensureQuickmapHtmlResource() {
+        ResourceManager resourceManager = RWT.getApplicationContext().getResourceManager();
+        try {
+            String fileName = "quick_map.html";
+            if (!resourceManager.isRegistered(fileName)) {
+                InputStream resourceAsStream = resourceLoader.getResourceAsStream(fileName);
+                if (resourceAsStream == null) {
+                    throw new NullPointerException();
+                }
+                String registered = register(resourceManager, fileName, resourceAsStream);
+                if (toRequireQuickMap == null)
+                    toRequireQuickMap = registered;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        if (toRequireQuickMap != null) {
+            JavaScriptLoader loader = RWT.getClient().getService(JavaScriptLoader.class);
+            loader.require(toRequireQuickMap);
+        }
+        return toRequireQuickMap;
     }
 
     public static String registerIfMissing( String resource ) {
