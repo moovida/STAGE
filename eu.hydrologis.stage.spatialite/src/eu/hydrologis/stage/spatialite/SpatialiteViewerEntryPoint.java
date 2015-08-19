@@ -1492,8 +1492,9 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                                 }
                                 runningY += tableHeight + indent;
                             }
-                            String json = root.toString();
                             // String string = root.toString(2);
+                            
+                            String json = root.toString();
                             TableGraphDialog d = new TableGraphDialog(parentShell, "Table Graph", json);
                             d.open();
                         } catch (Exception e) {

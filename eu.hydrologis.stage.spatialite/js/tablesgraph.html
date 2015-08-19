@@ -99,10 +99,10 @@ svg {
                 return lines * lineHeight + 3 * lineHeight;
             }).attr("width", width).attr("fill", "white").attr('stroke', 'black').attr('stroke-width', 1).attr("cursor", "move")//
             .on("mousedown", function() {
-                if (selectedTable) 
-                    selectedTable.transition().duration(100).attr('stroke-width', 1);
+//                if (selectedTable) 
+//                    selectedTable.transition().duration(100).attr('stroke-width', 1);
                 selectedTable = d3.select(this);
-                selectedTable.transition().duration(500).attr('stroke-width', 3)
+//                selectedTable.transition().duration(500).attr('stroke-width', 3)
 //                    selected = true;
 //                }else{
 //                    selectedTable = null;
