@@ -247,7 +247,11 @@ public class FolderSelectionDialog extends Dialog implements ModifyListener {
                         if (StageLogger.LOG_DEBUG) {
                             StageLogger.logDebug(this, "getChildren of: " + parentElement);
                         }
-                        Arrays.sort(listFiles);
+                        if (listFiles != null) {
+                            Arrays.sort(listFiles);
+                        } else {
+                            listFiles = new File[0];
+                        }
                         return listFiles;
                     }
                 }

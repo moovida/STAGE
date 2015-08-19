@@ -258,20 +258,6 @@ any resulting litigation.
    </requires>
 
    <plugin
-         id="org.eclipse.rap.addons.filedialog"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="org.eclipse.rap.addons.fileupload"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
          id="org.eclipse.equinox.app"
          download-size="0"
          install-size="0"
@@ -587,6 +573,27 @@ any resulting litigation.
 
    <plugin
          id="eu.hydrologis.stage.treeslicesviewer"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.eclipse.rap.filedialog"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.eclipse.rap.fileupload"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="eu.hydrologis.stage.spatialite"
          download-size="0"
          install-size="0"
          version="0.0.0"

@@ -13,6 +13,16 @@ function treeProfileScatterChart() {
             _dotsize = 2,
             _svg,
             _bodyG;
+    
+    var axisColor = "#505050";
+    var axisWidth = "1";
+    var axisFill = "none";
+    var axisShpRendering = "crispEdges";
+    
+    var axisThickColor = "#9b9b9b";
+    var axisThickWidth = "1";
+    var axisThickFill = "none";
+    var axisThickShpRendering = "crispEdges";
 
     _chart.render = function () {
         if (!_svg) {
@@ -54,7 +64,11 @@ function treeProfileScatterChart() {
                 .scale(_x.range([0, quadrantWidth()]))
                 .orient("bottom");
         axesG.append("g")
-                .attr("class", "x axis")
+        		.attr("class", "x axis")
+                .attr("stroke", axisColor)
+                .attr("stroke-width", axisWidth)
+                .attr("fill", axisFill)
+                .attr("shape-rendering", axisShpRendering)
                 .attr("transform", function () {
                     return "translate(" + xStart() + "," + yStart() + ")";
                 })
@@ -63,6 +77,10 @@ function treeProfileScatterChart() {
         d3.selectAll("g.x g.tick")
                 .append("line")
                 .classed("grid-line", true)
+                .attr("stroke", axisThickColor)
+                .attr("stroke-width", axisThickWidth)
+                .attr("fill", axisThickFill)
+                .attr("shape-rendering", axisThickShpRendering)
                 .attr("x1", 0)
                 .attr("y1", 0)
                 .attr("x2", 0)
@@ -76,6 +94,10 @@ function treeProfileScatterChart() {
 
         axesG.append("g")
                 .attr("class", "y axis")
+                .attr("stroke", axisColor)
+                .attr("stroke-width", axisWidth)
+                .attr("fill", axisFill)
+                .attr("shape-rendering", axisShpRendering)
                 .attr("transform", function () {
                     return "translate(" + xStart() + "," + yEnd() + ")";
                 })
@@ -84,6 +106,10 @@ function treeProfileScatterChart() {
         d3.selectAll("g.y g.tick")
                 .append("line")
                 .classed("grid-line", true)
+                .attr("stroke", axisThickColor)
+                .attr("stroke-width", axisThickWidth)
+                .attr("fill", axisThickFill)
+                .attr("shape-rendering", axisThickShpRendering)
                 .attr("x1", 0)
                 .attr("y1", 0)
                 .attr("x2", quadrantWidth())
@@ -163,7 +189,7 @@ function treeProfileScatterChart() {
     }
 
     function xStart() {
-        return _margins.left;
+    	return _margins.left;
     }
     function yStart() {
         return _height - _margins.bottom;
@@ -180,6 +206,10 @@ function treeProfileScatterChart() {
     function quadrantHeight() {
         return _height - _margins.top - _margins.bottom;
     }
+
+    _chart.svg = function () {
+    	return _svg;
+    };
 
     _chart.width = function (w) {
         if (!arguments.length)

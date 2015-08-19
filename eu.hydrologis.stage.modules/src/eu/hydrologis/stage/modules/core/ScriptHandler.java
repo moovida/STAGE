@@ -185,7 +185,21 @@ public class ScriptHandler {
                     display.asyncExec(new Runnable(){
                         public void run() {
 
-                            String _message = message.replaceFirst(dataFolder, StageWorkspace.STAGE_DATA_FOLDER_SUBSTITUTION_NAME);
+                            String _message = message
+                                    .replaceFirst(dataFolder, StageWorkspace.STAGE_DATA_FOLDER_SUBSTITUTION_NAME);
+
+                            String[] ignore = {"Call MapContent dispose()",//
+                                    "no gdaljni",//
+                                    "MediaLibLoad",//
+                                    "MediaLibAcc",//
+                                    "load mediaLib",//
+                                    "Failed to load the GDAL",//
+                            };
+
+                            for( String ignoreStr : ignore ) {
+                                if (message.contains(ignoreStr))
+                                    return;
+                            }
                             logList.add(_message, 0);
                             // logList.select(logList.getItemCount() - 1);
                             // logList.showSelection();

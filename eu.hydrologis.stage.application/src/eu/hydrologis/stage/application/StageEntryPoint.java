@@ -10,6 +10,7 @@ package eu.hydrologis.stage.application;
 
 import org.eclipse.rap.rwt.RWT;
 import org.eclipse.rap.rwt.application.AbstractEntryPoint;
+import org.eclipse.rap.rwt.client.service.JavaScriptExecutor;
 import org.eclipse.rap.rwt.client.service.UrlLauncher;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -21,6 +22,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 
+import eu.hydrologis.stage.libs.utils.StageUtils;
 import eu.hydrologis.stage.libs.utilsrap.LoginDialog;
 
 /**
@@ -71,7 +73,8 @@ public class StageEntryPoint extends AbstractEntryPoint {
         String[][] apps = new String[][]{//
         {"Spatial Toolbox", "/spatialtoolbox"}, //
                 {"Geopaparazzi Browser", "/geopapbrowser"},//
-                {"Tree Slices Viewer", "/treeslicesviewer"}//
+                {"Tree Slices Viewer", "/treeslicesviewer"},//
+                {"Spatialite Viewer", "/spatialiteviewer"}//
         };
 
         for( String[] app : apps ) {
@@ -82,8 +85,7 @@ public class StageEntryPoint extends AbstractEntryPoint {
             appButton.addSelectionListener(new SelectionAdapter(){
                 @Override
                 public void widgetSelected( SelectionEvent e ) {
-                    UrlLauncher launcher = RWT.getClient().getService(UrlLauncher.class);
-                    launcher.openURL(appButton.getData().toString());
+                    StageUtils.openUrl(appButton.getData().toString(), false);
                 }
             });
 
