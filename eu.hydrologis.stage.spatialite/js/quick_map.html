@@ -16,9 +16,9 @@
         <div id="map"></div>
 
         <!--<script type="text/javascript" src="d3.min.js"></script>-->
-                 
-                <script type="text/javascript" src="libs/d3.min.js"></script>
-                <script type="text/javascript"  src="libs/d3.geo.tile.js"></script> 
+
+        <script type="text/javascript" src="libs/d3.min.js"></script>
+        <script type="text/javascript"  src="libs/d3.geo.tile.js"></script> 
 
 
         <script>
@@ -66,78 +66,90 @@
                         .text("");
 
 //                d3.json("geoms.json", function (data) {
-                    var dataStr = getJsonData();
-                    var data = JSON.parse(dataStr);
+                var dataStr = getJsonData();
+                var data = JSON.parse(dataStr);
 
-                    var b, s, t;
-                    projection.scale(1).translate([0, 0]);
-                    var b = path.bounds(data);
-                    var s = .9 / Math.max((b[1][0] - b[0][0]) / width, (b[1][1] - b[0][1]) / height);
-                    var t = [(width - s * (b[1][0] + b[0][0])) / 2, (height - s * (b[1][1] + b[0][1])) / 2];
-                    projection.scale(s).translate(t);
+                var b, s, t;
+                projection.scale(1).translate([0, 0]);
+                var b = path.bounds(data);
+                var s = .9 / Math.max((b[1][0] - b[0][0]) / width, (b[1][1] - b[0][1]) / height);
+                var t = [(width - s * (b[1][0] + b[0][0])) / 2, (height - s * (b[1][1] + b[0][1])) / 2];
+                projection.scale(s).translate(t);
 
-                    map = svg.append('g').attr('class', 'boundary');
-                    mapData = map.selectAll('path').data(data.features);
+                map = svg.append('g').attr('class', 'boundary');
+                mapData = map.selectAll('path').data(data.features);
 
-                    var paths = mapData.enter()
-                            .append('path')
-                            .attr('d', path);
+                var paths = mapData.enter()
+                        .append('path')
+                        .attr('d', path);
 
-                    paths
-                            .attr('stroke', function (d) {
-                                if (d.properties.stroke)
-                                    return d.properties.stroke;
+                paths
+                        .attr('stroke', function (d) {
+                            if (d.properties.stroke)
+                                return d.properties.stroke;
+                            return "steelblue";
+                        })
+                        .attr('stroke-opacity', function (d) {
+                            if (d.properties.strokeopacity)
+                                return d.properties.strokeopacity;
+                            return "1";
+                        })
+                        .attr('stroke-width', function (d) {
+                            if (d.properties.strokewidth)
+                                return d.properties.strokewidth;
+                            return "1";
+                        })
+                        .attr('stroke-linejoin', "round")
+                        .attr('fill', function (d) {
+                            if (d.geometry.type.endsWith("Polygon")
+                                    || d.geometry.type.endsWith("Point")) {
+                                if (d.properties.fill)
+                                    return d.properties.fill;
                                 return "steelblue";
-                            })
-                            .attr('stroke-opacity', function (d) {
-                                if (d.properties.strokeopacity)
-                                    return d.properties.strokeopacity;
-                                return "1";
-                            })
-                            .attr('stroke-width', function (d) {
-                                if (d.properties.strokewidth)
-                                    return d.properties.strokewidth;
-                                return "1";
-                            })
-                            .attr('stroke-linejoin', "round")
-                            .attr('fill', function (d) {
-                                if (d.geometry.type.endsWith("Polygon")
-                                        || d.geometry.type.endsWith("Point")) {
-                                    if (d.properties.fill)
-                                        return d.properties.fill;
-                                    return "steelblue";
-                                } else {
-                                    return "none";
-                                }
-                            })
-                            .attr('fill-opacity', function (d) {
-                                if (d.properties.fillopacity)
-                                    return d.properties.fillopacity;
-                                return  "0.3";
-                            })
-                            .on("mouseover", function (d) {
-                                d3.select(this).transition().duration(500).attr('fill-opacity', "1");
-                                tooltip.selectAll("p").remove();
-                                var keys = Object.keys(d.properties);
-                                keys.forEach(function (key) {
+                            } else {
+                                return "none";
+                            }
+                        })
+                        .attr('fill-opacity', function (d) {
+                            if (d.properties.fillopacity)
+                                return d.properties.fillopacity;
+                            return  "0.3";
+                        })
+                        .style("stroke-linecap", "round")
+                        .style("stroke-linejoin", "round")
+                        .on("mouseover", function (d) {
+                            d3.select(this).transition().duration(500).attr('fill-opacity', "1").attr("stroke", "black").attr("stroke-width", "3");
+
+                            tooltip.selectAll("p").remove();
+                            var keys = Object.keys(d.properties);
+                            keys.forEach(function (key) {
+                                var value = d.properties[key];
+                                if (value && value.trim().length > 0)
                                     if (key !== "fill" && key !== "stroke" && key !== "fillopacity" && key !== "strokewidth") {
                                         var msg = key + ": " + d.properties[key] + "\n";
                                         tooltip.append("p").text(msg);
                                     }
-                                });
-                                return tooltip.style("visibility", "visible");
-                            })
-                            .on("mousemove", function () {
-                                return tooltip.style("top", (d3.event.pageY - 30) + "px").style("left", (d3.event.pageX + 10) + "px");
-                            })
-                            .on("mouseout", function (d) {
-                                var op = "0.3"
-                                if (d.properties.fillopacity)
-                                    op = d.properties.fillopacity;
-
-                                d3.select(this).transition().duration(500).attr('fill-opacity', op);
-                                return tooltip.text("").style("visibility", "hidden");
                             });
+                            return tooltip.style("visibility", "visible");
+                        })
+                        .on("mousemove", function () {
+                            return tooltip.style("top", (d3.event.pageY - 30) + "px").style("left", (d3.event.pageX + 10) + "px");
+                        })
+                        .on("mouseout", function (d) {
+                            var op = "0.3"
+                            if (d.properties.fillopacity)
+                                op = d.properties.fillopacity;
+                            var stroke = "steelblue";
+                            if (d.properties.stroke)
+                                stroke = d.properties.stroke;
+                            var strokew = "1";
+                            if (d.properties.strokewidth)
+                                strokew = d.properties.strokewidth;
+
+
+                            d3.select(this).transition().duration(500).attr('fill-opacity', op).attr("stroke", stroke).attr("stroke-width", strokew);
+                            return tooltip.text("").style("visibility", "hidden");
+                        });
 //                });
             }
 
