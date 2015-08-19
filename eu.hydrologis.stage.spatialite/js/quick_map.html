@@ -14,56 +14,118 @@
 
     <body>
         <div id="map"></div>
-        <script type="text/javascript" src="libs/d3.min.js"></script>
-        <!-- <script type="text/javascript"  src="libs/d3.geo.tile.js"></script> -->
+
+        <script type="text/javascript" src="d3.min.js"></script>
+        <!--         
+                <script type="text/javascript" src="libs/d3.min.js"></script>
+                <script type="text/javascript"  src="libs/d3.geo.tile.js"></script> -->
+
 
         <script>
-            var width = Math.max(960, window.innerWidth),
-                    height = Math.max(500, window.innerHeight);
+            var width = Math.max(960, window.innerWidth) - 30,
+                    height = Math.max(500, window.innerHeight) - 30;
             var map = void 0;
             var mapData = void 0;
             var zoom;
             var raster;
-            
-            function loadScript(){
+
+            loadScript();
+
+            function loadScript() {
                 var projection = d3.geo.mercator();
                 var path = d3.geo.path().projection(projection);
-    
+
                 var svg = d3.select("#map")
                         .append("svg")
                         .attr("width", width)
                         .attr("height", height);
-    
-                var dataStr = getJsonData();
-                var data = JSON.parse(dataStr);
-                
-                var b, s, t;
-                projection.scale(1).translate([0, 0]);
-                var b = path.bounds(data);
-                var s = .9 / Math.max((b[1][0] - b[0][0]) / width, (b[1][1] - b[0][1]) / height);
-                var t = [(width - s * (b[1][0] + b[0][0])) / 2, (height - s * (b[1][1] + b[0][1])) / 2];
-                projection.scale(s).translate(t);
-    
-                map = svg.append('g').attr('class', 'boundary');
-                mapData = map.selectAll('path').data(data.features);
-    
-                var paths = mapData.enter()
-                        .append('path')
-                        .attr('d', path);
-    
-                paths.attr('stroke', "steelblue")
-                        .attr('stroke-linejoin', "round")
-                        .attr('fill', function (d) {
-                            if (d.geometry.type.endsWith("Polygon")
-                                    || d.geometry.type.endsWith("Point")) {
+
+                var tooltip = d3.select("body")
+                        .append("div")
+                        .style("border-radius", "15px 50px")
+                        .style("background", "rgba(255, 255, 255, 0.8)")
+                        .style("padding", "20px")
+                        .style("position", "absolute")
+                        .style("z-index", "10")
+                        .style("visibility", "hidden")
+                        .text("");
+
+                d3.json("geoms.json", function (data) {
+
+//                    var dataStr = getJsonData();
+//                    var data = JSON.parse(dataStr);
+
+                    var b, s, t;
+                    projection.scale(1).translate([0, 0]);
+                    var b = path.bounds(data);
+                    var s = .9 / Math.max((b[1][0] - b[0][0]) / width, (b[1][1] - b[0][1]) / height);
+                    var t = [(width - s * (b[1][0] + b[0][0])) / 2, (height - s * (b[1][1] + b[0][1])) / 2];
+                    projection.scale(s).translate(t);
+
+                    map = svg.append('g').attr('class', 'boundary');
+                    mapData = map.selectAll('path').data(data.features);
+
+                    var paths = mapData.enter()
+                            .append('path')
+                            .attr('d', path);
+
+                    paths
+                            .attr('stroke', function (d) {
+                                if (d.properties.stroke)
+                                    return d.properties.stroke;
                                 return "steelblue";
-                            } else {
-                                return "none";
-                            }
-                        })
-                        .attr('fill-opacity', function (d) {
-                            return  "0.2";
-                        });
+                            })
+                            .attr('stroke-opacity', function (d) {
+                                if (d.properties.strokeopacity)
+                                    return d.properties.strokeopacity;
+                                return "1";
+                            })
+                            .attr('stroke-width', function (d) {
+                                if (d.properties.strokewidth)
+                                    return d.properties.strokewidth;
+                                return "1";
+                            })
+                            .attr('stroke-linejoin', "round")
+                            .attr('fill', function (d) {
+                                if (d.geometry.type.endsWith("Polygon")
+                                        || d.geometry.type.endsWith("Point")) {
+                                    if (d.properties.fill)
+                                        return d.properties.fill;
+                                    return "steelblue";
+                                } else {
+                                    return "none";
+                                }
+                            })
+                            .attr('fill-opacity', function (d) {
+                                if (d.properties.fillopacity)
+                                    return d.properties.fillopacity;
+                                return  "0.3";
+                            })
+                            .on("mouseover", function (d) {
+                                d3.select(this).transition().duration(500).attr('fill-opacity', "1");
+                                tooltip.selectAll("p").remove();
+                                var keys = Object.keys(d.properties);
+                                keys.forEach(function (key) {
+                                    if (key !== "fill" && key !== "stroke" && key !== "fill-opacity" && key !== "stroke-width") {
+                                        var msg = key + ": " + d.properties[key] + "\n";
+                                        tooltip.append("p").text(msg);
+                                    }
+                                });
+                                return tooltip.style("visibility", "visible");
+                            })
+                            .on("mousemove", function () {
+                                return tooltip.style("top", (d3.event.pageY - 30) + "px").style("left", (d3.event.pageX + 10) + "px");
+                            })
+                            .on("mouseout", function (d) {
+                                var op = "0.3"
+                                if (d.properties.fillopacity)
+                                    op = d.properties.fillopacity;
+
+                                d3.select(this).transition().duration(500).attr('fill-opacity', op);
+                                return tooltip.text("").style("visibility", "hidden");
+                            });
+                });
+
             }
 
         </script>

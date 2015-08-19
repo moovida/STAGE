@@ -620,35 +620,31 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                                 b.setCRS(targetCRS);
                                 b.add("geometry", Geometry.class);
 
-                                b.add("cat", String.class);
+                                TableColumn[] columns = dataTableViewer.getTable().getColumns();
+                                for( int j = 1; j < columns.length; j++ ) {
+                                    String colName = columns[j].getText();
+                                    b.add(colName, String.class);
+                                }
 
                                 SimpleFeatureType type = b.buildFeatureType();
                                 SimpleFeatureBuilder builder = new SimpleFeatureBuilder(type);
 
                                 DefaultFeatureCollection fc = new DefaultFeatureCollection();
-                                List<Geometry> geomsList = new ArrayList<>();
                                 List<Object[]> selectedData = selection.toList();
-                                int index = 0;
                                 for( Object[] objects : selectedData ) {
-                                    for( int i = 0; i < objects.length; i++ ) {
-                                        Object object1 = objects[i];
-                                        if (object1 instanceof Geometry) {
-                                            Geometry geom = (Geometry) object1;
-                                            Geometry targetGeometry = JTS.transform(geom, transform);
-                                            geomsList.add(targetGeometry);
-
-                                            String catValue = "" + index;
-                                            if (i + 1 < objects.length) {
-                                                if (objects[i + 1] != null)
-                                                    catValue = objects[i + 1].toString();
-                                            }
-                                            Object[] values = new Object[]{targetGeometry, catValue};
-                                            index++;
-                                            builder.addAll(values);
-                                            SimpleFeature feature = builder.buildFeature(null);
-                                            fc.add(feature);
-                                        }
+                                    // first needs to be the geometry
+                                    if (objects[0] instanceof Geometry) {
+                                        Geometry geom = (Geometry) objects[0];
+                                        Geometry targetGeometry = JTS.transform(geom, transform);
+                                        objects[0] = targetGeometry;
+                                    } else {
+                                        MessageDialog.openError(parentShell, "ERROR",
+                                                "The first column of the result of the query needs to be a geometry.");
+                                        return;
                                     }
+                                    builder.addAll(objects);
+                                    SimpleFeature feature = builder.buildFeature(null);
+                                    fc.add(feature);
                                 }
 
                                 FeatureJSON fjson = new FeatureJSON();
@@ -656,7 +652,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                                 fjson.writeFeatureCollection(fc, writer);
                                 String geojson = writer.toString();
 
-                                // System.out.println(geojson);
+//                                System.out.println(geojson);
 
                                 QuickGeometryViewDialog d = new QuickGeometryViewDialog(parentShell, "Table Graph", geojson);
                                 d.open();
@@ -1493,7 +1489,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                                 runningY += tableHeight + indent;
                             }
                             // String string = root.toString(2);
-                            
+
                             String json = root.toString();
                             TableGraphDialog d = new TableGraphDialog(parentShell, "Table Graph", json);
                             d.open();
