@@ -15,10 +15,10 @@
     <body>
         <div id="map"></div>
 
-        <script type="text/javascript" src="d3.min.js"></script>
-        <!--         
+        <!--<script type="text/javascript" src="d3.min.js"></script>-->
+                 
                 <script type="text/javascript" src="libs/d3.min.js"></script>
-                <script type="text/javascript"  src="libs/d3.geo.tile.js"></script> -->
+                <script type="text/javascript"  src="libs/d3.geo.tile.js"></script> 
 
 
         <script>
@@ -29,7 +29,7 @@
             var zoom;
             var raster;
 
-            loadScript();
+//            loadScript();
 
             function loadScript() {
                 var projection = d3.geo.mercator();
@@ -38,7 +38,22 @@
                 var svg = d3.select("#map")
                         .append("svg")
                         .attr("width", width)
-                        .attr("height", height);
+                        .attr("height", height)
+                        .append("g")
+                        .call(d3.behavior.zoom().scaleExtent([0.1, 50])
+                                .on("zoom", zoom))
+                        .append("g");
+
+                svg.append("rect")
+                        .attr("class", "overlay")
+                        .attr("width", width)
+                        .attr("height", height)
+                        .style("fill", "none")
+                        .style("pointer-events", "all");
+
+                function zoom() {
+                    svg.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+                }
 
                 var tooltip = d3.select("body")
                         .append("div")
@@ -50,10 +65,9 @@
                         .style("visibility", "hidden")
                         .text("");
 
-                d3.json("geoms.json", function (data) {
-
-//                    var dataStr = getJsonData();
-//                    var data = JSON.parse(dataStr);
+//                d3.json("geoms.json", function (data) {
+                    var dataStr = getJsonData();
+                    var data = JSON.parse(dataStr);
 
                     var b, s, t;
                     projection.scale(1).translate([0, 0]);
@@ -106,7 +120,7 @@
                                 tooltip.selectAll("p").remove();
                                 var keys = Object.keys(d.properties);
                                 keys.forEach(function (key) {
-                                    if (key !== "fill" && key !== "stroke" && key !== "fill-opacity" && key !== "stroke-width") {
+                                    if (key !== "fill" && key !== "stroke" && key !== "fillopacity" && key !== "strokewidth") {
                                         var msg = key + ": " + d.properties[key] + "\n";
                                         tooltip.append("p").text(msg);
                                     }
@@ -124,9 +138,10 @@
                                 d3.select(this).transition().duration(500).attr('fill-opacity', op);
                                 return tooltip.text("").style("visibility", "hidden");
                             });
-                });
-
+//                });
             }
+
+
 
         </script>
     </body>
