@@ -652,7 +652,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                                 fjson.writeFeatureCollection(fc, writer);
                                 String geojson = writer.toString();
 
-//                                System.out.println(geojson);
+                                // System.out.println(geojson);
 
                                 QuickGeometryViewDialog d = new QuickGeometryViewDialog(parentShell, "Table Graph", geojson);
                                 d.open();
@@ -786,16 +786,28 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                         case POINT_XYM:
                         case POINT_XYZ:
                         case POINT_XYZM:
+                        case MULTIPOINT_XY:
+                        case MULTIPOINT_XYM:
+                        case MULTIPOINT_XYZ:
+                        case MULTIPOINT_XYZM:
                             return ImageCache.getInstance().getImage(display, ImageCache.GEOM_POINT);
                         case LINESTRING_XY:
                         case LINESTRING_XYM:
                         case LINESTRING_XYZ:
                         case LINESTRING_XYZM:
+                        case MULTILINESTRING_XY:
+                        case MULTILINESTRING_XYM:
+                        case MULTILINESTRING_XYZ:
+                        case MULTILINESTRING_XYZM:
                             return ImageCache.getInstance().getImage(display, ImageCache.GEOM_LINE);
                         case POLYGON_XY:
                         case POLYGON_XYM:
                         case POLYGON_XYZ:
                         case POLYGON_XYZM:
+                        case MULTIPOLYGON_XY:
+                        case MULTIPOLYGON_XYM:
+                        case MULTIPOLYGON_XYZ:
+                        case MULTIPOLYGON_XYZM:
                             return ImageCache.getInstance().getImage(display, ImageCache.GEOM_POLYGON);
                         default:
                             return ImageCache.getInstance().getImage(display, ImageCache.TABLE_COLUMN);
@@ -936,6 +948,11 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                                     manager.add(action);
                                 }
                             }
+                        } else if (selectedItem instanceof TypeLevel) {
+                            Action[] typeLevelActions = makeTypeLevelAction((TypeLevel) selectedItem);
+                            for( Action action : typeLevelActions ) {
+                                manager.add(action);
+                            }
                         }
                     } else {
                         if (selectedItem instanceof TableLevel) {
@@ -964,8 +981,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
      * @throws InterruptedException
      * @throws InvocationTargetException
      */
-    public void relayout( final DbLevel dbLevel, final boolean expandAll )
-            throws InvocationTargetException, InterruptedException {
+    public void relayout( final DbLevel dbLevel, final boolean expandAll ) throws InvocationTargetException, InterruptedException {
         Display.getDefault().syncExec(new Runnable(){
             public void run() {
                 databaseTreeViewer.setInput(dbLevel);
@@ -1280,29 +1296,20 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
             }
         }
 
-        Action[] actions = new Action[hasFK ? 3 : 2];
-        actions[0] = new Action("Create select statement", null){
+        int size = 2;
+        if (hasFK)
+            size++;
+        if (selectedTable.isGeo)
+            size++;
+
+        Action[] actions = new Action[size];
+        int index = 0;
+        actions[index++] = new Action("Create select statement", null){
             @Override
             public void run() {
 
                 try {
-                    String tableName = selectedTable.tableName;
-                    String letter = tableName.substring(0, 1);
-                    List<String[]> tableColumns = currentConnectedDatabase.getTableColumns(tableName);
-                    SpatialiteGeometryColumns geometryColumns = currentConnectedDatabase.getGeometryColumnsForTable(tableName);
-                    String query = "SELECT ";
-                    for( int i = 0; i < tableColumns.size(); i++ ) {
-                        if (i > 0)
-                            query += ",";
-                        String colName = tableColumns.get(i)[0];
-                        if (geometryColumns != null && colName.equals(geometryColumns.f_geometry_column)) {
-                            colName = "ST_AsBinary(" + letter + "." + colName + ") as " + colName;
-                            query += colName;
-                        } else {
-                            query += letter + "." + colName;
-                        }
-                    }
-                    query += " FROM " + tableName + " " + letter;
+                    String query = getSelectQuery(selectedTable, false);
                     addTextToQueryEditor(query);
 
                 } catch (SQLException e) {
@@ -1311,7 +1318,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
 
             }
         };
-        actions[1] = new Action("Count table records", null){
+        actions[index++] = new Action("Count table records", null){
             @Override
             public void run() {
                 try {
@@ -1325,7 +1332,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
             }
         };
         if (hasFK) {
-            actions[2] = new Action("Show Foreign Keys Diagram", null){
+            actions[index++] = new Action("Show Foreign Keys Diagram", null){
                 @Override
                 public void run() {
 
@@ -1417,123 +1424,255 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                 }
             };
         }
+        if (selectedTable.isGeo) {
+            actions[index++] = new Action("Quick View Geometries", null){
+                @Override
+                public void run() {
+                    try {
+                        String selectQuery = getSelectQuery(selectedTable, true);
+                        QueryResult queryResult = currentConnectedDatabase.getTableRecordsMapFromRawSql(selectQuery, -1);
+
+                        List<ColumnLevel> colsList = selectedTable.columnsList;
+                        int epsg = 4326;
+                        for( ColumnLevel columnLevel : colsList ) {
+                            if (columnLevel.geomColumn != null) {
+                                epsg = columnLevel.geomColumn.srid;
+                                break;
+                            }
+                        }
+
+                        CoordinateReferenceSystem sourceCRS = CRS.decode("EPSG:" + epsg);
+
+                        Hints hints = new Hints(Hints.FORCE_LONGITUDE_FIRST_AXIS_ORDER, Boolean.TRUE);
+                        CRSAuthorityFactory factory = ReferencingFactoryFinder.getCRSAuthorityFactory("EPSG", hints);
+                        CoordinateReferenceSystem targetCRS = factory.createCoordinateReferenceSystem("EPSG:4326");
+
+                        MathTransform transform = CRS.findMathTransform(sourceCRS, targetCRS);
+
+                        SimpleFeatureTypeBuilder b = new SimpleFeatureTypeBuilder();
+                        b.setName("geojson");
+                        b.setCRS(targetCRS);
+                        b.add("geometry", Geometry.class);
+
+                        for( int j = 1; j < queryResult.names.size(); j++ ) {
+                            String colName = queryResult.names.get(j);
+                            b.add(colName, String.class);
+                        }
+
+                        SimpleFeatureType type = b.buildFeatureType();
+                        SimpleFeatureBuilder builder = new SimpleFeatureBuilder(type);
+
+                        DefaultFeatureCollection fc = new DefaultFeatureCollection();
+                        List<Object[]> tableData = queryResult.data;
+                        for( Object[] objects : tableData ) {
+                            // first needs to be the geometry
+                            if (objects[0] instanceof Geometry) {
+                                Geometry geom = (Geometry) objects[0];
+                                Geometry targetGeometry = JTS.transform(geom, transform);
+                                objects[0] = targetGeometry;
+                            } else {
+                                MessageDialog.openError(parentShell, "ERROR",
+                                        "The first column of the result of the query needs to be a geometry.");
+                                return;
+                            }
+                            builder.addAll(objects);
+                            SimpleFeature feature = builder.buildFeature(null);
+                            fc.add(feature);
+                        }
+
+                        FeatureJSON fjson = new FeatureJSON();
+                        StringWriter writer = new StringWriter();
+                        fjson.writeFeatureCollection(fc, writer);
+                        String geojson = writer.toString();
+
+                        // System.out.println(geojson);
+
+                        QuickGeometryViewDialog d = new QuickGeometryViewDialog(parentShell, "Data Viewer", geojson);
+                        d.open();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                }
+            };
+        }
         return actions;
+    }
+
+    private String getSelectQuery( final TableLevel selectedTable, boolean geomFirst ) throws SQLException {
+        String tableName = selectedTable.tableName;
+        String letter = tableName.substring(0, 1);
+        List<String[]> tableColumns = currentConnectedDatabase.getTableColumns(tableName);
+        SpatialiteGeometryColumns geometryColumns = currentConnectedDatabase.getGeometryColumnsForTable(tableName);
+        String query = "SELECT ";
+        if (geomFirst) {
+            // first geom
+            List<String> nonGeomCols = new ArrayList<String>();
+            for( int i = 0; i < tableColumns.size(); i++ ) {
+                String colName = tableColumns.get(i)[0];
+                if (geometryColumns != null && colName.equals(geometryColumns.f_geometry_column)) {
+                    colName = "ST_AsBinary(" + letter + "." + colName + ") as " + colName;
+                    query += colName;
+                } else {
+                    nonGeomCols.add(colName);
+                }
+            }
+            // then others
+            for( int i = 0; i < nonGeomCols.size(); i++ ) {
+                String colName = tableColumns.get(i)[0];
+                query += "," + letter + "." + colName;
+            }
+        } else {
+            for( int i = 0; i < tableColumns.size(); i++ ) {
+                if (i > 0)
+                    query += ",";
+                String colName = tableColumns.get(i)[0];
+                if (geometryColumns != null && colName.equals(geometryColumns.f_geometry_column)) {
+                    colName = "ST_AsBinary(" + letter + "." + colName + ") as " + colName;
+                    query += colName;
+                } else {
+                    query += letter + "." + colName;
+                }
+            }
+        }
+        query += " FROM " + tableName + " " + letter;
+        return query;
     }
 
     @SuppressWarnings("serial")
     private Action[] makeMultiTablesAction( final List<TableLevel> selectedTables ) {
         Action[] actions = {//
-                new Action("Create Tables Diagram", null){
-                    @Override
-                    public void run() {
-                        try {
-                            int tablesNum = selectedTables.size();
+        new Action("Create Tables Diagram", null){
+            @Override
+            public void run() {
+                try {
+                    int tablesNum = selectedTables.size();
 
-                            int gridCols = 4;
-                            int gridRows = tablesNum / gridCols + 1;
+                    int gridCols = 4;
+                    int gridRows = tablesNum / gridCols + 1;
 
-                            int indent = 10;
-                            int tableWidth = 350;
-                            int tableHeight = 300;
+                    int indent = 10;
+                    int tableWidth = 350;
+                    int tableHeight = 300;
 
-                            JSONArray root = new JSONArray();
-                            int tabesIndex = 0;
-                            int runningX = 0;
-                            int runningY = 10;
-                            for( int gridRow = 0; gridRow < gridRows; gridRow++ ) {
-                                runningX = indent;
-                                for( int gridCol = 0; gridCol < gridCols; gridCol++ ) {
-                                    if (tabesIndex == tablesNum) {
-                                        break;
-                                    }
-
-                                    JSONObject tableJson = new JSONObject();
-                                    root.put(tableJson);
-                                    TableLevel curTable = selectedTables.get(tabesIndex);
-                                    int id = tabesIndex;
-                                    tabesIndex++;
-
-                                    tableJson.put("id", id);
-                                    tableJson.put("x", runningX);
-                                    tableJson.put("y", runningY);
-
-                                    String fromTable = curTable.tableName;
-                                    tableJson.put("name", fromTable);
-                                    JSONArray fieldsArray = new JSONArray();
-                                    tableJson.put("fields", fieldsArray);
-                                    List<ColumnLevel> cols = curTable.columnsList;
-
-                                    List<ColumnLevel> sortedCols = new ArrayList<ColumnLevel>();
-                                    sortedCols.addAll(cols);
-                                    // Collections.sort(sortedCols, new Comparator<ColumnLevel>(){
-                                    // public int compare( ColumnLevel o1, ColumnLevel o2 ) {
-                                    // return o1.columnName.compareToIgnoreCase(o2.columnName);
-                                    // }
-                                    // });
-
-                                    for( ColumnLevel col : sortedCols ) {
-                                        JSONObject colObject = new JSONObject();
-                                        fieldsArray.put(colObject);
-                                        colObject.put("fname", col.columnName + " (" + col.columnType + ")");
-                                        if (col.references != null) {
-                                            String[] tableColsFromFK = col.tableColsFromFK();
-                                            String toTable = tableColsFromFK[0];
-                                            String toColumn = tableColsFromFK[1];
-                                            colObject.put("fk_name", toTable);
-                                            colObject.put("fk_field", toColumn);
-                                        }
-                                    }
-
-                                    runningX += indent + tableWidth;
-                                }
-                                runningY += tableHeight + indent;
+                    JSONArray root = new JSONArray();
+                    int tabesIndex = 0;
+                    int runningX = 0;
+                    int runningY = 10;
+                    for( int gridRow = 0; gridRow < gridRows; gridRow++ ) {
+                        runningX = indent;
+                        for( int gridCol = 0; gridCol < gridCols; gridCol++ ) {
+                            if (tabesIndex == tablesNum) {
+                                break;
                             }
-                            // String string = root.toString(2);
 
-                            String json = root.toString();
-                            TableGraphDialog d = new TableGraphDialog(parentShell, "Table Graph", json);
-                            d.open();
-                        } catch (Exception e) {
-                            e.printStackTrace();
+                            JSONObject tableJson = new JSONObject();
+                            root.put(tableJson);
+                            TableLevel curTable = selectedTables.get(tabesIndex);
+                            int id = tabesIndex;
+                            tabesIndex++;
+
+                            tableJson.put("id", id);
+                            tableJson.put("x", runningX);
+                            tableJson.put("y", runningY);
+
+                            String fromTable = curTable.tableName;
+                            tableJson.put("name", fromTable);
+                            JSONArray fieldsArray = new JSONArray();
+                            tableJson.put("fields", fieldsArray);
+                            List<ColumnLevel> cols = curTable.columnsList;
+
+                            List<ColumnLevel> sortedCols = new ArrayList<ColumnLevel>();
+                            sortedCols.addAll(cols);
+                            // Collections.sort(sortedCols, new Comparator<ColumnLevel>(){
+                            // public int compare( ColumnLevel o1, ColumnLevel o2 ) {
+                            // return o1.columnName.compareToIgnoreCase(o2.columnName);
+                            // }
+                            // });
+
+                            for( ColumnLevel col : sortedCols ) {
+                                JSONObject colObject = new JSONObject();
+                                fieldsArray.put(colObject);
+                                colObject.put("fname", col.columnName + " (" + col.columnType + ")");
+                                if (col.references != null) {
+                                    String[] tableColsFromFK = col.tableColsFromFK();
+                                    String toTable = tableColsFromFK[0];
+                                    String toColumn = tableColsFromFK[1];
+                                    colObject.put("fk_name", toTable);
+                                    colObject.put("fk_field", toColumn);
+                                }
+                            }
+
+                            runningX += indent + tableWidth;
                         }
-
+                        runningY += tableHeight + indent;
                     }
-                },//
+                    // String string = root.toString(2);
+
+                    String json = root.toString();
+                    TableGraphDialog d = new TableGraphDialog(parentShell, "Table Graph", json);
+                    d.open();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+            }
+        },//
         };
         return actions;
     }
     @SuppressWarnings("serial")
     private Action[] makeFKColumnAction( final ColumnLevel selectedColumn ) {
         Action[] actions = {//
-                new Action("Create combined select statement", null){
-                    @Override
-                    public void run() {
+        new Action("Create combined select statement", null){
+            @Override
+            public void run() {
 
-                        String[] tableColsFromFK = selectedColumn.tableColsFromFK();
-                        String refTable = tableColsFromFK[0];
-                        String refColumn = tableColsFromFK[1];
+                String[] tableColsFromFK = selectedColumn.tableColsFromFK();
+                String refTable = tableColsFromFK[0];
+                String refColumn = tableColsFromFK[1];
 
-                        String tableName = selectedColumn.parent.tableName;
-                        String query = "SELECT t1.*, t2.* FROM " + tableName + " t1, " + refTable + " t2" + "\nWHERE t1."
-                                + selectedColumn.columnName + "=t2." + refColumn;
-                        addTextToQueryEditor(query);
+                String tableName = selectedColumn.parent.tableName;
+                String query = "SELECT t1.*, t2.* FROM " + tableName + " t1, " + refTable + " t2" + "\nWHERE t1."
+                        + selectedColumn.columnName + "=t2." + refColumn;
+                addTextToQueryEditor(query);
 
-                    }
-                }, //
-                new Action("Quick view other table", null){
-                    @Override
-                    public void run() {
-                        try {
-                            String[] tableColsFromFK = selectedColumn.tableColsFromFK();
-                            String refTable = tableColsFromFK[0];
-                            QueryResult queryResult = currentConnectedDatabase.getTableRecordsMapIn(refTable, null, true, 20);
-                            createTableViewer(resultsetViewerGroup, queryResult);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
+            }
+        }, //
+        new Action("Quick view other table", null){
+            @Override
+            public void run() {
+                try {
+                    String[] tableColsFromFK = selectedColumn.tableColsFromFK();
+                    String refTable = tableColsFromFK[0];
+                    QueryResult queryResult = currentConnectedDatabase.getTableRecordsMapIn(refTable, null, true, 20);
+                    createTableViewer(resultsetViewerGroup, queryResult);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
 
-                    }
-                }, //
+            }
+        }, //
+        };
+        return actions;
+    }
+
+    @SuppressWarnings("serial")
+    private Action[] makeTypeLevelAction( final TypeLevel typeLevel ) {
+        Action[] actions = {//
+        new Action("Refresh View", null){
+            @Override
+            public void run() {
+
+                try {
+                    DbLevel dbLevel = gatherDatabaseLevels(currentConnectedDatabase);
+                    relayout(dbLevel, true);
+                } catch (Exception e) {
+                    StageLogger.logError(this, e);
+                }
+
+            }
+        }, //
         };
         return actions;
     }
