@@ -3,6 +3,12 @@
     <head>
         <meta charset="utf-8">
         <title>STAGE - Quick Geometry Viewer</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script type="text/javascript" src="d3.min.js"></script>
+        <script type="text/javascript" src="hylib.js"></script>
+        <script type="text/javascript" src="leaflet.js"></script>
+        <link rel="stylesheet" href="leaflet.css" />
+        <script type='text/javascript' src='jquery.min.js'></script>
         <style>
             svg {
                 border-style: solid;
@@ -14,213 +20,76 @@
 
     <body>
         <div id="map"></div>
-
-        <script type="text/javascript" src="d3.min.js"></script>
-        <script type="text/javascript"  src="d3.geo.tile.js"></script> 
-
-        <!--        <script type="text/javascript" src="libs/d3.min.js"></script>
-                <script type="text/javascript"  src="libs/d3.geo.tile.js"></script> -->
-
-
         <script>
             var width = Math.max(960, window.innerWidth) - 30,
                     height = Math.max(500, window.innerHeight) - 30;
             var map = void 0;
             var mapData = void 0;
-            var zoom;
-            var raster;
-            var projection;
-
+            var leafletMap;
             loadScript();
-
             function loadScript() {
-                projection = d3.geo.mercator();
-//                        .scale((1 << 12) / 2 / Math.PI)
-//                        .translate([width / 2, height / 2]);
 
-                var center = projection([12, 42]);
-
-                var path = d3.geo.path().projection(projection);
-
-                var tile = d3.geo.tile()
-                        .size([width, height]);
-
-                var zoomBehaviour = d3.behavior.zoom()
-                        .scaleExtent([0.1, 50])
-//                        .scaleExtent([1, 8])
-//                        .scale(projection.scale() * 2 * Math.PI)
-//                        .translate([width - center[0], height - center[1]])
-                        .on("zoom", zoom);
-
-//                projection
-//                        .scale(1 / 2 / Math.PI)
-//                        .translate([0, 0]);
-
-
-                var svg = d3.select("#map")
-                        .append("svg")
-                        .attr("width", width)
-                        .attr("height", height)
-                        .append("g")
-                        .call(zoomBehaviour)
-                        .append("g");
-
-                svg.append("rect")
-                        .attr("class", "overlay")
-                        .attr("width", width)
-                        .attr("height", height)
-                        .style("fill", "none")
-                        .style("pointer-events", "all");
-
-
-
-                var tooltip = d3.select("body")
-                        .append("div")
-                        .style("border-radius", "15px 50px")
-                        .style("background", "rgba(255, 255, 255, 0.8)")
-                        .style("padding", "20px")
-                        .style("position", "absolute")
-                        .style("z-index", "10")
-                        .style("visibility", "hidden")
-                        .text("");
-
+                var body = d3.select("body");
+                body.select("#map").style("width", width + "px").style("height", height + "px");
+                leafletMap = L.map('map');
+                var mapnik = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+                    maxZoom: 25,
+                    maxNativeZoom: 18
+                });
+                var esri_world = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                    attribution: 'Tiles &copy; Esri',
+                    maxZoom: 25,
+                    maxNativeZoom: 18
+                });
+                var baseMaps = {
+                    "mapnik": mapnik,
+                    "esri_world": esri_world,
+                };
+                L.control.layers(baseMaps).addTo(leafletMap);
+                leafletMap.setView([0.0, 0.0], 2);
+                leafletMap._initPathRoot();
                 d3.json("geoms.json", function (data) {
 //                var dataStr = getJsonData();
 //                var data = JSON.parse(dataStr);
 
-                    var b, s, t;
-                    projection.scale(1).translate([0, 0]);
-                    var b = path.bounds(data);
-                    var s = .9 / Math.max((b[1][0] - b[0][0]) / width, (b[1][1] - b[0][1]) / height);
-                    var t = [(width - s * (b[1][0] + b[0][0])) / 2, (height - s * (b[1][1] + b[0][1])) / 2];
-                    projection.scale(s).translate(t);
-
-//                    zoomBehaviour.scale(projection.scale() * 2 * Math.PI).translate(projection.translate());
-
-                    raster = svg.append("g");
-                    map = svg.append('g');//.attr('class', 'boundary');
-                    mapData = map.selectAll('path').data(data.features);
-
-                    var paths = mapData.enter()
-                            .append('path')
-                            .attr('d', path);
-
-                    paths
-                            .attr('stroke', function (d) {
-                                if (d.properties.stroke)
-                                    return d.properties.stroke;
-                                return "steelblue";
-                            })
-                            .attr('stroke-opacity', function (d) {
-                                if (d.properties.strokeopacity)
-                                    return d.properties.strokeopacity;
-                                return "1";
-                            })
-                            .attr('stroke-width', function (d) {
-                                if (d.properties.strokewidth)
-                                    return d.properties.strokewidth;
-                                return "1";
-                            })
-                            .attr('stroke-linejoin', "round")
-                            .attr('fill', function (d) {
-                                if (d.geometry.type.endsWith("Polygon")
-                                        || d.geometry.type.endsWith("Point")) {
-                                    if (d.properties.fill)
-                                        return d.properties.fill;
-                                    return "steelblue";
-                                } else {
-                                    return "none";
-                                }
-                            })
-                            .attr('fill-opacity', function (d) {
-                                if (d.properties.fillopacity)
-                                    return d.properties.fillopacity;
-                                return  "0.3";
-                            })
-                            .style("stroke-linecap", "round")
-                            .style("stroke-linejoin", "round")
-                            .on("mouseover", function (d) {
-                                d3.select(this).transition().duration(500).attr('fill-opacity', "1").attr("stroke", "black").attr("stroke-width", "3");
-
-                                tooltip.selectAll("p").remove();
-                                var keys = Object.keys(d.properties);
-                                keys.forEach(function (key) {
-                                    var value = d.properties[key];
-                                    if (value && value.trim().length > 0)
-                                        if (key !== "fill" && key !== "stroke" && key !== "fillopacity" && key !== "strokewidth") {
-                                            var msg = key + ": " + d.properties[key] + "\n";
-                                            tooltip.append("p").text(msg);
-                                        }
-                                });
-                                return tooltip.style("visibility", "visible");
-                            })
-                            .on("mousemove", function () {
-                                return tooltip.style("top", (d3.event.pageY - 30) + "px").style("left", (d3.event.pageX + 10) + "px");
-                            })
-                            .on("mouseout", function (d) {
-                                var op = "0.3"
-                                if (d.properties.fillopacity)
-                                    op = d.properties.fillopacity;
-                                var stroke = "steelblue";
-                                if (d.properties.stroke)
-                                    stroke = d.properties.stroke;
-                                var strokew = "1";
-                                if (d.properties.strokewidth)
-                                    strokew = d.properties.strokewidth;
-
-
-                                d3.select(this).transition().duration(500).attr('fill-opacity', op).attr("stroke", stroke).attr("stroke-width", strokew);
-                                return tooltip.text("").style("visibility", "hidden");
+                    var gjson = L.geoJson(data);
+                    L.geoJson(data, {
+                        style: function (feature) {
+                            var p = feature.properties;
+                            return {color: p.stroke ? p.stroke : "steelblue",
+                                fillColor: p.fill ? p.fill : "steelblue",
+                                fillOpacity: p.fillopacity ? p.fillopacity : "0.3",
+                                opacity: p.strokeopacity ? p.strokeopacity : "1",
+                                weight: p.strokewidth ? p.strokewidth : "1"
+                            };
+                        },
+                        onEachFeature: function (feature, layer) {
+                            var keys = Object.keys(feature.properties);
+                            var desc = "<table><tr><td><b>Feature type: </b>" + feature.geometry.type + "</td></tr>";
+                            keys.forEach(function (key) {
+                                var value = feature.properties[key];
+                                if (value && value.trim().length > 0)
+                                    if (key !== "fill" && key !== "stroke" && key !== "fillopacity" && key !== "strokewidth") {
+                                        var msg = "<tr><td><b>" + key + ":</b> " + value + "</td></tr>";
+                                        desc += msg;
+                                    }
                             });
+                            desc += "</table>";
+                            layer.bindPopup(desc);
+                        }
+                    }).addTo(leafletMap);
+                    mapnik.addTo(leafletMap);
 
-                    //zoomTiles(zoomBehaviour.translate(), zoomBehaviour.scale());
+                    fitBounds = gjson.getBounds();
+                    leafletMap.fitBounds(fitBounds);
                 });
-
-                function zoomTiles(trans, scal) {
-                    console.log(zoomBehaviour.translate());
-                    console.log( zoomBehaviour.scale());
-                    var tiles = tile
-                            .scale(scal)
-                            .translate(trans)
-                            ();
-
-                    var image = raster
-//                            .attr("transform", "scale(" + tiles.scale + ")translate(" + tiles.translate + ")")
-                            .selectAll("image")
-                            .data(tiles, function (d) {
-                                return d;
-                            });
-
-                    image.exit()
-                            .remove();
-
-                    image.enter().append("image")
-                            .attr("xlink:href", function (d) {
-                                return "http://a.tile.openstreetmap.org/" + d[2] + "/" + d[0] + "/" + d[1] + ".png";
-                            })
-                            .attr("width", 1)
-                            .attr("height", 1)
-                            .attr("x", function (d) {
-                                return d[0];
-                            })
-                            .attr("y", function (d) {
-                                return d[1];
-                            });
-                }
-
-
-                function zoom() {
-//                    console.log(d3.event.scale);
-//                    console.log(d3.event.translate);
-                    svg.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
-                    
-//                    zoomBehaviour.scale(projection.scale() * 2 * Math.PI).translate(projection.translate());
-//                     zoomTiles(zoomBehaviour.translate(), zoomBehaviour.scale());
-//                    zoomTiles(d3.event.translate, d3.event.scale);
-                }
             }
 
-
+            function project(x, y) {
+                var point = leafletMap.latLngToLayerPoint(new L.LatLng(y, x));
+                return point;
+            }
 
 
 

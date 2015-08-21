@@ -18,6 +18,7 @@ STAGE VM ARGS
 
 > -Dstage.workspace="your path" **Path to a custom workspace**
 > -Dstage.javaexec="java exec path"  **Path to the java executable to use**
+> -Dstage.islocal=true **If set to true, some features for local use are enabled**
 
 Override workspace structure
 --------------------------------
