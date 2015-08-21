@@ -31,8 +31,6 @@ public class QuickGeometryViewDialog extends Dialog {
         this.title = title;
         this.geoJson = geoJson;
 
-        JsResources.ensureJavaScriptResources();
-        quickViewUrl = JsResources.ensureQuickmapHtmlResource();
     }
 
     @Override
@@ -55,6 +53,9 @@ public class QuickGeometryViewDialog extends Dialog {
             quickViewBrowser = new Browser(composite, SWT.NONE);
             GridData tablesGraphBrowserGD = new GridData(SWT.FILL, SWT.FILL, true, true);
             quickViewBrowser.setLayoutData(tablesGraphBrowserGD);
+            
+            JsResources.ensureJavaScriptResources();
+            quickViewUrl = JsResources.ensureQuickmapHtmlResource();
             quickViewBrowser.setUrl(quickViewUrl);
             quickViewBrowser.addProgressListener(new ProgressListener(){
                 public void completed( ProgressEvent event ) {

@@ -4,13 +4,12 @@
         <meta charset="utf-8">
         <title>STAGE - Quick Geometry Viewer</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <script type="text/javascript" src="d3.min.js"></script>
-        <script type="text/javascript" src="hylib.js"></script>
-        <script type="text/javascript" src="leaflet.js"></script>
-        <link rel="stylesheet" href="leaflet.css" />
-        <script type='text/javascript' src='jquery.min.js'></script>
+        <script type="text/javascript" src="libs/d3.min.js"></script>
+        <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.js"></script>
+        <link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.css" />
+        <script type='text/javascript' src='libs/jquery.min.js'></script>
         <style>
-            svg {
+            .map {
                 border-style: solid;
                 border-width: 1px;
                 border-color: #ccc;
@@ -26,7 +25,7 @@
             var map = void 0;
             var mapData = void 0;
             var leafletMap;
-            loadScript();
+//            loadScript();
             function loadScript() {
 
                 var body = d3.select("body");
@@ -49,41 +48,54 @@
                 L.control.layers(baseMaps).addTo(leafletMap);
                 leafletMap.setView([0.0, 0.0], 2);
                 leafletMap._initPathRoot();
-                d3.json("geoms.json", function (data) {
-//                var dataStr = getJsonData();
-//                var data = JSON.parse(dataStr);
+//                d3.json("geoms.json", function (data) {
+                var dataStr = getJsonData();
+                var data = JSON.parse(dataStr);
 
-                    var gjson = L.geoJson(data);
-                    L.geoJson(data, {
-                        style: function (feature) {
-                            var p = feature.properties;
-                            return {color: p.stroke ? p.stroke : "steelblue",
-                                fillColor: p.fill ? p.fill : "steelblue",
-                                fillOpacity: p.fillopacity ? p.fillopacity : "0.3",
-                                opacity: p.strokeopacity ? p.strokeopacity : "1",
-                                weight: p.strokewidth ? p.strokewidth : "1"
-                            };
-                        },
-                        onEachFeature: function (feature, layer) {
-                            var keys = Object.keys(feature.properties);
-                            var desc = "<table><tr><td><b>Feature type: </b>" + feature.geometry.type + "</td></tr>";
-                            keys.forEach(function (key) {
-                                var value = feature.properties[key];
-                                if (value && value.trim().length > 0)
-                                    if (key !== "fill" && key !== "stroke" && key !== "fillopacity" && key !== "strokewidth") {
-                                        var msg = "<tr><td><b>" + key + ":</b> " + value + "</td></tr>";
-                                        desc += msg;
-                                    }
-                            });
-                            desc += "</table>";
-                            layer.bindPopup(desc);
-                        }
-                    }).addTo(leafletMap);
-                    mapnik.addTo(leafletMap);
 
-                    fitBounds = gjson.getBounds();
-                    leafletMap.fitBounds(fitBounds);
-                });
+                var gjson = L.geoJson(data);
+                L.geoJson(data, {
+                    pointToLayer: function (feature, latlng) {
+                        var p = feature.properties;
+                        var mOpt = {
+                            radius: 8,
+                            color: p.stroke ? p.stroke : "steelblue",
+                            fillColor: p.fill ? p.fill : "steelblue",
+                            fillOpacity: p.fillopacity ? p.fillopacity : "0.3",
+                            opacity: p.strokeopacity ? p.strokeopacity : "1",
+                            weight: p.strokewidth ? p.strokewidth : "1"
+                        };
+                        return L.circleMarker(latlng, mOpt);
+                    },
+                    style: function (feature) {
+                        var p = feature.properties;
+                        return {color: p.stroke ? p.stroke : "steelblue",
+                            fillColor: p.fill ? p.fill : "steelblue",
+                            fillOpacity: p.fillopacity ? p.fillopacity : "0.3",
+                            opacity: p.strokeopacity ? p.strokeopacity : "1",
+                            weight: p.strokewidth ? p.strokewidth : "1"
+                        };
+                    },
+                    onEachFeature: function (feature, layer) {
+                        var keys = Object.keys(feature.properties);
+                        var desc = "<table><tr><td><b>Feature type: </b>" + feature.geometry.type + "</td></tr>";
+                        keys.forEach(function (key) {
+                            var value = feature.properties[key];
+                            if (value && value.trim().length > 0)
+                                if (key !== "fill" && key !== "stroke" && key !== "fillopacity" && key !== "strokewidth") {
+                                    var msg = "<tr><td><b>" + key + ":</b> " + value + "</td></tr>";
+                                    desc += msg;
+                                }
+                        });
+                        desc += "</table>";
+                        layer.bindPopup(desc);
+                    }
+                }).addTo(leafletMap);
+                mapnik.addTo(leafletMap);
+
+                fitBounds = gjson.getBounds();
+                leafletMap.fitBounds(fitBounds);
+//                });
             }
 
             function project(x, y) {

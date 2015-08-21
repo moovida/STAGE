@@ -13,7 +13,7 @@ import org.eclipse.rap.rwt.service.ResourceManager;
 public class JsResources {
 
     private static final String[][] javascriptFiles = new String[][]{//
-            {"libs/jquery.min.js", "jquery.min.js"}, //
+    {"libs/jquery.min.js", "jquery.min.js"}, //
             {"libs/d3.min.js", "d3.min.js"}, //
     };
 

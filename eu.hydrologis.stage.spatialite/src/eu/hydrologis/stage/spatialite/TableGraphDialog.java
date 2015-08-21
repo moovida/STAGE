@@ -51,8 +51,6 @@ public class TableGraphDialog extends Dialog {
         this.title = title;
         this.json = json;
 
-        JsResources.ensureJavaScriptResources();
-        graphUrl = JsResources.ensureGraphHtmlResource();
     }
 
     @Override
@@ -138,25 +136,13 @@ public class TableGraphDialog extends Dialog {
                 }
             });
 
-            // final Button zoomToggleButton = new Button(buttonsComposite, SWT.CHECK | SWT.BORDER);
-            // GridData zoomToggleButtonGD = new GridData(SWT.BEGINNING, SWT.FILL, false, false);
-            // zoomToggleButtonGD.horizontalIndent = 5;
-            // zoomToggleButton.setLayoutData(zoomToggleButtonGD);
-            // zoomToggleButton.setText("Toggle Pan");
-            // zoomToggleButton.addSelectionListener(new SelectionAdapter(){
-            // @Override
-            // public void widgetSelected( SelectionEvent e ) {
-            // if (zoomToggleButton.getSelection()) {
-            // tablesGraphBrowser.evaluate("enableZoom();");
-            // } else {
-            // tablesGraphBrowser.evaluate("disableZoom();");
-            // }
-            // }
-            // });
-
             tablesGraphBrowser = new Browser(composite, SWT.NONE);
             GridData tablesGraphBrowserGD = new GridData(SWT.FILL, SWT.FILL, true, true);
             tablesGraphBrowser.setLayoutData(tablesGraphBrowserGD);
+            
+            JsResources.ensureJavaScriptResources();
+            graphUrl = JsResources.ensureGraphHtmlResource();
+            
             tablesGraphBrowser.setUrl(graphUrl);
             tablesGraphBrowser.addProgressListener(new ProgressListener(){
                 public void completed( ProgressEvent event ) {
