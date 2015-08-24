@@ -225,7 +225,6 @@ any resulting litigation.
 
    <requires>
       <import plugin="org.eclipse.rap.rwt" version="2.3.0"/>
-      <import plugin="org.eclipse.rap.addons.fileupload" version="0.6.0" match="compatible"/>
       <import plugin="org.eclipse.equinox.registry" version="3.4.0" match="compatible"/>
       <import plugin="org.eclipse.equinox.common" version="3.2.0" match="compatible"/>
       <import plugin="org.eclipse.rap.rwt" version="2.3.0" match="compatible"/>
@@ -579,6 +578,13 @@ any resulting litigation.
          unpack="false"/>
 
    <plugin
+         id="eu.hydrologis.stage.spatialite"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
          id="org.eclipse.rap.filedialog"
          download-size="0"
          install-size="0"
@@ -593,7 +599,14 @@ any resulting litigation.
          unpack="false"/>
 
    <plugin
-         id="eu.hydrologis.stage.spatialite"
+         id="org.apache.commons.fileupload"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.apache.commons.io"
          download-size="0"
          install-size="0"
          version="0.0.0"

@@ -32,5 +32,6 @@ rem "STAGEJAVAEXEC = %STAGEJAVAEXEC%"
 :: -Dstage.geopaparazzifolder="geopaparazzi projects folder"  **Path to a custom geopaparazzi folder**
 :: -Dstage.datafolder="data folder" **Path to a custom data folder**
 :: -Dstage.scriptsfolder="scripts folder" **Path to a custom scripts folder**
+:: -Dstage.islocal=true **if true enables additional features**
 
 START /B %EXEC% -vm "%STAGEJAVAEXEC%" %ARGS% -vmargs %VMARGS% -Dorg.osgi.service.http.port=%PORT% -Dstage.javaexec=%STAGEJAVAEXEC% -Dstage.workspace=%WORKSPACE% %LOGARGS%
