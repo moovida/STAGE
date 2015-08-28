@@ -34,6 +34,7 @@ public class ImageCache {
     public static final String TEMPLATE = "template.gif";
     public static final String RUN = "run_module.gif";
     public static final String RUN_TO_FILE = "run_script.gif";
+    public static final String RUN_TO_SHAPEFILE = "run_to_shp.gif";
     public static final String STOP = "stop_module.gif";
     public static final String GRID = "grid_obj.gif";
 	
