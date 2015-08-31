@@ -30,6 +30,7 @@ import org.eclipse.rap.rwt.service.ServiceHandler;
 
 import eu.hydrologis.stage.geopaparazzi.geopapbrowser.GeopapBrowserEntryPoint;
 import eu.hydrologis.stage.modules.SpatialToolboxEntryPoint;
+import eu.hydrologis.stage.spatialite.LidarViewerEntryPoint;
 import eu.hydrologis.stage.spatialite.SpatialiteViewerEntryPoint;
 import eu.hydrologis.stage.treeslicesviewer.TreeSlicesViewerEntryPoint;
 
@@ -75,6 +76,13 @@ public class StageApplication implements ApplicationConfiguration {
         spatialiteProperties.put(WebClient.HEAD_HTML, readTextFromResource("resources/head.html", "UTF-8"));
         spatialiteProperties.put(WebClient.FAVICON, "resources/favicon.png");
         application.addEntryPoint("/spatialiteviewer", SpatialiteViewerEntryPoint.class, spatialiteProperties);
+
+        Map<String, String> lidarViewerProperties = new HashMap<String, String>();
+        lidarViewerProperties.put(WebClient.PAGE_TITLE, "LiDAR Viewer");
+        lidarViewerProperties.put(WebClient.BODY_HTML, readTextFromResource("resources/body_loading.html", "UTF-8"));
+        lidarViewerProperties.put(WebClient.HEAD_HTML, readTextFromResource("resources/head.html", "UTF-8"));
+        lidarViewerProperties.put(WebClient.FAVICON, "resources/favicon.png");
+        application.addEntryPoint("/lidarviewer", LidarViewerEntryPoint.class, lidarViewerProperties);
 
         application.setOperationMode(OperationMode.SWT_COMPATIBILITY);
         application.addStyleSheet(RWT.DEFAULT_THEME_ID, "theme/theme.css");

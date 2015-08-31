@@ -20,6 +20,7 @@ public class JsResources {
     private static List<String> toRequireList = new ArrayList<String>();
     private static String toRequireGraphMap;
     private static String toRequireQuickMap;
+    private static String toRequireLidarMap;
 
     private static final ResourceLoader resourceLoader = new ResourceLoader(){
         public InputStream getResourceAsStream( String resourceName ) throws IOException {
@@ -95,6 +96,29 @@ public class JsResources {
             loader.require(toRequireQuickMap);
         }
         return toRequireQuickMap;
+    }
+
+    public static String ensureLidarmapHtmlResource() {
+        ResourceManager resourceManager = RWT.getApplicationContext().getResourceManager();
+        try {
+            String fileName = "lidar_map.html";
+            if (!resourceManager.isRegistered(fileName)) {
+                InputStream resourceAsStream = resourceLoader.getResourceAsStream(fileName);
+                if (resourceAsStream == null) {
+                    throw new NullPointerException();
+                }
+                String registered = register(resourceManager, fileName, resourceAsStream);
+                if (toRequireLidarMap == null)
+                    toRequireLidarMap = registered;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        if (toRequireLidarMap != null) {
+            JavaScriptLoader loader = RWT.getClient().getService(JavaScriptLoader.class);
+            loader.require(toRequireLidarMap);
+        }
+        return toRequireLidarMap;
     }
 
     public static String registerIfMissing( String resource ) {

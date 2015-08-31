@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>STAGE - Quick Geometry Viewer</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script type="text/javascript" src="libs/d3.min.js"></script>
+        <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.js"></script>
+        <link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.css" />
+        <script type='text/javascript' src='libs/jquery.min.js'></script>
+        <style>
+            .map {
+                border-style: solid;
+                border-width: 1px;
+                border-color: #ccc;
+            }
+        </style>
+    </head>
+
+    <body>
+        <div id="map"></div>
+        <script>
+            var width = Math.max(960, window.innerWidth) - 30,
+                    height = Math.max(500, window.innerHeight) - 30;
+            var map = void 0;
+            var mapData = void 0;
+            var leafletMap;
+            var gjson;
+            var mapnik;
+            
+//            loadScript();
+            function loadScript() {
+
+                var body = d3.select("body");
+                body.select("#map").style("width", width + "px").style("height", height + "px");
+                leafletMap = L.map('map');
+                mapnik = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+                    maxZoom: 25,
+                    maxNativeZoom: 18
+                });
+                var esri_world = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                    attribution: 'Tiles &copy; Esri',
+                    maxZoom: 25,
+                    maxNativeZoom: 18
+                });
+                var baseMaps = {
+                    "mapnik": mapnik,
+                    "esri_world": esri_world,
+                };
+                L.control.layers(baseMaps).addTo(leafletMap);
+                leafletMap.setView([0.0, 0.0], 2);
+                leafletMap._initPathRoot();
+                leafletMap.on('moveend', function(){
+                    checkData(false);
+                });
+
+                
+                
+//                d3.json("geoms.json", function (data) {
+                
+				checkData(true);
+    			mapnik.addTo(leafletMap);
+    
+                
+//                });
+            }
+
+            function project(x, y) {
+                var point = leafletMap.latLngToLayerPoint(new L.LatLng(y, x));
+                return point;
+            }
+            
+            function checkData(fitData){
+                var zoom = leafletMap.getZoom();
+                
+                var type = 1;
+                if(zoom > 17){
+                    type = 2;
+                }
+                
+                var bb = leafletMap.getBounds();
+                
+                var w = bb.getWest();
+                var e = bb.getEast();
+                var s = bb.getSouth();
+                var n = bb.getNorth();
+                
+                
+                // 1=overview, 2=cells, 3=points
+                var dataStr = getJsonData(type, w, e, s, n, zoom);
+                var data = JSON.parse(dataStr);
+
+				if(gjson){
+				    leafletMap.removeLayer(gjson);
+				}
+				    leafletMap.removeLayer(mapnik);
+				
+				if(type===1){
+                     gjson = L.geoJson(data, {
+                         style: function (feature) {
+                             var p = feature.properties;
+                             return {color: "red",
+                                 fillOpacity: "0.0",
+                                 weight: "2"
+                             };
+                         },
+                         onEachFeature: function (feature, layer) {
+                             var keys = Object.keys(feature.properties);
+                             var desc = "<table>";
+                             keys.forEach(function (key) {
+                                 var value = feature.properties[key];
+                                 if (value && value.trim().length > 0)
+                                         var msg = "<tr><td><b>" + key + ":</b> " + value + "</td></tr>";
+                                         desc += msg;
+                             });
+                             desc += "</table>";
+                             layer.bindPopup(desc);
+                         }
+                     });
+				}
+				else if(type===2){
+                     gjson = L.geoJson(data, {
+                         style: function (feature) {
+                             var p = feature.properties;
+                             return {color: p.stroke ? p.stroke : "steelblue",
+                                     fillColor: p.fill ? p.fill : "steelblue",
+                                     fillOpacity: p.fillopacity ? p.fillopacity : "0.3",
+                                     opacity: p.strokeopacity ? p.strokeopacity : "1",
+                                     weight: p.strokewidth ? p.strokewidth : "0.1"
+                             };
+                         },
+                         onEachFeature: function (feature, layer) {
+                             var keys = Object.keys(feature.properties);
+                             var desc = "<table>";
+                             keys.forEach(function (key) {
+                                 var value = feature.properties[key];
+                                 if (value && value.trim().length > 0)
+                                         var msg = "<tr><td><b>" + key + ":</b> " + value + "</td></tr>";
+                                         desc += msg;
+                             });
+                             desc += "</table>";
+                             layer.bindPopup(desc);
+                         }
+                     });
+				}
+                gjson.addTo(leafletMap)
+                
+                mapnik.addTo(leafletMap);
+                if(fitData){
+                    fitBounds = gjson.getBounds();
+                	leafletMap.fitBounds(fitBounds);
+                }
+            }
+
+        </script>
+    </body>

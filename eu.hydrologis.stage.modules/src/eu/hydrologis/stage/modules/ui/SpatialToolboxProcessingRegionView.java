@@ -103,7 +103,7 @@ public class SpatialToolboxProcessingRegionView {
 
         Label elabel = new Label(leftComposite, SWT.NONE);
         elabel.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, false));
-        elabel.setText("West");
+        elabel.setText("East");
         eText = new Text(leftComposite, SWT.SINGLE | SWT.LEAD | SWT.BORDER);
         eText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
         eText.setText("");
