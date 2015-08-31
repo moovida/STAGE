@@ -76,8 +76,11 @@
                 var zoom = leafletMap.getZoom();
 
                 var type = 1;
-                if (zoom > 17) {
+                if (zoom > 16) {
                     type = 2;
+                }
+                if (zoom > 20) {
+                    type = 3;
                 }
 
                 var bb = leafletMap.getBounds();
@@ -97,56 +100,90 @@
                 var minVal = json.vmin;
                 var maxVal = json.vmax;
 
+                var delta = (maxVal - minVal) / 4;
                 var colorScale = d3.scale.linear() // <-A
-                        .domain([minVal, maxVal])
-                        .range(["green", "red"]);
+                        .domain(
+                                [
+                                    minVal,
+                                    minVal + delta,
+                                    minVal + 2 * delta,
+                                    minVal + 3 * delta,
+                                    maxVal
+                                ]
+                                )
+                        .range(
+                                [
+                                    d3.rgb(0, 191, 191),
+                                    d3.rgb(255, 255, 0),
+                                    d3.rgb(255, 127, 0),
+                                    d3.rgb(191, 127, 63),
+                                    d3.rgb(20, 21, 20)
+//                                    d3.rgb(255, 255, 0),
+//                                    d3.rgb(0, 255, 0),
+//                                    d3.rgb(0, 0, 255),
+//                                    d3.rgb(255, 0, 255),
+//                                    d3.rgb(255, 0, 0)
+                                ]
+                                );
 
-                var rects = dataG.selectAll("rect")
+                var rects = dataG.selectAll("polygon")
                         .data(json.data);
-
+//svg.append("polygon")
+//                    .attr("points", "450,200 500,100 550,200");
                 rects.enter()
-                        .append("rect");
+                        .append("polygon");
 
                 rects
-                        .attr("x", function (d) {
-                            return project(d.x1, d.y1).x;
-                        })
-                        .attr("y", function (d) {
-                            return project(d.x2, d.y2).y;
-                        })
-                        .attr("width", function (d) {
-                            var x1 = project(d.x1, d.y1).x;
-                            var x2 = project(d.x2, d.y2).x;
-                            var w = x2 - x1;
-                            if (w <= 0)
-                                w = 1;
-                            return w;
-                        })
-                        .attr("height", function (d) {
-                            var y1 = project(d.x1, d.y1).y;
-                            var y2 = project(d.x2, d.y2).y;
-                            var h = y1 - y2;
-                            if (h <= 0)
-                                h = 1;
-                            return h;
+                        .attr("points", function (d) {
+                            if (type === 1 || type === 2) {
+                                var str = "";
+                                var p = project(d.x1, d.y1);
+                                str += p.x + "," + p.y;
+                                p = project(d.x2, d.y2);
+                                str += " " + p.x + "," + p.y;
+                                p = project(d.x3, d.y3);
+                                str += " " + p.x + "," + p.y;
+                                p = project(d.x4, d.y4);
+                                str += " " + p.x + "," + p.y;
+                                return str;
+                            } else {
+                                var dx = 3;
+                                var p = project(d.x1, d.y1);
+                                var str = (p.x - dx) + "," + (p.y - dx);
+                                str += " " + (p.x - dx) + "," + (p.y + dx);
+                                str += " " + (p.x + dx) + "," + (p.y + dx);
+                                str += " " + (p.x + dx) + "," + (p.y - dx);
+                                return str;
+                            }
                         })
                         .style("stroke", function (d) {
-                            if (d.l) {
+                            if (type === 1) {
                                 return colorScale(d.v);
                             }
                         })
                         .style("stroke-width", function (d) {
-                            if (d.l) {
+                            if (type === 1) {
                                 return 2;
                             }
                         })
                         .style("fill", function (d) {
                             return colorScale(d.v);
                         })
-                        .style("fill-opacity", 0.5);
+                        .style("fill-opacity", function (d) {
+                            if (type === 1) {
+                                return 0;
+                            }
+                            return 0.5;
+                        })
+                        .append("svg:title")
+                        .text(function (d) {
+                            if(d.l) return d.l;
+                            return d.v;
+                        });
+                
 
                 rects.exit().remove();
-                if (fitData) {
+                if (fitData && json.ymin) {
                     var southWest = L.latLng(json.ymin, json.xmin),
                             northEast = L.latLng(json.ymax, json.xmax),
                             fitBounds = L.latLngBounds(southWest, northEast);

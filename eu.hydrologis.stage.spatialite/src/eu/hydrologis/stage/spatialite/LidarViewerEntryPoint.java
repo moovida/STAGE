@@ -54,6 +54,7 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.MathTransform;
 import org.opengis.referencing.operation.TransformException;
 
+import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.Polygon;
@@ -276,6 +277,8 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
                             return getSources(llEnv);
                         } else if (type == 2) {
                             return getCells(llEnv);
+                        } else if (type == 3) {
+                            return getPoints(llEnv);
                         }
                     } catch (Exception e) {
                         // TODO Auto-generated catch block
@@ -317,21 +320,26 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
             }
 
             Envelope geomEnvLL = JTS.transform(geomEnvCRS, crs2llTransform);
-            
+
             if (bounds == null) {
                 bounds = new Envelope(geomEnvLL);
             } else {
                 bounds.expandToInclude(geomEnvLL);
             }
 
-            minValue = Math.min(minValue, lasSource.minElev);
+            minValue = Math.min(minValue, lasSource.maxElev);
             maxValue = Math.max(maxValue, lasSource.maxElev);
+            Coordinate[] coordinates = lasSource.polygon.getCoordinates();
             JSONObject dataObj = new JSONObject();
             dataArray.put(index++, dataObj);
-            dataObj.put("x1", geomEnvLL.getMinX());
-            dataObj.put("x2", geomEnvLL.getMaxX());
-            dataObj.put("y1", geomEnvLL.getMinY());
-            dataObj.put("y2", geomEnvLL.getMaxY());
+            Coordinate newCoord = new Coordinate();
+            for( int i = 0; i < coordinates.length; i++ ) {
+                JTS.transform(coordinates[i], newCoord, crs2llTransform);
+
+                dataObj.put("x" + (i + 1), newCoord.x);
+                dataObj.put("y" + (i + 1), newCoord.y);
+            }
+
             dataObj.put("l", lasSource.name);
             dataObj.put("v", lasSource.maxElev);
         }
@@ -349,53 +357,111 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
             IOException {
         CoordinateReferenceSystem crs = CRS.decode("EPSG:32632");
 
-        SimpleFeatureTypeBuilder b = new SimpleFeatureTypeBuilder();
-        b.setName("sources");
-        b.setCRS(crs);
-        b.add("the_geom", Polygon.class);
-        b.add("avg elev", String.class);
-        b.add("avg intens", String.class);
-        SimpleFeatureType fType = b.buildFeatureType();
-        SimpleFeatureBuilder builder = new SimpleFeatureBuilder(fType);
-
         CoordinateReferenceSystem leafletCRS = DefaultGeographicCRS.WGS84;// CRS.decode("EPSG:4326");
-        MathTransform transform = CRS.findMathTransform(leafletCRS, crs);
-        Envelope searchEnv = JTS.transform(env, transform);
+        MathTransform ll2CRSTransform = CRS.findMathTransform(leafletCRS, crs);
+        MathTransform crs2llTransform = CRS.findMathTransform(crs, leafletCRS);
 
-        Polygon searchPolygon = GeometryUtilities.createPolygonFromEnvelope(searchEnv);
+        JSONObject rootObj = new JSONObject();
+        JSONArray dataArray = new JSONArray();
+        rootObj.put("data", dataArray);
 
-        // Envelope tableBounds =
-        // currentConnectedDatabase.getTableBounds("lascells");
+        Polygon searchPolygonLL = GeometryUtilities.createPolygonFromEnvelope(env);
+        Geometry searchPolygonLLCRS = JTS.transform(searchPolygonLL, ll2CRSTransform);
 
         long t1 = System.currentTimeMillis();
-        List<LasCell> lasCells = LasCellsTable.getLasCells(currentConnectedDatabase, searchPolygon, true, true, false, false,
-                false);
+        List<LasCell> lasCells = LasCellsTable.getLasCells(currentConnectedDatabase, searchPolygonLLCRS, true, false, false,
+                false, false);
         int size = lasCells.size();
         long t2 = System.currentTimeMillis();
         System.out.println("time: " + (t2 - t1) + " size = " + size);
 
-        if (size > 2000) {
-            return getSources(env);
-        }
+        // if (size > 4000) {
+        // return getSources(env);
+        // }
         if (size == 0) {
             return null;
         }
 
-        DefaultFeatureCollection fc = new DefaultFeatureCollection();
+        double minValue = Double.POSITIVE_INFINITY;
+        double maxValue = Double.NEGATIVE_INFINITY;
+        int index = 0;
         for( LasCell lasCell : lasCells ) {
-            Object[] values = new Object[]{lasCell.polygon, String.valueOf(lasCell.avgElev), String.valueOf(lasCell.avgIntensity)};
-            builder.addAll(values);
-            SimpleFeature feature = builder.buildFeature(null);
-            fc.add(feature);
+            Coordinate[] coordinates = lasCell.polygon.getCoordinates();
+            JSONObject dataObj = new JSONObject();
+            dataArray.put(index++, dataObj);
+            Coordinate newCoord = new Coordinate();
+            for( int i = 0; i < coordinates.length; i++ ) {
+                JTS.transform(coordinates[i], newCoord, crs2llTransform);
+
+                dataObj.put("x" + (i + 1), newCoord.x);
+                dataObj.put("y" + (i + 1), newCoord.y);
+            }
+            minValue = Math.min(minValue, lasCell.avgElev);
+            maxValue = Math.max(maxValue, lasCell.avgElev);
+
+            // dataObj.put("l", lasCell.avgElev);
+            dataObj.put("v", lasCell.avgElev);
+        }
+        rootObj.put("vmin", minValue);
+        rootObj.put("vmax", maxValue);
+        return rootObj.toString();
+    }
+
+    private Object getPoints( Envelope env ) throws NoSuchAuthorityCodeException, FactoryException, TransformException,
+            Exception, IOException {
+        CoordinateReferenceSystem crs = CRS.decode("EPSG:32632");
+
+        CoordinateReferenceSystem leafletCRS = DefaultGeographicCRS.WGS84;// CRS.decode("EPSG:4326");
+        MathTransform ll2CRSTransform = CRS.findMathTransform(leafletCRS, crs);
+        MathTransform crs2llTransform = CRS.findMathTransform(crs, leafletCRS);
+
+        JSONObject rootObj = new JSONObject();
+        JSONArray dataArray = new JSONArray();
+        rootObj.put("data", dataArray);
+
+        Polygon searchPolygonLL = GeometryUtilities.createPolygonFromEnvelope(env);
+        Geometry searchPolygonLLCRS = JTS.transform(searchPolygonLL, ll2CRSTransform);
+
+        long t1 = System.currentTimeMillis();
+        List<LasCell> lasCells = LasCellsTable.getLasCells(currentConnectedDatabase, searchPolygonLLCRS, true, false, false,
+                false, false);
+        int size = lasCells.size();
+        if (size == 0) {
+            return null;
         }
 
-        ReprojectingFeatureCollection rfc = new ReprojectingFeatureCollection(fc, DefaultGeographicCRS.WGS84);
+        int count = 0;
+        for( LasCell lasCell : lasCells ) {
+            count += lasCell.pointsCount;
+        }
+        long t2 = System.currentTimeMillis();
+        System.out.println("time: " + (t2 - t1) + " exploded size = " + count);
 
-        FeatureJSON fjson = new FeatureJSON();
-        StringWriter writer = new StringWriter();
-        fjson.writeFeatureCollection(rfc, writer);
-        String geojson = writer.toString();
-        return geojson;
+        int index = 0;
+        double minValue = Double.POSITIVE_INFINITY;
+        double maxValue = Double.NEGATIVE_INFINITY;
+        for( LasCell lasCell : lasCells ) {
+            double[][] cellPositions = LasCellsTable.getCellPositions(lasCell);
+            Coordinate newCoord = new Coordinate();
+            for( int i = 0; i < cellPositions.length; i++ ) {
+                JSONObject dataObj = new JSONObject();
+                dataArray.put(index++, dataObj);
+                double[] xyz = cellPositions[i];
+
+                minValue = Math.min(minValue, xyz[2]);
+                maxValue = Math.max(maxValue, xyz[2]);
+                JTS.transform(new Coordinate(xyz[0], xyz[1]), newCoord, crs2llTransform);
+
+                dataObj.put("x1", newCoord.x);
+                dataObj.put("y1", newCoord.y);
+                // dataObj.put("l", lasCell.avgElev);
+                dataObj.put("v", xyz[2]);
+            }
+
+        }
+        rootObj.put("vmin", minValue);
+        rootObj.put("vmax", maxValue);
+        return rootObj.toString();
     }
 
     private double getDouble( Object object ) {
