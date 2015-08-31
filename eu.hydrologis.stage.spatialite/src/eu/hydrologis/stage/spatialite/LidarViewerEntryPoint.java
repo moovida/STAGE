@@ -44,6 +44,8 @@ import org.jgrasstools.gears.io.las.spatialite.LasSource;
 import org.jgrasstools.gears.io.las.spatialite.LasSourcesTable;
 import org.jgrasstools.gears.spatialite.SpatialiteDb;
 import org.jgrasstools.gears.utils.geometry.GeometryUtilities;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.referencing.FactoryException;
@@ -293,45 +295,58 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
     private Object getSources( Envelope env ) throws NoSuchAuthorityCodeException, FactoryException, Exception, IOException {
         CoordinateReferenceSystem crs = CRS.decode("EPSG:32632");
 
-        CoordinateReferenceSystem leafletCRS = CRS.decode("EPSG:4326");
-        MathTransform transform = CRS.findMathTransform(leafletCRS, crs);
-        Envelope searchEnv = JTS.transform(env, transform);
+        CoordinateReferenceSystem leafletCRS = DefaultGeographicCRS.WGS84;// CRS.decode("EPSG:4326");
+        MathTransform ll2CRSTransform = CRS.findMathTransform(leafletCRS, crs);
+        MathTransform crs2llTransform = CRS.findMathTransform(crs, leafletCRS);
+        Envelope searchEnv = JTS.transform(env, ll2CRSTransform);
 
-        SimpleFeatureTypeBuilder b = new SimpleFeatureTypeBuilder();
-        b.setName("sources");
-        b.setCRS(crs);
-        b.add("the_geom", Polygon.class);
-        b.add("name", String.class);
-        b.add("min elev", String.class);
-        b.add("max elev", String.class);
-        SimpleFeatureType fType = b.buildFeatureType();
-        SimpleFeatureBuilder builder = new SimpleFeatureBuilder(fType);
-
-        DefaultFeatureCollection fc = new DefaultFeatureCollection();
         List<LasSource> lasSources = LasSourcesTable.getLasSources(currentConnectedDatabase);
+
+        JSONObject rootObj = new JSONObject();
+        JSONArray dataArray = new JSONArray();
+        rootObj.put("data", dataArray);
+
+        Envelope bounds = null;
+        int index = 0;
+        double minValue = Double.POSITIVE_INFINITY;
+        double maxValue = Double.NEGATIVE_INFINITY;
         for( LasSource lasSource : lasSources ) {
-            if (!lasSource.polygon.getEnvelopeInternal().intersects(searchEnv)) {
+            Envelope geomEnvCRS = lasSource.polygon.getEnvelopeInternal();
+            if (!geomEnvCRS.intersects(searchEnv)) {
                 continue;
             }
 
-            Object[] values = new Object[]{lasSource.polygon, lasSource.name, String.valueOf(lasSource.minElev),
-                    String.valueOf(lasSource.maxElev)};
-            builder.addAll(values);
-            SimpleFeature feature = builder.buildFeature(null);
-            fc.add(feature);
+            Envelope geomEnvLL = JTS.transform(geomEnvCRS, crs2llTransform);
+            
+            if (bounds == null) {
+                bounds = new Envelope(geomEnvLL);
+            } else {
+                bounds.expandToInclude(geomEnvLL);
+            }
+
+            minValue = Math.min(minValue, lasSource.minElev);
+            maxValue = Math.max(maxValue, lasSource.maxElev);
+            JSONObject dataObj = new JSONObject();
+            dataArray.put(index++, dataObj);
+            dataObj.put("x1", geomEnvLL.getMinX());
+            dataObj.put("x2", geomEnvLL.getMaxX());
+            dataObj.put("y1", geomEnvLL.getMinY());
+            dataObj.put("y2", geomEnvLL.getMaxY());
+            dataObj.put("l", lasSource.name);
+            dataObj.put("v", lasSource.maxElev);
         }
+        rootObj.put("xmin", bounds.getMinX());
+        rootObj.put("xmax", bounds.getMaxX());
+        rootObj.put("ymin", bounds.getMinY());
+        rootObj.put("ymax", bounds.getMaxY());
+        rootObj.put("vmin", minValue);
+        rootObj.put("vmax", maxValue);
 
-        ReprojectingFeatureCollection rfc = new ReprojectingFeatureCollection(fc, DefaultGeographicCRS.WGS84);
-
-        FeatureJSON fjson = new FeatureJSON();
-        StringWriter writer = new StringWriter();
-        fjson.writeFeatureCollection(rfc, writer);
-        String geojson = writer.toString();
-        return geojson;
+        return rootObj.toString();
     }
 
-    private Object getCells( Envelope env )
-            throws NoSuchAuthorityCodeException, FactoryException, TransformException, Exception, IOException {
+    private Object getCells( Envelope env ) throws NoSuchAuthorityCodeException, FactoryException, TransformException, Exception,
+            IOException {
         CoordinateReferenceSystem crs = CRS.decode("EPSG:32632");
 
         SimpleFeatureTypeBuilder b = new SimpleFeatureTypeBuilder();
@@ -343,12 +358,11 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
         SimpleFeatureType fType = b.buildFeatureType();
         SimpleFeatureBuilder builder = new SimpleFeatureBuilder(fType);
 
-        CoordinateReferenceSystem leafletCRS = CRS.decode("EPSG:4326");
+        CoordinateReferenceSystem leafletCRS = DefaultGeographicCRS.WGS84;// CRS.decode("EPSG:4326");
         MathTransform transform = CRS.findMathTransform(leafletCRS, crs);
         Envelope searchEnv = JTS.transform(env, transform);
-        
+
         Polygon searchPolygon = GeometryUtilities.createPolygonFromEnvelope(searchEnv);
-        
 
         // Envelope tableBounds =
         // currentConnectedDatabase.getTableBounds("lascells");
@@ -363,11 +377,13 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
         if (size > 2000) {
             return getSources(env);
         }
+        if (size == 0) {
+            return null;
+        }
 
         DefaultFeatureCollection fc = new DefaultFeatureCollection();
         for( LasCell lasCell : lasCells ) {
-            Object[] values = new Object[]{lasCell.polygon, String.valueOf(lasCell.avgElev),
-                    String.valueOf(lasCell.avgIntensity)};
+            Object[] values = new Object[]{lasCell.polygon, String.valueOf(lasCell.avgElev), String.valueOf(lasCell.avgIntensity)};
             builder.addAll(values);
             SimpleFeature feature = builder.buildFeature(null);
             fc.add(feature);

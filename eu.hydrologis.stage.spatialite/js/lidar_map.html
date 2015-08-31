@@ -25,9 +25,9 @@
             var map = void 0;
             var mapData = void 0;
             var leafletMap;
-            var gjson;
             var mapnik;
-            
+            var dataG;
+
 //            loadScript();
             function loadScript() {
 
@@ -51,18 +51,19 @@
                 L.control.layers(baseMaps).addTo(leafletMap);
                 leafletMap.setView([0.0, 0.0], 2);
                 leafletMap._initPathRoot();
-                leafletMap.on('moveend', function(){
+                leafletMap.on('moveend', function () {
                     checkData(false);
                 });
 
-                
-                
+                var mapSvg = d3.select("#map").select("svg");
+                dataG = mapSvg.append("g");
+
 //                d3.json("geoms.json", function (data) {
-                
-				checkData(true);
-    			mapnik.addTo(leafletMap);
-    
-                
+
+                checkData(true);
+                mapnik.addTo(leafletMap);
+
+
 //                });
             }
 
@@ -70,86 +71,91 @@
                 var point = leafletMap.latLngToLayerPoint(new L.LatLng(y, x));
                 return point;
             }
-            
-            function checkData(fitData){
+
+            function checkData(fitData) {
                 var zoom = leafletMap.getZoom();
-                
+
                 var type = 1;
-                if(zoom > 17){
+                if (zoom > 17) {
                     type = 2;
                 }
-                
+
                 var bb = leafletMap.getBounds();
-                
+
                 var w = bb.getWest();
                 var e = bb.getEast();
                 var s = bb.getSouth();
                 var n = bb.getNorth();
-                
-                
-                // 1=overview, 2=cells, 3=points
-                var dataStr = getJsonData(type, w, e, s, n, zoom);
-                var data = JSON.parse(dataStr);
 
-				if(gjson){
-				    leafletMap.removeLayer(gjson);
-				}
-				    leafletMap.removeLayer(mapnik);
-				
-				if(type===1){
-                     gjson = L.geoJson(data, {
-                         style: function (feature) {
-                             var p = feature.properties;
-                             return {color: "red",
-                                 fillOpacity: "0.0",
-                                 weight: "2"
-                             };
-                         },
-                         onEachFeature: function (feature, layer) {
-                             var keys = Object.keys(feature.properties);
-                             var desc = "<table>";
-                             keys.forEach(function (key) {
-                                 var value = feature.properties[key];
-                                 if (value && value.trim().length > 0)
-                                         var msg = "<tr><td><b>" + key + ":</b> " + value + "</td></tr>";
-                                         desc += msg;
-                             });
-                             desc += "</table>";
-                             layer.bindPopup(desc);
-                         }
-                     });
-				}
-				else if(type===2){
-                     gjson = L.geoJson(data, {
-                         style: function (feature) {
-                             var p = feature.properties;
-                             return {color: p.stroke ? p.stroke : "steelblue",
-                                     fillColor: p.fill ? p.fill : "steelblue",
-                                     fillOpacity: p.fillopacity ? p.fillopacity : "0.3",
-                                     opacity: p.strokeopacity ? p.strokeopacity : "1",
-                                     weight: p.strokewidth ? p.strokewidth : "0.1"
-                             };
-                         },
-                         onEachFeature: function (feature, layer) {
-                             var keys = Object.keys(feature.properties);
-                             var desc = "<table>";
-                             keys.forEach(function (key) {
-                                 var value = feature.properties[key];
-                                 if (value && value.trim().length > 0)
-                                         var msg = "<tr><td><b>" + key + ":</b> " + value + "</td></tr>";
-                                         desc += msg;
-                             });
-                             desc += "</table>";
-                             layer.bindPopup(desc);
-                         }
-                     });
-				}
-                gjson.addTo(leafletMap)
-                
-                mapnik.addTo(leafletMap);
-                if(fitData){
-                    fitBounds = gjson.getBounds();
-                	leafletMap.fitBounds(fitBounds);
+
+                // 1=overview, 2=cells, 3=points
+                var dataStr = getJsonData(type, s, n, w, e, zoom);
+                if (!dataStr)
+                    return;
+                var json = JSON.parse(dataStr);
+
+                var minVal = json.vmin;
+                var maxVal = json.vmax;
+
+                var colorScale = d3.scale.linear() // <-A
+                        .domain([minVal, maxVal])
+                        .range(["green", "red"]);
+
+                var rects = dataG.selectAll("rect")
+                        .data(json.data);
+
+                rects.enter()
+                        .append("rect");
+
+                rects
+                        .attr("x", function (d) {
+                            return project(d.x1, d.y1).x;
+                        })
+                        .attr("y", function (d) {
+                            return project(d.x2, d.y2).y;
+                        })
+                        .attr("width", function (d) {
+                            var x1 = project(d.x1, d.y1).x;
+                            var x2 = project(d.x2, d.y2).x;
+                            var w = x2 - x1;
+                            if (w <= 0)
+                                w = 1;
+                            return w;
+                        })
+                        .attr("height", function (d) {
+                            var y1 = project(d.x1, d.y1).y;
+                            var y2 = project(d.x2, d.y2).y;
+                            var h = y1 - y2;
+                            if (h <= 0)
+                                h = 1;
+                            return h;
+                        })
+                        .style("stroke", function (d) {
+                            if (d.l) {
+                                return colorScale(d.v);
+                            }
+                        })
+                        .style("stroke-width", function (d) {
+                            if (d.l) {
+                                return 2;
+                            }
+                        })
+                        .style("fill", function (d) {
+                            return colorScale(d.v);
+                        })
+                        .style("fill-opacity", 0.5);
+
+                rects.exit().remove();
+                if (fitData) {
+                    var southWest = L.latLng(json.ymin, json.xmin),
+                            northEast = L.latLng(json.ymax, json.xmax),
+                            fitBounds = L.latLngBounds(southWest, northEast);
+//                    leafletMap.fitBounds([
+//                        [json.ymin, json.xmin],
+//                        [json.ymax, json.xmax]
+//                    ]);
+//                    fitBounds = gjson.getBounds();
+                    leafletMap.fitBounds(fitBounds);
                 }
             }
 
