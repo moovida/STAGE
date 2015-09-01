@@ -15,6 +15,7 @@ import java.util.List;
 
 import org.eclipse.rap.rwt.RWT;
 import org.eclipse.rap.rwt.application.AbstractEntryPoint;
+import org.eclipse.rap.rwt.widgets.BrowserUtil;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.browser.BrowserFunction;
@@ -22,9 +23,11 @@ import org.eclipse.swt.browser.ProgressEvent;
 import org.eclipse.swt.browser.ProgressListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
@@ -62,6 +65,7 @@ import com.vividsolutions.jts.geom.Polygon;
 import eu.hydrologis.stage.libs.log.StageLogger;
 import eu.hydrologis.stage.libs.utils.ImageCache;
 import eu.hydrologis.stage.libs.utils.StageProgressBar;
+import eu.hydrologis.stage.libs.utils.StageUtils;
 import eu.hydrologis.stage.libs.utilsrap.LoginDialog;
 import eu.hydrologis.stage.libs.workspace.StageWorkspace;
 import eu.hydrologis.stage.libs.workspace.User;
@@ -81,8 +85,6 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
 
     private StageProgressBar generalProgressBar;
 
-    private Label connectedDbLabel;
-
     private Browser mapBrowser;
 
     private Text databaseNameText;
@@ -90,6 +92,10 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
     private String lidarMapUrl;
 
     private LidarViewerProgressListener lidarViewerProgressListener;
+
+    private int dataType = 0; // 0 elev, 1 intens
+
+    private Label loadedElementsNumLabel;
 
     @Override
     protected void createContents( final Composite parent ) {
@@ -119,7 +125,7 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
         // leftGD.widthHint = 100;
         leftComposite.setLayoutData(leftGD);
 
-        connectedDbLabel = new Label(leftComposite, SWT.NONE);
+        Label connectedDbLabel = new Label(leftComposite, SWT.NONE);
         connectedDbLabel.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
         connectedDbLabel.setText("Database: ");
 
@@ -141,6 +147,57 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
             }
         });
 
+        Label dataTypeLabel = new Label(leftComposite, SWT.NONE);
+        dataTypeLabel.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
+        dataTypeLabel.setText("Data type: ");
+
+        final Combo dataTypeCombo = new Combo(leftComposite, SWT.DROP_DOWN | SWT.READ_ONLY);
+        GridData dataTypeComboGD = new GridData(SWT.FILL, SWT.CENTER, false, false);
+        dataTypeComboGD.horizontalSpan = 2;
+        dataTypeCombo.setLayoutData(dataTypeComboGD);
+        dataTypeCombo.setItems(new String[]{"elevation", "intensity"});
+        dataTypeCombo.select(0);
+        dataTypeCombo.addSelectionListener(new SelectionListener(){
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public void widgetSelected( SelectionEvent e ) {
+                parentShell.getDisplay().asyncExec(new Runnable(){
+                    public void run() {
+                        try {
+                            // generalProgressBar.setProgressText("Load data...");
+                            // generalProgressBar.start(0);
+                            dataType = dataTypeCombo.getSelectionIndex();
+                            if (dataType == 0) {
+                                StageUtils.blockWhileOtherScriptIsBusy(mapBrowser);
+                                mapBrowser.evaluate("checkData(false, 1);");
+                            } else {
+                                StageUtils.blockWhileOtherScriptIsBusy(mapBrowser);
+                                mapBrowser.evaluate("checkData(false, 2);");
+                            }
+                        } catch (Exception e) {
+                            StageLogger.logError(LidarViewerEntryPoint.this, e);
+                            // } finally {
+                            // generalProgressBar.stop();
+                        }
+                    }
+                });
+
+            }
+
+            public void widgetDefaultSelected( SelectionEvent e ) {
+            }
+        });
+
+        Label loadedElementsLabel = new Label(leftComposite, SWT.NONE);
+        loadedElementsLabel.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
+        loadedElementsLabel.setText("Loaded elements: ");
+        loadedElementsNumLabel = new Label(leftComposite, SWT.NONE);
+        GridData loadedElementsNumLabelGD = new GridData(SWT.FILL, SWT.CENTER, false, false);
+        loadedElementsNumLabelGD.horizontalSpan = 2;
+        loadedElementsNumLabel.setLayoutData(loadedElementsNumLabelGD);
+        loadedElementsNumLabel.setText(" - ");
+
         Composite rightComposite = new Composite(composite, SWT.None);
         GridLayout rightLayout = new GridLayout(1, true);
         rightLayout.marginWidth = 0;
@@ -150,8 +207,10 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
         rightComposite.setLayoutData(rightGD);
 
         try {
-            mapBrowser = new Browser(rightComposite, SWT.NONE);
+            mapBrowser = new Browser(rightComposite, SWT.BORDER);
             GridData mapBrowserGD = new GridData(SWT.FILL, SWT.FILL, true, true);
+            // mapBrowserGD.horizontalIndent = 3;
+            // mapBrowserGD.verticalIndent = 3;
             mapBrowser.setLayoutData(mapBrowserGD);
 
             JsResources.ensureJavaScriptResources();
@@ -281,10 +340,8 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
                             return getPoints(llEnv);
                         }
                     } catch (Exception e) {
-                        // TODO Auto-generated catch block
                         e.printStackTrace();
                     }
-
                     return "";
                 }
 
@@ -327,8 +384,8 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
                 bounds.expandToInclude(geomEnvLL);
             }
 
-            minValue = Math.min(minValue, lasSource.maxElev);
-            maxValue = Math.max(maxValue, lasSource.maxElev);
+            minValue = Math.min(minValue, r(lasSource.maxElev));
+            maxValue = Math.max(maxValue, r(lasSource.maxElev));
             Coordinate[] coordinates = lasSource.polygon.getCoordinates();
             JSONObject dataObj = new JSONObject();
             dataArray.put(index++, dataObj);
@@ -341,7 +398,7 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
             }
 
             dataObj.put("l", lasSource.name);
-            dataObj.put("v", lasSource.maxElev);
+            dataObj.put("v", r(lasSource.maxElev));
         }
         rootObj.put("xmin", bounds.getMinX());
         rootObj.put("xmax", bounds.getMaxX());
@@ -349,6 +406,8 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
         rootObj.put("ymax", bounds.getMaxY());
         rootObj.put("vmin", minValue);
         rootObj.put("vmax", maxValue);
+
+        loadedElementsNumLabel.setText("" + index);
 
         return rootObj.toString();
     }
@@ -369,18 +428,17 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
         Geometry searchPolygonLLCRS = JTS.transform(searchPolygonLL, ll2CRSTransform);
 
         long t1 = System.currentTimeMillis();
-        List<LasCell> lasCells = LasCellsTable.getLasCells(currentConnectedDatabase, searchPolygonLLCRS, true, false, false,
+        List<LasCell> lasCells = LasCellsTable.getLasCells(currentConnectedDatabase, searchPolygonLLCRS, true, true, false,
                 false, false);
         int size = lasCells.size();
         long t2 = System.currentTimeMillis();
         System.out.println("time: " + (t2 - t1) + " size = " + size);
 
-        // if (size > 4000) {
-        // return getSources(env);
-        // }
         if (size == 0) {
             return null;
         }
+
+        loadedElementsNumLabel.setText("" + size);
 
         double minValue = Double.POSITIVE_INFINITY;
         double maxValue = Double.NEGATIVE_INFINITY;
@@ -396,11 +454,16 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
                 dataObj.put("x" + (i + 1), newCoord.x);
                 dataObj.put("y" + (i + 1), newCoord.y);
             }
-            minValue = Math.min(minValue, lasCell.avgElev);
-            maxValue = Math.max(maxValue, lasCell.avgElev);
-
-            // dataObj.put("l", lasCell.avgElev);
-            dataObj.put("v", lasCell.avgElev);
+            if (dataType == 0) {
+                minValue = Math.min(minValue, r(lasCell.avgElev));
+                maxValue = Math.max(maxValue, r(lasCell.avgElev));
+                // dataObj.put("l", lasCell.avgElev);
+                dataObj.put("v", r(lasCell.avgElev));
+            } else {
+                minValue = Math.min(minValue, r(lasCell.avgIntensity));
+                maxValue = Math.max(maxValue, r(lasCell.avgIntensity));
+                dataObj.put("v", r(lasCell.avgIntensity));
+            }
         }
         rootObj.put("vmin", minValue);
         rootObj.put("vmax", maxValue);
@@ -423,7 +486,7 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
         Geometry searchPolygonLLCRS = JTS.transform(searchPolygonLL, ll2CRSTransform);
 
         long t1 = System.currentTimeMillis();
-        List<LasCell> lasCells = LasCellsTable.getLasCells(currentConnectedDatabase, searchPolygonLLCRS, true, false, false,
+        List<LasCell> lasCells = LasCellsTable.getLasCells(currentConnectedDatabase, searchPolygonLLCRS, true, true, false,
                 false, false);
         int size = lasCells.size();
         if (size == 0) {
@@ -436,32 +499,63 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
         }
         long t2 = System.currentTimeMillis();
         System.out.println("time: " + (t2 - t1) + " exploded size = " + count);
+        loadedElementsNumLabel.setText("" + count);
 
         int index = 0;
-        double minValue = Double.POSITIVE_INFINITY;
-        double maxValue = Double.NEGATIVE_INFINITY;
-        for( LasCell lasCell : lasCells ) {
-            double[][] cellPositions = LasCellsTable.getCellPositions(lasCell);
-            Coordinate newCoord = new Coordinate();
-            for( int i = 0; i < cellPositions.length; i++ ) {
-                JSONObject dataObj = new JSONObject();
-                dataArray.put(index++, dataObj);
-                double[] xyz = cellPositions[i];
+        if (dataType == 0) {
+            double minValue = Double.POSITIVE_INFINITY;
+            double maxValue = Double.NEGATIVE_INFINITY;
+            for( LasCell lasCell : lasCells ) {
+                double[][] cellData = LasCellsTable.getCellPositions(lasCell);
+                Coordinate newCoord = new Coordinate();
+                for( int i = 0; i < cellData.length; i++ ) {
+                    JSONObject dataObj = new JSONObject();
+                    dataArray.put(index++, dataObj);
+                    double[] xyz = cellData[i];
 
-                minValue = Math.min(minValue, xyz[2]);
-                maxValue = Math.max(maxValue, xyz[2]);
-                JTS.transform(new Coordinate(xyz[0], xyz[1]), newCoord, crs2llTransform);
+                    minValue = Math.min(minValue, r(xyz[2]));
+                    maxValue = Math.max(maxValue, r(xyz[2]));
+                    JTS.transform(new Coordinate(xyz[0], xyz[1]), newCoord, crs2llTransform);
 
-                dataObj.put("x1", newCoord.x);
-                dataObj.put("y1", newCoord.y);
-                // dataObj.put("l", lasCell.avgElev);
-                dataObj.put("v", xyz[2]);
+                    dataObj.put("x1", newCoord.x);
+                    dataObj.put("y1", newCoord.y);
+                    // dataObj.put("l", lasCell.avgElev);
+                    dataObj.put("v", r(xyz[2]));
+                }
             }
+            rootObj.put("vmin", minValue);
+            rootObj.put("vmax", maxValue);
+        } else {
+            short minValue = 30000;
+            short maxValue = -1;
+            for( LasCell lasCell : lasCells ) {
+                double[][] cellPosition = LasCellsTable.getCellPositions(lasCell);
+                short[][] cellIntens = LasCellsTable.getCellIntensityClass(lasCell);
+                Coordinate newCoord = new Coordinate();
+                for( int i = 0; i < cellPosition.length; i++ ) {
+                    JSONObject dataObj = new JSONObject();
+                    dataArray.put(index++, dataObj);
+                    double[] xyz = cellPosition[i];
+                    short[] intens = cellIntens[i];
 
+                    minValue = (short) Math.min(minValue, r(intens[0]));
+                    maxValue = (short) Math.max(maxValue, r(intens[0]));
+                    JTS.transform(new Coordinate(xyz[0], xyz[1]), newCoord, crs2llTransform);
+
+                    dataObj.put("x1", newCoord.x);
+                    dataObj.put("y1", newCoord.y);
+                    // dataObj.put("l", lasCell.avgElev);
+                    dataObj.put("v", r(intens[0]));
+                }
+            }
+            rootObj.put("vmin", minValue);
+            rootObj.put("vmax", maxValue);
         }
-        rootObj.put("vmin", minValue);
-        rootObj.put("vmax", maxValue);
         return rootObj.toString();
+    }
+
+    private double r( double num ) {
+        return Math.round(num * 10.0) / 10.0;
     }
 
     private double getDouble( Object object ) {
