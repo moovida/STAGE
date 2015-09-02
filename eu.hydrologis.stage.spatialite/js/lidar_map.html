@@ -74,7 +74,7 @@
             }
 
             function checkData(fitData, colortab) {
-            	lastC = colortab;
+                lastC = colortab;
                 var zoom = leafletMap.getZoom();
 
                 var type = 1;
@@ -104,54 +104,54 @@
 
                 var delta = (maxVal - minVal) / 4;
                 var colorScale;
-                if(colortab===1){
-                	colorScale= d3.scale.linear()
-                        .domain(
-                                [
-                                    minVal,
-                                    minVal + delta,
-                                    minVal + 2 * delta,
-                                    minVal + 3 * delta,
-                                    maxVal
-                                ]
-                                )
-                        .range(
-                                [
-                                    d3.rgb(0, 191, 191),
-                                    d3.rgb(255, 255, 0),
-                                    d3.rgb(255, 127, 0),
-                                    d3.rgb(191, 127, 63),
-                                    d3.rgb(20, 21, 20)
-                                ]
-                                );
-                }else{
-                	colorScale= d3.scale.linear() // <-A
-                    .domain(
-                            [
-                                minVal,
-                                minVal + delta,
-                                minVal + 2 * delta,
-                                minVal + 3 * delta,
-                                maxVal
-                            ]
-                            )
-                    .range(
-                            [
-                                d3.rgb(255, 255, 0),
-                                d3.rgb(0, 255, 0),
-                                d3.rgb(0, 0, 255),
-                                d3.rgb(255, 0, 255),
-                                d3.rgb(255, 0, 0)
-                            ]
-                            );
+                if (colortab === 1) {
+                    colorScale = d3.scale.linear()
+                            .domain(
+                                    [
+                                        minVal,
+                                        minVal + delta,
+                                        minVal + 2 * delta,
+                                        minVal + 3 * delta,
+                                        maxVal
+                                    ]
+                                    )
+                            .range(
+                                    [
+                                        d3.rgb(0, 191, 191),
+                                        d3.rgb(255, 255, 0),
+                                        d3.rgb(255, 127, 0),
+                                        d3.rgb(191, 127, 63),
+                                        d3.rgb(20, 21, 20)
+                                    ]
+                                    );
+                } else {
+                    colorScale = d3.scale.linear() // <-A
+                            .domain(
+                                    [
+                                        minVal,
+                                        minVal + delta,
+                                        minVal + 2 * delta,
+                                        minVal + 3 * delta,
+                                        maxVal
+                                    ]
+                                    )
+                            .range(
+                                    [
+                                        d3.rgb(255, 255, 0),
+                                        d3.rgb(0, 255, 0),
+                                        d3.rgb(0, 0, 255),
+                                        d3.rgb(255, 0, 255),
+                                        d3.rgb(255, 0, 0)
+                                    ]
+                                    );
                 }
 
-                
+
                 // DATA JOIN
                 // Join new data with old elements, if any.
                 var rects = dataG.selectAll("polygon")
                         .data(json.data);
-                
+
                 // UPDATE
                 // Update old elements as needed.
                 rects.attr("points", function (d) {
@@ -176,33 +176,35 @@
                         return str;
                     }
                 })
-                .style("stroke", function (d) {
-                    if (type === 1) {
-                        return colorScale(d.v);
-                    }
-                })
-                .style("stroke-width", function (d) {
-                    if (type === 1) {
-                        return 2;
-                    }
-                })
-                .style("fill", function (d) {
-                    return colorScale(d.v);
-                })
-                .style("fill-opacity", function (d) {
-                    if (type === 1) {
-                        return 0;
-                    }
-                    return 0.7;
+                        .style("stroke", function (d) {
+                            if (type === 1) {
+                                return colorScale(d.v);
+                            }
+                        })
+                        .style("stroke-width", function (d) {
+                            if (type === 1) {
+                                return 2;
+                            }
+                        })
+                        .style("fill", function (d) {
+                            return colorScale(d.v);
+                        })
+                        .style("fill-opacity", function (d) {
+                            if (type === 1) {
+                                return 0;
+                            }
+                            return 0.7;
+                        });
+
+                rects.select("title").text(function (d) {
+                    if (d.l)
+                        return d.l;
+                    return d.v
                 });
-                
-                rects.select("title").text(function(d) { 
-                	if(d.l) return d.l;
-                	return d.v });
-                
-                
+
+
                 // ENTER
-				// Create new elements as needed.
+                // Create new elements as needed.
                 rects.enter().append("polygon")
                         .attr("points", function (d) {
                             if (type === 1 || type === 2) {
@@ -247,10 +249,11 @@
                         })
                         .append("svg:title")
                         .text(function (d) {
-                            if(d.l) return d.l;
+                            if (d.l)
+                                return d.l;
                             return d.v;
                         });
-                
+
                 rects.exit().remove();
 
                 if (fitData && json.ymin) {

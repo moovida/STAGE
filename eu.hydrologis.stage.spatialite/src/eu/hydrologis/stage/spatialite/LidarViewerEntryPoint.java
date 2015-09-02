@@ -63,6 +63,7 @@ import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.Polygon;
 
 import eu.hydrologis.stage.libs.log.StageLogger;
+import eu.hydrologis.stage.libs.utils.FileUtilities;
 import eu.hydrologis.stage.libs.utils.ImageCache;
 import eu.hydrologis.stage.libs.utils.StageProgressBar;
 import eu.hydrologis.stage.libs.utils.StageUtils;
@@ -551,6 +552,9 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
             rootObj.put("vmin", minValue);
             rootObj.put("vmax", maxValue);
         }
+        
+        FileUtilities.writeFile(rootObj.toString(2), new File("/home/hydrologis/development/STAGE-git/eu.hydrologis.stage.spatialite/js/wegl.json"));
+        
         return rootObj.toString();
     }
 
