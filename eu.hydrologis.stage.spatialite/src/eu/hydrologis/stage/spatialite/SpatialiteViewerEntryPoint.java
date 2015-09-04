@@ -66,6 +66,7 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.ToolItem;
 import org.eclipse.swt.widgets.Tree;
+import org.geotools.data.store.ReprojectingFeatureCollection;
 import org.geotools.factory.Hints;
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
@@ -74,6 +75,7 @@ import org.geotools.geojson.feature.FeatureJSON;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.ReferencingFactoryFinder;
+import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.jgrasstools.gears.io.vectorwriter.OmsVectorWriter;
 import org.jgrasstools.gears.spatialite.ForeignKey;
 import org.jgrasstools.gears.spatialite.QueryResult;
@@ -622,16 +624,11 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                                 int epsg = currentSelectedColumn.geomColumn.srid;
 
                                 CoordinateReferenceSystem sourceCRS = CRS.decode("EPSG:" + epsg);
-
-                                Hints hints = new Hints(Hints.FORCE_LONGITUDE_FIRST_AXIS_ORDER, Boolean.TRUE);
-                                CRSAuthorityFactory factory = ReferencingFactoryFinder.getCRSAuthorityFactory("EPSG", hints);
-                                CoordinateReferenceSystem targetCRS = factory.createCoordinateReferenceSystem("EPSG:4326");
-
-                                MathTransform transform = CRS.findMathTransform(sourceCRS, targetCRS);
+                                CoordinateReferenceSystem targetCRS = DefaultGeographicCRS.WGS84;
 
                                 SimpleFeatureTypeBuilder b = new SimpleFeatureTypeBuilder();
                                 b.setName("geojson");
-                                b.setCRS(targetCRS);
+                                b.setCRS(sourceCRS);
                                 b.add("geometry", Geometry.class);
 
                                 TableColumn[] columns = dataTableViewer.getTable().getColumns();
@@ -647,11 +644,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                                 List<Object[]> selectedData = selection.toList();
                                 for( Object[] objects : selectedData ) {
                                     // first needs to be the geometry
-                                    if (objects[0] instanceof Geometry) {
-                                        Geometry geom = (Geometry) objects[0];
-                                        Geometry targetGeometry = JTS.transform(geom, transform);
-                                        objects[0] = targetGeometry;
-                                    } else {
+                                    if (!(objects[0] instanceof Geometry)) {
                                         MessageDialog.openError(parentShell, "ERROR",
                                                 "The first column of the result of the query needs to be a geometry.");
                                         return;
@@ -661,14 +654,17 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                                     fc.add(feature);
                                 }
 
+                                ReprojectingFeatureCollection rfc = new ReprojectingFeatureCollection(fc, targetCRS);
+
                                 FeatureJSON fjson = new FeatureJSON();
                                 StringWriter writer = new StringWriter();
-                                fjson.writeFeatureCollection(fc, writer);
+                                fjson.writeFeatureCollection(rfc, writer);
                                 String geojson = writer.toString();
 
                                 // System.out.println(geojson);
 
-                                QuickGeometryViewDialog d = new QuickGeometryViewDialog(parentShell, "Table Graph", geojson);
+                                QuickGeometryViewDialog d = new QuickGeometryViewDialog(parentShell, "Table Data Viewer",
+                                        geojson);
                                 d.open();
                             } catch (Exception e) {
                                 e.printStackTrace();
@@ -1490,7 +1486,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
             };
         }
         if (selectedTable.isGeo) {
-            actions[index++] = new Action("Quick View Geometries", null){
+            actions[index++] = new Action("Quick View Table", null){
                 @Override
                 public void run() {
                     try {
@@ -1507,16 +1503,11 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                         }
 
                         CoordinateReferenceSystem sourceCRS = CRS.decode("EPSG:" + epsg);
-
-                        Hints hints = new Hints(Hints.FORCE_LONGITUDE_FIRST_AXIS_ORDER, Boolean.TRUE);
-                        CRSAuthorityFactory factory = ReferencingFactoryFinder.getCRSAuthorityFactory("EPSG", hints);
-                        CoordinateReferenceSystem targetCRS = factory.createCoordinateReferenceSystem("EPSG:4326");
-
-                        MathTransform transform = CRS.findMathTransform(sourceCRS, targetCRS);
+                        CoordinateReferenceSystem targetCRS = DefaultGeographicCRS.WGS84;
 
                         SimpleFeatureTypeBuilder b = new SimpleFeatureTypeBuilder();
                         b.setName("geojson");
-                        b.setCRS(targetCRS);
+                        b.setCRS(sourceCRS);
                         b.add("geometry", Geometry.class);
 
                         for( int j = 1; j < queryResult.names.size(); j++ ) {
@@ -1531,11 +1522,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                         List<Object[]> tableData = queryResult.data;
                         for( Object[] objects : tableData ) {
                             // first needs to be the geometry
-                            if (objects[0] instanceof Geometry) {
-                                Geometry geom = (Geometry) objects[0];
-                                Geometry targetGeometry = JTS.transform(geom, transform);
-                                objects[0] = targetGeometry;
-                            } else {
+                            if (!(objects[0] instanceof Geometry)) {
                                 MessageDialog.openError(parentShell, "ERROR",
                                         "The first column of the result of the query needs to be a geometry.");
                                 return;
@@ -1545,14 +1532,17 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                             fc.add(feature);
                         }
 
+                        ReprojectingFeatureCollection rfc = new ReprojectingFeatureCollection(fc, targetCRS);
+
                         FeatureJSON fjson = new FeatureJSON();
                         StringWriter writer = new StringWriter();
-                        fjson.writeFeatureCollection(fc, writer);
+                        fjson.writeFeatureCollection(rfc, writer);
                         String geojson = writer.toString();
 
                         // System.out.println(geojson);
 
-                        QuickGeometryViewDialog d = new QuickGeometryViewDialog(parentShell, "Data Viewer", geojson);
+                        QuickGeometryViewDialog d = new QuickGeometryViewDialog(parentShell,
+                                "Data Viewer: " + selectedTable.tableName, geojson);
                         d.open();
                     } catch (Exception e) {
                         e.printStackTrace();
