@@ -47,9 +47,7 @@ import org.jgrasstools.gears.spatialite.SpatialiteDb;
 import org.jgrasstools.gears.spatialite.SpatialiteGeometryColumns;
 import org.jgrasstools.gears.utils.geometry.GeometryUtilities;
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
-import org.opengis.geometry.MismatchedDimensionException;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.NoSuchAuthorityCodeException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
@@ -116,7 +114,8 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
 
     private CoordinateReferenceSystem leafletCRS = DefaultGeographicCRS.WGS84;
 
-    protected boolean isInfoToolOn;
+    private boolean isInfoToolOn;
+    private boolean isSourcesView = false;
 
     @Override
     protected void createContents( final Composite parent ) {
@@ -496,8 +495,10 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
 
                     try {
                         if (viewType == 1) {
+                            isSourcesView = true;
                             return getSources(llEnv);
                         } else if (viewType == 2) {
+                            isSourcesView = false;
                             return getPoints(llEnv);
                         } else {
                             MathTransform ll2CRSTransform = CRS.findMathTransform(leafletCRS, databaseCrs);
@@ -509,6 +510,7 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
                                 if (StageLogger.LOG_INFO)
                                     StageLogger.logInfo(this, "At zoom: " + zoom + " and bounds: " + searchEnv
                                             + " render cells (ca." + tilesNumEsteem + ")");
+                                isSourcesView = false;
                                 return getCells(llEnv);
                             } else {
                                 for( int i = 1; i <= maxLevel; i++ ) {
@@ -520,12 +522,14 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
                                         if (StageLogger.LOG_INFO)
                                             StageLogger.logInfo(this, "At zoom: " + zoom + " and bounds: " + searchEnv
                                                     + " render level: " + i + " (ca." + tilesNumEsteem + ")");
+                                        isSourcesView = false;
                                         return getLevels(llEnv, i);
                                     }
                                 }
                                 if (StageLogger.LOG_INFO)
                                     StageLogger.logInfo(this, "At zoom: " + zoom + " and bounds: " + searchEnv
                                             + " render sources (ca." + tilesNumEsteem + ")");
+                                isSourcesView = true;
                                 return getSources(llEnv);
                             }
 
@@ -542,7 +546,7 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
                 public Object function( Object[] arguments ) {
                     double lon = getDouble(arguments[0]);
                     double lat = getDouble(arguments[1]);
-                    String msg = "<p>Hello world!<br />This is a nice popup.</p>";
+                    String msg = "";
 
                     try {
                         MathTransform ll2CRSTransform = CRS.findMathTransform(leafletCRS, databaseCrs);
@@ -556,6 +560,18 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
                                 true, true, true, true);
                         if (lasCells.size() == 0) {
                             msg = "<p>No data found here.</p>";
+                        } else if (isSourcesView == true) {
+                            List<LasSource> sources = LasSourcesTable.getLasSources(currentConnectedDatabase);
+                            for( LasSource lasSource : sources ) {
+                                if (lasSource.polygon.intersects(GeometryUtilities.gf().createPoint(crsCoord))) {
+                                    msg = "<p>source: " + lasSource.name;
+                                    msg += "<br/>min elevation: " + lasSource.minElev;
+                                    msg += "<br/>max elevation: " + lasSource.maxElev;
+                                    msg += "<br/>cell resolution: " + lasSource.resolution;
+                                    msg += "</p>";
+                                    return msg;
+                                }
+                            }
                         } else {
                             LasCell lasCell = lasCells.get(0);
                             double[][] cellPositions = LasCellsTable.getCellPositions(lasCell);
@@ -580,14 +596,14 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
                             msg += "<br/>intensity: " + intens;
                             msg += "<br/>classification: " + classif;
                             msg += "</p>";
-
+                            return msg;
                         }
                     } catch (Exception e) {
                         StageLogger.logError(this, e);
                         msg = "<p>An error occurred while retrieving the data.</p>";
                     }
-
                     return msg;
+                    
                 }
 
             };

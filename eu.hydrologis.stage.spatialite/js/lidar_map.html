@@ -30,6 +30,7 @@
             var lastC = 1;
             var psize = 2;
             var doInfoTool = false;
+            
 
 //            loadScript();
             function loadScript() {
@@ -57,7 +58,7 @@
                 leafletMap.on('moveend', function () {
                     checkData(false, lastC);
                 });
-                leafletMap.on('mouseup', function (event) {
+                leafletMap.on('mousedown', function (event) {
                     if(doInfoTool)
                        info(event)
                 });
@@ -85,7 +86,8 @@
             
             function info(event){
                 var msg = getInfoData(event.latlng.lng, event.latlng.lat);
-                L.popup().setLatLng(L.latLng(event.latlng.lat,event.latlng.lng)).setContent(msg).openOn(leafletMap);
+                var infoPopup = L.popup().setLatLng(L.latLng(event.latlng.lat,event.latlng.lng)).setContent(msg);
+                leafletMap.openPopup(infoPopup);
             }
 
             function project(x, y) {
@@ -220,11 +222,11 @@
                             return 0.7;
                         });
 
-                rects.select("title").text(function (d) {
-                    if (d.l)
-                        return d.l;
-                    return d.v
-                });
+            //    rects.select("title").text(function (d) {
+             //       if (d.l)
+              //          return d.l;
+               //     return d.v
+                //});
 
 
                 // ENTER
@@ -269,13 +271,13 @@
                                 return 0;
                             }
                             return 0.7;
-                        })
-                        .append("svg:title")
-                        .text(function (d) {
-                            if (d.l)
-                                return d.l;
-                            return d.v;
                         });
+//                        .append("svg:title")
+ //                       .text(function (d) {
+  //                          if (d.l)
+   //                             return d.l;
+    //                        return d.v;
+     //                   });
 
                 rects.exit().remove();
 
