@@ -28,6 +28,8 @@
             var mapnik;
             var dataG;
             var lastC = 1;
+            var psize = 2;
+            var doInfoTool = false;
 
 //            loadScript();
             function loadScript() {
@@ -55,6 +57,10 @@
                 leafletMap.on('moveend', function () {
                     checkData(false, lastC);
                 });
+                leafletMap.on('mouseup', function (event) {
+                    if(doInfoTool)
+                       info(event)
+                });
 
                 var mapSvg = d3.select("#map").select("svg");
                 dataG = mapSvg.append("g");
@@ -67,12 +73,31 @@
 
 //                });
             }
+            
+            function enableInfo(doInfo){
+                doInfoTool = doInfo; 
+                if(doInfo){
+                    document.getElementById('map').style.cursor = 'crosshair';
+                }else{
+                    document.getElementById('map').style.cursor = '';
+                }
+            }
+            
+            function info(event){
+                var msg = getInfoData(event.latlng.lng, event.latlng.lat);
+                L.popup().setLatLng(L.latLng(event.latlng.lat,event.latlng.lng)).setContent(msg).openOn(leafletMap);
+            }
 
             function project(x, y) {
                 var point = leafletMap.latLngToLayerPoint(new L.LatLng(y, x));
                 return point;
             }
-
+            
+            function zoomToData(){
+                leafletMap.setZoom(1);
+                checkData(true, 1);
+            }
+            
             function checkData(fitData, colortab) {
                 lastC = colortab;
                 var zoom = leafletMap.getZoom();
@@ -155,7 +180,7 @@
                 // UPDATE
                 // Update old elements as needed.
                 rects.attr("points", function (d) {
-                    if (type === 1 || type === 2) {
+                    if (d.x1) {
                         var str = "";
                         var p = project(d.x1, d.y1);
                         str += p.x + "," + p.y;
@@ -167,30 +192,29 @@
                         str += " " + p.x + "," + p.y;
                         return str;
                     } else {
-                        var dx = 3;
-                        var p = project(d.x1, d.y1);
-                        var str = (p.x - dx) + "," + (p.y - dx);
-                        str += " " + (p.x - dx) + "," + (p.y + dx);
-                        str += " " + (p.x + dx) + "," + (p.y + dx);
-                        str += " " + (p.x + dx) + "," + (p.y - dx);
+                        var p = project(d.x, d.y);
+                        var str = (p.x - psize) + "," + (p.y - psize);
+                        str += " " + (p.x - psize) + "," + (p.y + psize);
+                        str += " " + (p.x + psize) + "," + (p.y + psize);
+                        str += " " + (p.x + psize) + "," + (p.y - psize);
                         return str;
                     }
                 })
                         .style("stroke", function (d) {
-                            if (type === 1) {
+                            if (d.l) {
                                 return colorScale(d.v);
-                            }
+                           }
                         })
                         .style("stroke-width", function (d) {
-                            if (type === 1) {
+                            if (d.l) {
                                 return 2;
-                            }
+                           }
                         })
                         .style("fill", function (d) {
                             return colorScale(d.v);
                         })
                         .style("fill-opacity", function (d) {
-                            if (type === 1) {
+                           if (d.l) {
                                 return 0;
                             }
                             return 0.7;
@@ -207,7 +231,7 @@
                 // Create new elements as needed.
                 rects.enter().append("polygon")
                         .attr("points", function (d) {
-                            if (type === 1 || type === 2) {
+                            if (d.x1) {
                                 var str = "";
                                 var p = project(d.x1, d.y1);
                                 str += p.x + "," + p.y;
@@ -219,22 +243,21 @@
                                 str += " " + p.x + "," + p.y;
                                 return str;
                             } else {
-                                var dx = 2;
-                                var p = project(d.x1, d.y1);
-                                var str = (p.x - dx) + "," + (p.y - dx);
-                                str += " " + (p.x - dx) + "," + (p.y + dx);
-                                str += " " + (p.x + dx) + "," + (p.y + dx);
-                                str += " " + (p.x + dx) + "," + (p.y - dx);
+                                var p = project(d.x, d.y);
+                                var str = (p.x - psize) + "," + (p.y - psize);
+                                str += " " + (p.x - psize) + "," + (p.y + psize);
+                                str += " " + (p.x + psize) + "," + (p.y + psize);
+                                str += " " + (p.x + psize) + "," + (p.y - psize);
                                 return str;
                             }
                         })
                         .style("stroke", function (d) {
-                            if (type === 1) {
+                            if (d.l) {
                                 return colorScale(d.v);
                             }
                         })
                         .style("stroke-width", function (d) {
-                            if (type === 1) {
+                            if (d.l) {
                                 return 2;
                             }
                         })
@@ -242,7 +265,7 @@
                             return colorScale(d.v);
                         })
                         .style("fill-opacity", function (d) {
-                            if (type === 1) {
+                            if (d.l) {
                                 return 0;
                             }
                             return 0.7;

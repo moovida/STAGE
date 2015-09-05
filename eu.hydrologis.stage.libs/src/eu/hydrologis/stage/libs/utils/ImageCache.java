@@ -67,8 +67,12 @@ public class ImageCache {
     public static final String PHOTO = "photo.png";
 
     public static final String EXPORT = "export_wiz.gif";
+
+    public static final String INFOTOOL_ON = "info_on.gif";
+    public static final String INFOTOOL_OFF = "info_off.png";
     
     public static final String GLOBE = "globe.gif";
+    public static final String ZOOM_TO_ALL = "zoom_to_all.png";
     
     public static final String VECTOR = "vector.png";
 

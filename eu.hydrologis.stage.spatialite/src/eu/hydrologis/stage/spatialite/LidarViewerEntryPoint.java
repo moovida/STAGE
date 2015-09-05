@@ -8,23 +8,20 @@
  */
 package eu.hydrologis.stage.spatialite;
 
-import static java.lang.Math.max;
-
 import java.io.File;
 import java.io.IOException;
-import java.io.StringWriter;
-import java.util.HashMap;
 import java.util.List;
 
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.rap.rwt.RWT;
 import org.eclipse.rap.rwt.application.AbstractEntryPoint;
-import org.eclipse.rap.rwt.widgets.BrowserUtil;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.browser.BrowserFunction;
 import org.eclipse.swt.browser.ProgressEvent;
 import org.eclipse.swt.browser.ProgressListener;
+import org.eclipse.swt.events.ModifyEvent;
+import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
@@ -37,11 +34,6 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
-import org.geotools.data.store.ReprojectingFeatureCollection;
-import org.geotools.feature.DefaultFeatureCollection;
-import org.geotools.feature.simple.SimpleFeatureBuilder;
-import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
-import org.geotools.geojson.feature.FeatureJSON;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
@@ -55,9 +47,9 @@ import org.jgrasstools.gears.spatialite.SpatialiteDb;
 import org.jgrasstools.gears.spatialite.SpatialiteGeometryColumns;
 import org.jgrasstools.gears.utils.geometry.GeometryUtilities;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
+import org.opengis.geometry.MismatchedDimensionException;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.NoSuchAuthorityCodeException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
@@ -70,7 +62,6 @@ import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.Polygon;
 
 import eu.hydrologis.stage.libs.log.StageLogger;
-import eu.hydrologis.stage.libs.utils.FileUtilities;
 import eu.hydrologis.stage.libs.utils.ImageCache;
 import eu.hydrologis.stage.libs.utils.StageProgressBar;
 import eu.hydrologis.stage.libs.utils.StageUtils;
@@ -110,13 +101,22 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
      */
     private int viewType = 0;
 
-    private Label loadedElementsNumLabel;
+    private Text loadedElementsNumText;
 
     private CoordinateReferenceSystem databaseCrs;
 
-    private int maxLevel;
+    private int maxLevel = 0;
+    private double maxLevelResolution;
+    private double maxLevelFactor;
 
     private Combo viewTypeCombo;
+
+    private int pointsLimit = 50000;
+    private int cellsLimit = 1000;
+
+    private CoordinateReferenceSystem leafletCRS = DefaultGeographicCRS.WGS84;
+
+    protected boolean isInfoToolOn;
 
     @Override
     protected void createContents( final Composite parent ) {
@@ -143,7 +143,6 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
         leftLayout.marginHeight = 0;
         leftComposite.setLayout(leftLayout);
         GridData leftGD = new GridData(GridData.FILL, GridData.FILL, false, true);
-        // leftGD.widthHint = 100;
         leftComposite.setLayoutData(leftGD);
 
         Label connectedDbLabel = new Label(leftComposite, SWT.NONE);
@@ -175,6 +174,7 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
         viewTypeCombo = new Combo(leftComposite, SWT.DROP_DOWN | SWT.READ_ONLY);
         GridData viewTypeComboGD = new GridData(SWT.FILL, SWT.CENTER, false, false);
         viewTypeComboGD.horizontalSpan = 2;
+        viewTypeComboGD.widthHint = 200;
         viewTypeCombo.setLayoutData(viewTypeComboGD);
         viewTypeCombo.setItems(new String[]{"automatic", "overview", "points"});
         viewTypeCombo.select(0);
@@ -189,12 +189,7 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
                             // generalProgressBar.setProgressText("Load data...");
                             // generalProgressBar.start(0);
                             viewType = viewTypeCombo.getSelectionIndex();
-                            if (viewType == 0 || viewType == 1) {
-                                // 1, 2 are polygons
-                                mapBrowser.evaluate("checkData(false, 1);");
-                            } else {
-                                mapBrowser.evaluate("checkData(false, 3);");
-                            }
+                            mapBrowser.evaluate("checkData(false, 1);");
                         } catch (Exception e) {
                             StageLogger.logError(LidarViewerEntryPoint.this, e);
                             // } finally {
@@ -251,14 +246,65 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
             }
         });
 
+        Label pointsLimitLabel = new Label(leftComposite, SWT.NONE);
+        pointsLimitLabel.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
+        pointsLimitLabel.setText("Points limit: ");
+
+        final Text pointsLimitText = new Text(leftComposite, SWT.SINGLE | SWT.LEAD | SWT.BORDER);
+        GridData pointsLimitTextGD = new GridData(SWT.FILL, SWT.CENTER, true, false);
+        pointsLimitTextGD.horizontalSpan = 2;
+        pointsLimitText.setLayoutData(pointsLimitTextGD);
+        pointsLimitText.setText("" + pointsLimit);
+        pointsLimitText.addModifyListener(new ModifyListener(){
+            @Override
+            public void modifyText( ModifyEvent event ) {
+                String limitStr = pointsLimitText.getText();
+                try {
+                    pointsLimit = (int) Double.parseDouble(limitStr);
+                } catch (NumberFormatException e) {
+                    pointsLimit = 50000;
+                }
+            }
+        });
+
+        Label cellsLimitLabel = new Label(leftComposite, SWT.NONE);
+        cellsLimitLabel.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
+        cellsLimitLabel.setText("Cells limit: ");
+
+        final Text cellsLimitText = new Text(leftComposite, SWT.SINGLE | SWT.LEAD | SWT.BORDER);
+        GridData cellsLimitTextGD = new GridData(SWT.FILL, SWT.CENTER, true, false);
+        cellsLimitTextGD.horizontalSpan = 2;
+        cellsLimitText.setLayoutData(cellsLimitTextGD);
+        cellsLimitText.setText("" + cellsLimit);
+        cellsLimitText.addModifyListener(new ModifyListener(){
+            @Override
+            public void modifyText( ModifyEvent event ) {
+                String limitStr = cellsLimitText.getText();
+                try {
+                    cellsLimit = (int) Double.parseDouble(limitStr);
+                } catch (NumberFormatException e) {
+                    cellsLimit = 1000;
+                }
+            }
+        });
+
         Label loadedElementsLabel = new Label(leftComposite, SWT.NONE);
         loadedElementsLabel.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
         loadedElementsLabel.setText("Loaded elements: ");
-        loadedElementsNumLabel = new Label(leftComposite, SWT.NONE);
+        loadedElementsNumText = new Text(leftComposite, SWT.SINGLE | SWT.LEAD | SWT.BORDER);
         GridData loadedElementsNumLabelGD = new GridData(SWT.FILL, SWT.CENTER, false, false);
         loadedElementsNumLabelGD.horizontalSpan = 2;
-        loadedElementsNumLabel.setLayoutData(loadedElementsNumLabelGD);
-        loadedElementsNumLabel.setText(" - ");
+        loadedElementsNumText.setLayoutData(loadedElementsNumLabelGD);
+        loadedElementsNumText.setText(" - ");
+        loadedElementsNumText.setEditable(false);
+
+        Label spacerLabel = new Label(leftComposite, SWT.NONE);
+        GridData spacerLabelGD = new GridData(SWT.FILL, SWT.FILL, false, true);
+        spacerLabelGD.horizontalSpan = 3;
+        spacerLabel.setLayoutData(spacerLabelGD);
+        spacerLabel.setText("");
+
+        createButtonsComposite(leftComposite);
 
         Composite rightComposite = new Composite(composite, SWT.None);
         GridLayout rightLayout = new GridLayout(1, true);
@@ -269,7 +315,7 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
         rightComposite.setLayoutData(rightGD);
 
         try {
-            mapBrowser = new Browser(rightComposite, SWT.BORDER);
+            mapBrowser = new Browser(rightComposite, SWT.NONE);
             GridData mapBrowserGD = new GridData(SWT.FILL, SWT.FILL, true, true);
             // mapBrowserGD.horizontalIndent = 3;
             // mapBrowserGD.verticalIndent = 3;
@@ -288,6 +334,40 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
         progressBarGD.horizontalSpan = 2;
         generalProgressBar = new StageProgressBar(composite, SWT.HORIZONTAL | SWT.INDETERMINATE, progressBarGD);
 
+    }
+
+    private void createButtonsComposite( Composite leftComposite ) {
+        Composite buttonsComposite = new Composite(leftComposite, SWT.NONE);
+        buttonsComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, false));
+        buttonsComposite.setLayout(new GridLayout(5, false));
+
+        Button zoomToAllButton = new Button(buttonsComposite, SWT.PUSH);
+        zoomToAllButton.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
+        zoomToAllButton.setToolTipText("Zoom to the complete data extend.");
+        zoomToAllButton.setImage(ImageCache.getInstance().getImage(display, ImageCache.ZOOM_TO_ALL));
+        zoomToAllButton.addSelectionListener(new SelectionAdapter(){
+            @Override
+            public void widgetSelected( SelectionEvent e ) {
+                mapBrowser.evaluate("zoomToData();");
+            }
+        });
+
+        final Button infoToolButton = new Button(buttonsComposite, SWT.PUSH);
+        infoToolButton.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
+        infoToolButton.setToolTipText("Enable info tool");
+        infoToolButton.setImage(ImageCache.getInstance().getImage(display, ImageCache.INFOTOOL_ON));
+        infoToolButton.addSelectionListener(new SelectionAdapter(){
+            @Override
+            public void widgetSelected( SelectionEvent e ) {
+                isInfoToolOn = !isInfoToolOn;
+                mapBrowser.evaluate("enableInfo(" + isInfoToolOn + ");");
+                if (isInfoToolOn) {
+                    infoToolButton.setImage(ImageCache.getInstance().getImage(display, ImageCache.INFOTOOL_OFF));
+                } else {
+                    infoToolButton.setImage(ImageCache.getInstance().getImage(display, ImageCache.INFOTOOL_ON));
+                }
+            }
+        });
     }
 
     private void openDatabase( final Shell shell ) {
@@ -325,7 +405,11 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
 
                                     List<LasSource> lasSources = LasSourcesTable.getLasSources(currentConnectedDatabase);
                                     for( LasSource lasSource : lasSources ) {
-                                        maxLevel = max(lasSource.levels, maxLevel);
+                                        if (lasSource.levels > maxLevel) {
+                                            maxLevel = lasSource.levels;
+                                            maxLevelResolution = lasSource.resolution;
+                                            maxLevelFactor = lasSource.levelFactor;
+                                        }
                                     }
                                     SpatialiteGeometryColumns geometryColumns = currentConnectedDatabase
                                             .getGeometryColumnsForTable(LasSourcesTable.TABLENAME);
@@ -398,15 +482,16 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
                     double east = getDouble(arguments[4]); // e,
                     int zoom = (int) getDouble(arguments[5]); // zoom
 
-                    StringBuilder sb = new StringBuilder();
-                    sb.append("type=").append(type).append("\n");
-                    sb.append("south=").append(south).append("\n");
-                    sb.append("north=").append(north).append("\n");
-                    sb.append("west=").append(west).append("\n");
-                    sb.append("east=").append(east).append("\n");
-                    sb.append("zoom=").append(zoom).append("\n***************************************");
-                    System.out.println(sb.toString());
-
+                    if (StageLogger.LOG_DEBUG) {
+                        StringBuilder sb = new StringBuilder();
+                        sb.append("type=").append(type).append("\n");
+                        sb.append("south=").append(south).append("\n");
+                        sb.append("north=").append(north).append("\n");
+                        sb.append("west=").append(west).append("\n");
+                        sb.append("east=").append(east).append("\n");
+                        sb.append("zoom=").append(zoom).append("\n***************************************");
+                        StageLogger.logInfo(this, sb.toString());
+                    }
                     Envelope llEnv = new Envelope(west, east, south, north);
 
                     try {
@@ -415,55 +500,94 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
                         } else if (viewType == 2) {
                             return getPoints(llEnv);
                         } else {
-                            if (type == 1) {
-                                return getSources(llEnv);
-                            } else if (type == 3) {
-                                return getPoints(llEnv);
-                            } else if (type == 2) {
-                                if (maxLevel > 0) {
-                                    if (zoom == 16) {
-                                        int l = 3;
-                                        if (l <= maxLevel) {
-                                            System.out.println("z=" + zoom + " l=" + l);
-                                            return getLevels(llEnv, l);
-                                        } else {
-                                            return getSources(llEnv);
-                                        }
-                                    } else if (zoom == 17) {
-                                        int l = 2;
-                                        if (l <= maxLevel) {
-                                            System.out.println("z=" + zoom + " l=" + l);
-                                            return getLevels(llEnv, l);
-                                        } else {
-                                            return getSources(llEnv);
-                                        }
-                                    } else if (zoom == 18) {
-                                        int l = 1;
-                                        if (l <= maxLevel) {
-                                            System.out.println("z=" + zoom + " l=" + l);
-                                            return getLevels(llEnv, l);
-                                        } else {
-                                            return getSources(llEnv);
-                                        }
-//                                    } else if (zoom == 19) {
-//                                        if (1 <= maxLevel) {
-//                                            System.out.println("z=" + zoom + " l=" + 2);
-//                                            return getLevels(llEnv, 2);
-//                                        } else {
-//                                            return getCells(llEnv);
-//                                        }
-                                    } else {
-                                        return getCells(llEnv);
+                            MathTransform ll2CRSTransform = CRS.findMathTransform(leafletCRS, databaseCrs);
+                            Envelope searchEnv = JTS.transform(llEnv, ll2CRSTransform);
+                            int countX = (int) (searchEnv.getWidth() / maxLevelResolution);
+                            int countY = (int) (searchEnv.getHeight() / maxLevelResolution);
+                            int tilesNumEsteem = countX * countY;
+                            if (tilesNumEsteem >= 0 && tilesNumEsteem < cellsLimit) {
+                                if (StageLogger.LOG_INFO)
+                                    StageLogger.logInfo(this, "At zoom: " + zoom + " and bounds: " + searchEnv
+                                            + " render cells (ca." + tilesNumEsteem + ")");
+                                return getCells(llEnv);
+                            } else {
+                                for( int i = 1; i <= maxLevel; i++ ) {
+                                    double res = maxLevelResolution * i * maxLevelFactor;
+                                    countX = (int) (searchEnv.getWidth() / res);
+                                    countY = (int) (searchEnv.getHeight() / res);
+                                    tilesNumEsteem = countX * countY;
+                                    if (tilesNumEsteem >= 0 && tilesNumEsteem < cellsLimit) {
+                                        if (StageLogger.LOG_INFO)
+                                            StageLogger.logInfo(this, "At zoom: " + zoom + " and bounds: " + searchEnv
+                                                    + " render level: " + i + " (ca." + tilesNumEsteem + ")");
+                                        return getLevels(llEnv, i);
                                     }
-                                } else {
-                                    return getCells(llEnv);
                                 }
+                                if (StageLogger.LOG_INFO)
+                                    StageLogger.logInfo(this, "At zoom: " + zoom + " and bounds: " + searchEnv
+                                            + " render sources (ca." + tilesNumEsteem + ")");
+                                return getSources(llEnv);
                             }
+
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
                     return "";
+                }
+
+            };
+            new BrowserFunction(mapBrowser, "getInfoData"){
+                @Override
+                public Object function( Object[] arguments ) {
+                    double lon = getDouble(arguments[0]);
+                    double lat = getDouble(arguments[1]);
+                    String msg = "<p>Hello world!<br />This is a nice popup.</p>";
+
+                    try {
+                        MathTransform ll2CRSTransform = CRS.findMathTransform(leafletCRS, databaseCrs);
+                        Coordinate llCord = new Coordinate(lon, lat);
+                        Coordinate crsCoord = JTS.transform(llCord, null, ll2CRSTransform);
+                        Envelope env = new Envelope(llCord);
+                        env.expandBy(0.000001);
+                        Polygon searchPolygonLL = GeometryUtilities.createPolygonFromEnvelope(env);
+                        Geometry searchPolygonLLCRS = JTS.transform(searchPolygonLL, ll2CRSTransform);
+                        List<LasCell> lasCells = LasCellsTable.getLasCells(currentConnectedDatabase, searchPolygonLLCRS, true,
+                                true, true, true, true);
+                        if (lasCells.size() == 0) {
+                            msg = "<p>No data found here.</p>";
+                        } else {
+                            LasCell lasCell = lasCells.get(0);
+                            double[][] cellPositions = LasCellsTable.getCellPositions(lasCell);
+                            short[][] cellIntens = LasCellsTable.getCellIntensityClass(lasCell);
+                            double minDist = Double.POSITIVE_INFINITY;
+                            double z = 0;
+                            short intens = 0;
+                            short classif = 0;
+                            for( int i = 0; i < cellPositions.length; i++ ) {
+                                double[] xyz = cellPositions[i];
+
+                                Coordinate c = new Coordinate(xyz[0], xyz[1]);
+                                double dist = c.distance(crsCoord);
+                                if (dist < minDist) {
+                                    minDist = dist;
+                                    z = xyz[2];
+                                    intens = cellIntens[i][0];
+                                    classif = cellIntens[i][1];
+                                }
+                            }
+                            msg = "<p>elevation: " + z;
+                            msg += "<br/>intensity: " + intens;
+                            msg += "<br/>classification: " + classif;
+                            msg += "</p>";
+
+                        }
+                    } catch (Exception e) {
+                        StageLogger.logError(this, e);
+                        msg = "<p>An error occurred while retrieving the data.</p>";
+                    }
+
+                    return msg;
                 }
 
             };
@@ -480,6 +604,9 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
         Envelope searchEnv = JTS.transform(env, ll2CRSTransform);
 
         List<LasSource> lasSources = LasSourcesTable.getLasSources(currentConnectedDatabase);
+        if (lasSources.size() == 0) {
+            return null;
+        }
 
         JSONObject rootObj = new JSONObject();
         JSONArray dataArray = new JSONArray();
@@ -519,6 +646,10 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
             dataObj.put("l", lasSource.name);
             dataObj.put("v", r(lasSource.maxElev));
         }
+        if (bounds == null) {
+            return null;
+        }
+
         rootObj.put("xmin", bounds.getMinX());
         rootObj.put("xmax", bounds.getMaxX());
         rootObj.put("ymin", bounds.getMinY());
@@ -526,19 +657,15 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
         rootObj.put("vmin", minValue);
         rootObj.put("vmax", maxValue);
 
-        loadedElementsNumLabel.setText("" + index);
+        loadedElementsNumText.setText("" + index);
 
         return rootObj.toString();
     }
 
     private Object getCells( Envelope env ) throws Exception {
-        CoordinateReferenceSystem leafletCRS = DefaultGeographicCRS.WGS84;
+
         MathTransform ll2CRSTransform = CRS.findMathTransform(leafletCRS, databaseCrs);
         MathTransform crs2llTransform = CRS.findMathTransform(databaseCrs, leafletCRS);
-
-        JSONObject rootObj = new JSONObject();
-        JSONArray dataArray = new JSONArray();
-        rootObj.put("data", dataArray);
 
         Polygon searchPolygonLL = GeometryUtilities.createPolygonFromEnvelope(env);
         Geometry searchPolygonLLCRS = JTS.transform(searchPolygonLL, ll2CRSTransform);
@@ -554,8 +681,16 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
             return null;
         }
 
-        loadedElementsNumLabel.setText("" + size);
+        loadedElementsNumText.setText("" + size);
 
+        JSONObject rootObj = cells2Json(crs2llTransform, lasCells);
+        return rootObj.toString();
+    }
+
+    private JSONObject cells2Json( MathTransform crs2llTransform, List<LasCell> lasCells ) throws TransformException {
+        JSONObject rootObj = new JSONObject();
+        JSONArray dataArray = new JSONArray();
+        rootObj.put("data", dataArray);
         double minValue = Double.POSITIVE_INFINITY;
         double maxValue = Double.NEGATIVE_INFINITY;
         int index = 0;
@@ -583,13 +718,12 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
         }
         rootObj.put("vmin", minValue);
         rootObj.put("vmax", maxValue);
-        return rootObj.toString();
+        return rootObj;
     }
 
     private Object getLevels( Envelope env, int level )
             throws NoSuchAuthorityCodeException, FactoryException, TransformException, Exception, IOException {
 
-        CoordinateReferenceSystem leafletCRS = DefaultGeographicCRS.WGS84;// CRS.decode("EPSG:4326");
         MathTransform ll2CRSTransform = CRS.findMathTransform(leafletCRS, databaseCrs);
         MathTransform crs2llTransform = CRS.findMathTransform(databaseCrs, leafletCRS);
 
@@ -610,7 +744,7 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
             return null;
         }
 
-        loadedElementsNumLabel.setText("" + size);
+        loadedElementsNumText.setText("" + size);
 
         double minValue = Double.POSITIVE_INFINITY;
         double maxValue = Double.NEGATIVE_INFINITY;
@@ -645,7 +779,6 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
     private Object getPoints( Envelope env )
             throws NoSuchAuthorityCodeException, FactoryException, TransformException, Exception, IOException {
 
-        CoordinateReferenceSystem leafletCRS = DefaultGeographicCRS.WGS84;// CRS.decode("EPSG:4326");
         MathTransform ll2CRSTransform = CRS.findMathTransform(leafletCRS, databaseCrs);
         MathTransform crs2llTransform = CRS.findMathTransform(databaseCrs, leafletCRS);
 
@@ -670,15 +803,13 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
         }
         long t2 = System.currentTimeMillis();
         System.out.println("time: " + (t2 - t1) + " exploded size = " + count);
-        if (count > 50000) {
-            boolean doContinue = MessageDialog.openConfirm(parentShell, "WARNING", "The chosen region will try to render " + count
-                    + " points, which might even freeze your computer. Are you sure you want to continue?");
-            if (!doContinue) {
-                viewTypeCombo.select(0);
-                return "";
-            }
+        if (count > pointsLimit) {
+            loadedElementsNumText.setText("Wont't render: " + count);
+            viewTypeCombo.select(0);
+            viewType = 0;
+            return cells2Json(crs2llTransform, lasCells).toString();
         }
-        loadedElementsNumLabel.setText("" + count);
+        loadedElementsNumText.setText("" + count);
 
         int index = 0;
         if (dataType == 0) {
@@ -696,8 +827,8 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
                     maxValue = Math.max(maxValue, r(xyz[2]));
                     JTS.transform(new Coordinate(xyz[0], xyz[1]), newCoord, crs2llTransform);
 
-                    dataObj.put("x1", newCoord.x);
-                    dataObj.put("y1", newCoord.y);
+                    dataObj.put("x", newCoord.x);
+                    dataObj.put("y", newCoord.y);
                     // dataObj.put("l", lasCell.avgElev);
                     dataObj.put("v", r(xyz[2]));
                 }
@@ -721,8 +852,8 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
                     maxValue = (short) Math.max(maxValue, r(intens[0]));
                     JTS.transform(new Coordinate(xyz[0], xyz[1]), newCoord, crs2llTransform);
 
-                    dataObj.put("x1", newCoord.x);
-                    dataObj.put("y1", newCoord.y);
+                    dataObj.put("x", newCoord.x);
+                    dataObj.put("y", newCoord.y);
                     // dataObj.put("l", lasCell.avgElev);
                     dataObj.put("v", r(intens[0]));
                 }
