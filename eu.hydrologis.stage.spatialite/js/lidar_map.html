@@ -5,8 +5,18 @@
         <title>STAGE - Quick Geometry Viewer</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <script type="text/javascript" src="libs/d3.min.js"></script>
+        
+        <!-- 
         <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.js"></script>
         <link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.css" />
+         -->
+        
+        <script type='text/javascript' src="http://leaflet.github.com/Leaflet.draw/lib/leaflet/leaflet.js"></script>
+        <link rel="stylesheet" type="text/css" href="http://leaflet.github.com/Leaflet.draw/lib/leaflet/leaflet.css">
+        
+        <link rel="stylesheet" type="text/css" href="http://leaflet.github.com/Leaflet.draw/leaflet.draw.css">
+        <script type='text/javascript' src="http://leaflet.github.com/Leaflet.draw/leaflet.draw.js"></script>
+        
         <script type='text/javascript' src='libs/jquery.min.js'></script>
         <style>
             .map {
@@ -30,6 +40,7 @@
             var lastC = 1;
             var psize = 2;
             var doInfoTool = false;
+            var drawnItems;
             
 
 //            loadScript();
@@ -63,6 +74,8 @@
                        info(event)
                 });
 
+                enableDrawTools();
+                
                 var mapSvg = d3.select("#map").select("svg");
                 dataG = mapSvg.append("g");
 
@@ -70,9 +83,61 @@
 
                 checkData(true, lastC);
                 mapnik.addTo(leafletMap);
-
-
 //                });
+            }
+            
+            
+            function enableDrawTools(){
+
+        		drawnItems = new L.FeatureGroup();
+        		leafletMap.addLayer(drawnItems);
+
+        		var drawControl = new L.Control.Draw({
+        			draw: {
+        				polygon: false,
+        				polyline: {
+        					metric: true,
+        					shapeOptions: { 
+        						color: '#004a80',
+        						opacity: 1
+        					} 
+        				},
+        				circle: false,
+        				rectangle: false,
+        				marker: false
+        			},
+        			edit: {
+        				featureGroup: drawnItems,
+        				remove: false
+        			}
+        		});
+        		leafletMap.addControl(drawControl);
+
+        		leafletMap.on('draw:created', function (e) {
+        			drawnItems.eachLayer(function (layer) {
+        			    drawnItems.removeLayer(layer);
+        			});
+        			layer = e.layer;
+        			
+        			var latLngs = [];
+        			layer.getLatLngs().forEach(function(ll){
+        				//console.log(ll.lat + " " + ll.lng);
+        				latLngs.push(ll.lat, ll.lng);
+        			});
+        			drawnItems.addLayer(layer);
+        			
+        			var chartData = getProfileChart(latLngs);
+        			console.log(chartData);
+        		});
+
+        		leafletMap.on('draw:edited', function (e) {
+        			var layers = e.layers;
+        			var countOfEditedLayers = 0;
+        			layers.eachLayer(function(layer) {
+        				countOfEditedLayers++;
+        			});
+        			console.log("Edited " + countOfEditedLayers + " layers");
+        		});
             }
             
             function enableInfo(doInfo){

@@ -622,16 +622,16 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
                 @Override
                 public Object function( Object[] arguments ) {
                     try {
-                        double[] coords = (double[]) arguments[0];
+                        Object[] object = (Object[]) arguments[0];
 
-                        MathTransform ll2CRSTransform = CRS.findMathTransform(leafletCRS, databaseCrs);
-
-                        Coordinate[] coordsLL = new Coordinate[coords.length / 2];
+                        Coordinate[] coordsLL = new Coordinate[object.length / 2];
                         int index = 0;
-                        for( int i = 0; i < coords.length; i = i + 2 ) {
-                            Coordinate c = new Coordinate(coords[i], coords[i + 1]);
+                        for( int i = 0; i < object.length; i = i + 2 ) {
+                            Coordinate c = new Coordinate((double) object[i + 1], (double) object[i]);
                             coordsLL[index++] = c;
                         }
+
+                        MathTransform ll2CRSTransform = CRS.findMathTransform(leafletCRS, databaseCrs);
 
                         GeometryFactory gf = GeometryUtilities.gf();
                         LineString profileLineLL = gf.createLineString(coordsLL);
@@ -659,10 +659,12 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
                             }
                         }
 
-                        double[][] data = new double[progressiveElevList.size()][2];
-                        for( int i = 0; i < data.length; i++ ) {
+                        Object[] data = new Object[progressiveElevList.size()*2];
+                        index = 0;
+                        for( int i = 0; i < progressiveElevList.size(); i++ ) {
                             double[] ds = progressiveElevList.get(i);
-                            data[i] = ds;
+                            data[index++] = ds[0];
+                            data[index++] = ds[1];
                         }
                         return data;
                     } catch (Exception e) {
