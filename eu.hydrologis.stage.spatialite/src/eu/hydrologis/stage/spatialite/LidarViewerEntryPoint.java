@@ -10,6 +10,7 @@ package eu.hydrologis.stage.spatialite;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -34,6 +35,9 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
+import org.geotools.feature.DefaultFeatureCollection;
+import org.geotools.feature.simple.SimpleFeatureBuilder;
+import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
@@ -48,6 +52,8 @@ import org.jgrasstools.gears.spatialite.SpatialiteGeometryColumns;
 import org.jgrasstools.gears.utils.geometry.GeometryUtilities;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.opengis.feature.simple.SimpleFeatureType;
+import org.opengis.geometry.MismatchedDimensionException;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.NoSuchAuthorityCodeException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
@@ -57,7 +63,12 @@ import org.opengis.referencing.operation.TransformException;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.geom.LineString;
+import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.geom.Polygon;
+import com.vividsolutions.jts.geom.prep.PreparedGeometry;
+import com.vividsolutions.jts.geom.prep.PreparedGeometryFactory;
 
 import eu.hydrologis.stage.libs.log.StageLogger;
 import eu.hydrologis.stage.libs.utils.ImageCache;
@@ -603,9 +614,62 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
                         msg = "<p>An error occurred while retrieving the data.</p>";
                     }
                     return msg;
-                    
+
                 }
 
+            };
+            new BrowserFunction(mapBrowser, "getProfileChart"){
+                @Override
+                public Object function( Object[] arguments ) {
+                    try {
+                        double[] coords = (double[]) arguments[0];
+
+                        MathTransform ll2CRSTransform = CRS.findMathTransform(leafletCRS, databaseCrs);
+
+                        Coordinate[] coordsLL = new Coordinate[coords.length / 2];
+                        int index = 0;
+                        for( int i = 0; i < coords.length; i = i + 2 ) {
+                            Coordinate c = new Coordinate(coords[i], coords[i + 1]);
+                            coordsLL[index++] = c;
+                        }
+
+                        GeometryFactory gf = GeometryUtilities.gf();
+                        LineString profileLineLL = gf.createLineString(coordsLL);
+
+                        LineString profileLineCrs = (LineString) JTS.transform(profileLineLL, ll2CRSTransform);
+                        Geometry lineBuffer = profileLineCrs.buffer(0.2);
+
+                        PreparedGeometry preparedLineBuffer = PreparedGeometryFactory.prepare(lineBuffer);
+
+                        Coordinate c1 = profileLineCrs.getStartPoint().getCoordinate();
+                        // Coordinate c2 = profileLineCrs.getEndPoint().getCoordinate();
+
+                        List<double[]> progressiveElevList = new ArrayList<>();
+                        List<LasCell> lasCells = LasCellsTable.getLasCells(currentConnectedDatabase, profileLineCrs, true, false,
+                                false, false, false);
+                        for( LasCell lasCell : lasCells ) {
+                            double[][] cellPositions = LasCellsTable.getCellPositions(lasCell);
+                            for( int i = 0; i < cellPositions.length; i++ ) {
+                                Coordinate c = new Coordinate(cellPositions[i][0], cellPositions[i][1]);
+                                Point p = gf.createPoint(c);
+                                if (!preparedLineBuffer.intersects(p)) {
+                                    continue;
+                                }
+                                progressiveElevList.add(new double[]{c1.distance(c), cellPositions[i][2]});
+                            }
+                        }
+
+                        double[][] data = new double[progressiveElevList.size()][2];
+                        for( int i = 0; i < data.length; i++ ) {
+                            double[] ds = progressiveElevList.get(i);
+                            data[i] = ds;
+                        }
+                        return data;
+                    } catch (Exception e) {
+                        StageLogger.logError(this, e);
+                    }
+                    return null;
+                }
             };
             mapBrowser.evaluate("loadScript();");
         }
