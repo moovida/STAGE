@@ -5,6 +5,7 @@
         <title>STAGE - Quick Geometry Viewer</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <script type="text/javascript" src="libs/d3.min.js"></script>
+        <script type="text/javascript" src="profile_scatterchart.js"></script>
         
         <!-- 
         <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.js"></script>
@@ -24,6 +25,27 @@
                 border-width: 1px;
                 border-color: #ccc;
             }
+            svg .line {
+                stroke: red;
+                stroke-width: 1;
+                fill: none;
+            }
+            .dot {
+                fill: #fff;
+                stroke: steelblue;
+            }
+            .axis path, .axis line {
+                fill: none;
+                stroke: #000;
+                shape-rendering: crispEdges;
+            }
+            .axis text {
+                font: 10px sans-serif;
+            }
+            .axis .grid-line {
+                stroke: #000;
+                shape-rendering: crispEdges;
+            }
         </style>
     </head>
 
@@ -37,6 +59,7 @@
             var leafletMap;
             var mapnik;
             var dataG;
+            var chartG;
             var lastC = 1;
             var psize = 2;
             var doInfoTool = false;
@@ -69,6 +92,9 @@
                 leafletMap.on('moveend', function () {
                     checkData(false, lastC);
                 });
+                leafletMap.on('movestart', function () {
+                    clearChart();
+                });
                 leafletMap.on('mousedown', function (event) {
                     if(doInfoTool)
                        info(event)
@@ -77,7 +103,8 @@
                 enableDrawTools();
                 
                 var mapSvg = d3.select("#map").select("svg");
-                dataG = mapSvg.append("g");
+                dataG = mapSvg.append("g").attr("class", "lidardata");
+                chartG = mapSvg.append("g").attr("class", "lidarchart");
 
 //                d3.json("geoms.json", function (data) {
 
@@ -127,7 +154,8 @@
         			drawnItems.addLayer(layer);
         			
         			var chartData = getProfileChart(latLngs);
-        			console.log(chartData);
+        			//console.log(chartData);
+        			doChart(chartData);
         		});
 
         		leafletMap.on('draw:edited', function (e) {
@@ -138,6 +166,65 @@
         			});
         			console.log("Edited " + countOfEditedLayers + " layers");
         		});
+            }
+            
+            function clearChart(){
+                chartG.selectAll("*").remove();
+            }
+            
+            function doChart(data){
+                clearChart();
+                
+                var size = data.length;
+                var chartData = [];
+                var minP = 999999;
+                var maxP=-1000;
+                var minH = 99999;
+                var maxH=-1000;
+                for (i = 0; i < size; i=i+2) {
+                    var p = data[i];
+                    var h = data[i+1];
+                    minH = Math.min(minH, h);
+                    minP = Math.min(minP, p);
+                    maxH = Math.max(maxH, h);
+                    maxP = Math.max(maxP, p);
+                    chartData.push([p, h]);
+                }
+                
+                chart = profileScatterChart()
+                .x(
+                        d3.scale.linear().domain([minP, maxP])
+                        )
+                .y(
+                        d3.scale.linear().domain([minH, maxH])
+                        );
+                    //chart.centerMatchedTreeProg(treeData.progressive, treeData.height);
+                
+                    chartG.append("rect")
+                      .attr("rx", 6)
+                      .attr("ry", 6)
+                      .attr("x", 0)
+                      .attr("y", 0)
+                      .attr("width", width)
+                      .attr("height", 300)
+                      .style("fill", "white")
+                      .style("fill-opacity", 0.3)
+                      ;
+                    
+                chart.width(width);
+                chart.height(300);
+                var margins = {
+                    top: 10,
+                    left: 20,
+                    right: 10,
+                    bottom: 20
+                };
+                chart.margins(margins);
+                //chart.color("");
+                chart.dotsize(2);
+                chart.setData(chartData);
+                chart.render(chartG);
+                
             }
             
             function enableInfo(doInfo){

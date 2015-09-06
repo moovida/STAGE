@@ -15,6 +15,7 @@ public class JsResources {
     private static final String[][] javascriptFiles = new String[][]{//
     {"libs/jquery.min.js", "jquery.min.js"}, //
             {"libs/d3.min.js", "d3.min.js"}, //
+            {"profile_scatterchart.js", "profile_scatterchart.js"}, //
     };
 
     private static List<String> toRequireList = new ArrayList<String>();
