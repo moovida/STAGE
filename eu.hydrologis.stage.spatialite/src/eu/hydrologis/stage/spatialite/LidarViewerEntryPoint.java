@@ -69,6 +69,8 @@ import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.geom.Polygon;
 import com.vividsolutions.jts.geom.prep.PreparedGeometry;
 import com.vividsolutions.jts.geom.prep.PreparedGeometryFactory;
+import com.vividsolutions.jts.operation.buffer.BufferOp;
+import com.vividsolutions.jts.operation.buffer.BufferParameters;
 
 import eu.hydrologis.stage.libs.log.StageLogger;
 import eu.hydrologis.stage.libs.utils.ImageCache;
@@ -485,192 +487,19 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
             new BrowserFunction(mapBrowser, "getJsonData"){
                 @Override
                 public Object function( Object[] arguments ) {
-                    int type = (int) getDouble(arguments[0]); // 1,
-                    double south = getDouble(arguments[1]); // s,
-                    double north = getDouble(arguments[2]); // n,
-                    double west = getDouble(arguments[3]); // w,
-                    double east = getDouble(arguments[4]); // e,
-                    int zoom = (int) getDouble(arguments[5]); // zoom
-
-                    if (StageLogger.LOG_DEBUG) {
-                        StringBuilder sb = new StringBuilder();
-                        sb.append("type=").append(type).append("\n");
-                        sb.append("south=").append(south).append("\n");
-                        sb.append("north=").append(north).append("\n");
-                        sb.append("west=").append(west).append("\n");
-                        sb.append("east=").append(east).append("\n");
-                        sb.append("zoom=").append(zoom).append("\n***************************************");
-                        StageLogger.logInfo(this, sb.toString());
-                    }
-                    Envelope llEnv = new Envelope(west, east, south, north);
-
-                    try {
-                        if (viewType == 1) {
-                            isSourcesView = true;
-                            return getSources(llEnv);
-                        } else if (viewType == 2) {
-                            isSourcesView = false;
-                            return getPoints(llEnv);
-                        } else {
-                            MathTransform ll2CRSTransform = CRS.findMathTransform(leafletCRS, databaseCrs);
-                            Envelope searchEnv = JTS.transform(llEnv, ll2CRSTransform);
-                            int countX = (int) (searchEnv.getWidth() / maxLevelResolution);
-                            int countY = (int) (searchEnv.getHeight() / maxLevelResolution);
-                            int tilesNumEsteem = countX * countY;
-                            if (tilesNumEsteem >= 0 && tilesNumEsteem < cellsLimit) {
-                                if (StageLogger.LOG_INFO)
-                                    StageLogger.logInfo(this, "At zoom: " + zoom + " and bounds: " + searchEnv
-                                            + " render cells (ca." + tilesNumEsteem + ")");
-                                isSourcesView = false;
-                                return getCells(llEnv);
-                            } else {
-                                for( int i = 1; i <= maxLevel; i++ ) {
-                                    double res = maxLevelResolution * i * maxLevelFactor;
-                                    countX = (int) (searchEnv.getWidth() / res);
-                                    countY = (int) (searchEnv.getHeight() / res);
-                                    tilesNumEsteem = countX * countY;
-                                    if (tilesNumEsteem >= 0 && tilesNumEsteem < cellsLimit) {
-                                        if (StageLogger.LOG_INFO)
-                                            StageLogger.logInfo(this, "At zoom: " + zoom + " and bounds: " + searchEnv
-                                                    + " render level: " + i + " (ca." + tilesNumEsteem + ")");
-                                        isSourcesView = false;
-                                        return getLevels(llEnv, i);
-                                    }
-                                }
-                                if (StageLogger.LOG_INFO)
-                                    StageLogger.logInfo(this, "At zoom: " + zoom + " and bounds: " + searchEnv
-                                            + " render sources (ca." + tilesNumEsteem + ")");
-                                isSourcesView = true;
-                                return getSources(llEnv);
-                            }
-
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                    return "";
+                    return getJsonData(arguments);
                 }
-
             };
             new BrowserFunction(mapBrowser, "getInfoData"){
                 @Override
                 public Object function( Object[] arguments ) {
-                    double lon = getDouble(arguments[0]);
-                    double lat = getDouble(arguments[1]);
-                    String msg = "";
-
-                    try {
-                        MathTransform ll2CRSTransform = CRS.findMathTransform(leafletCRS, databaseCrs);
-                        Coordinate llCord = new Coordinate(lon, lat);
-                        Coordinate crsCoord = JTS.transform(llCord, null, ll2CRSTransform);
-                        Envelope env = new Envelope(llCord);
-                        env.expandBy(0.000001);
-                        Polygon searchPolygonLL = GeometryUtilities.createPolygonFromEnvelope(env);
-                        Geometry searchPolygonLLCRS = JTS.transform(searchPolygonLL, ll2CRSTransform);
-                        List<LasCell> lasCells = LasCellsTable.getLasCells(currentConnectedDatabase, searchPolygonLLCRS, true,
-                                true, true, true, true);
-                        if (lasCells.size() == 0) {
-                            msg = "<p>No data found here.</p>";
-                        } else if (isSourcesView == true) {
-                            List<LasSource> sources = LasSourcesTable.getLasSources(currentConnectedDatabase);
-                            for( LasSource lasSource : sources ) {
-                                if (lasSource.polygon.intersects(GeometryUtilities.gf().createPoint(crsCoord))) {
-                                    msg = "<p>source: " + lasSource.name;
-                                    msg += "<br/>min elevation: " + lasSource.minElev;
-                                    msg += "<br/>max elevation: " + lasSource.maxElev;
-                                    msg += "<br/>cell resolution: " + lasSource.resolution;
-                                    msg += "</p>";
-                                    return msg;
-                                }
-                            }
-                        } else {
-                            LasCell lasCell = lasCells.get(0);
-                            double[][] cellPositions = LasCellsTable.getCellPositions(lasCell);
-                            short[][] cellIntens = LasCellsTable.getCellIntensityClass(lasCell);
-                            double minDist = Double.POSITIVE_INFINITY;
-                            double z = 0;
-                            short intens = 0;
-                            short classif = 0;
-                            for( int i = 0; i < cellPositions.length; i++ ) {
-                                double[] xyz = cellPositions[i];
-
-                                Coordinate c = new Coordinate(xyz[0], xyz[1]);
-                                double dist = c.distance(crsCoord);
-                                if (dist < minDist) {
-                                    minDist = dist;
-                                    z = xyz[2];
-                                    intens = cellIntens[i][0];
-                                    classif = cellIntens[i][1];
-                                }
-                            }
-                            msg = "<p>elevation: " + z;
-                            msg += "<br/>intensity: " + intens;
-                            msg += "<br/>classification: " + classif;
-                            msg += "</p>";
-                            return msg;
-                        }
-                    } catch (Exception e) {
-                        StageLogger.logError(this, e);
-                        msg = "<p>An error occurred while retrieving the data.</p>";
-                    }
-                    return msg;
-
+                    return getInfoData(arguments);
                 }
-
             };
             new BrowserFunction(mapBrowser, "getProfileChart"){
                 @Override
                 public Object function( Object[] arguments ) {
-                    try {
-                        Object[] object = (Object[]) arguments[0];
-
-                        Coordinate[] coordsLL = new Coordinate[object.length / 2];
-                        int index = 0;
-                        for( int i = 0; i < object.length; i = i + 2 ) {
-                            Coordinate c = new Coordinate((double) object[i + 1], (double) object[i]);
-                            coordsLL[index++] = c;
-                        }
-
-                        MathTransform ll2CRSTransform = CRS.findMathTransform(leafletCRS, databaseCrs);
-
-                        GeometryFactory gf = GeometryUtilities.gf();
-                        LineString profileLineLL = gf.createLineString(coordsLL);
-
-                        LineString profileLineCrs = (LineString) JTS.transform(profileLineLL, ll2CRSTransform);
-                        Geometry lineBuffer = profileLineCrs.buffer(0.2);
-
-                        PreparedGeometry preparedLineBuffer = PreparedGeometryFactory.prepare(lineBuffer);
-
-                        Coordinate c1 = profileLineCrs.getStartPoint().getCoordinate();
-                        // Coordinate c2 = profileLineCrs.getEndPoint().getCoordinate();
-
-                        List<double[]> progressiveElevList = new ArrayList<>();
-                        List<LasCell> lasCells = LasCellsTable.getLasCells(currentConnectedDatabase, profileLineCrs, true, false,
-                                false, false, false);
-                        for( LasCell lasCell : lasCells ) {
-                            double[][] cellPositions = LasCellsTable.getCellPositions(lasCell);
-                            for( int i = 0; i < cellPositions.length; i++ ) {
-                                Coordinate c = new Coordinate(cellPositions[i][0], cellPositions[i][1]);
-                                Point p = gf.createPoint(c);
-                                if (!preparedLineBuffer.intersects(p)) {
-                                    continue;
-                                }
-                                progressiveElevList.add(new double[]{c1.distance(c), cellPositions[i][2]});
-                            }
-                        }
-
-                        Object[] data = new Object[progressiveElevList.size()*2];
-                        index = 0;
-                        for( int i = 0; i < progressiveElevList.size(); i++ ) {
-                            double[] ds = progressiveElevList.get(i);
-                            data[index++] = ds[0];
-                            data[index++] = ds[1];
-                        }
-                        return data;
-                    } catch (Exception e) {
-                        StageLogger.logError(this, e);
-                    }
-                    return null;
+                    return getProfileChart(arguments);
                 }
             };
             mapBrowser.evaluate("loadScript();");
@@ -949,6 +778,195 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
         // File("/home/hydrologis/development/STAGE-git/eu.hydrologis.stage.spatialite/js/wegl.json"));
 
         return rootObj.toString();
+    }
+
+    private Object getJsonData( Object[] arguments ) {
+        int type = (int) getDouble(arguments[0]); // 1,
+        double south = getDouble(arguments[1]); // s,
+        double north = getDouble(arguments[2]); // n,
+        double west = getDouble(arguments[3]); // w,
+        double east = getDouble(arguments[4]); // e,
+        int zoom = (int) getDouble(arguments[5]); // zoom
+
+        if (StageLogger.LOG_DEBUG) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("type=").append(type).append("\n");
+            sb.append("south=").append(south).append("\n");
+            sb.append("north=").append(north).append("\n");
+            sb.append("west=").append(west).append("\n");
+            sb.append("east=").append(east).append("\n");
+            sb.append("zoom=").append(zoom).append("\n***************************************");
+            StageLogger.logInfo(this, sb.toString());
+        }
+        Envelope llEnv = new Envelope(west, east, south, north);
+
+        try {
+            if (viewType == 1) {
+                isSourcesView = true;
+                return getSources(llEnv);
+            } else if (viewType == 2) {
+                isSourcesView = false;
+                return getPoints(llEnv);
+            } else {
+                MathTransform ll2CRSTransform = CRS.findMathTransform(leafletCRS, databaseCrs);
+                Envelope searchEnv = JTS.transform(llEnv, ll2CRSTransform);
+                int countX = (int) (searchEnv.getWidth() / maxLevelResolution);
+                int countY = (int) (searchEnv.getHeight() / maxLevelResolution);
+                int tilesNumEsteem = countX * countY;
+                if (tilesNumEsteem >= 0 && tilesNumEsteem < cellsLimit) {
+                    if (StageLogger.LOG_INFO)
+                        StageLogger.logInfo(this,
+                                "At zoom: " + zoom + " and bounds: " + searchEnv + " render cells (ca." + tilesNumEsteem + ")");
+                    isSourcesView = false;
+                    return getCells(llEnv);
+                } else {
+                    for( int i = 1; i <= maxLevel; i++ ) {
+                        double res = maxLevelResolution * i * maxLevelFactor;
+                        countX = (int) (searchEnv.getWidth() / res);
+                        countY = (int) (searchEnv.getHeight() / res);
+                        tilesNumEsteem = countX * countY;
+                        if (tilesNumEsteem >= 0 && tilesNumEsteem < cellsLimit) {
+                            if (StageLogger.LOG_INFO)
+                                StageLogger.logInfo(this, "At zoom: " + zoom + " and bounds: " + searchEnv + " render level: " + i
+                                        + " (ca." + tilesNumEsteem + ")");
+                            isSourcesView = false;
+                            return getLevels(llEnv, i);
+                        }
+                    }
+                    if (StageLogger.LOG_INFO)
+                        StageLogger.logInfo(this,
+                                "At zoom: " + zoom + " and bounds: " + searchEnv + " render sources (ca." + tilesNumEsteem + ")");
+                    isSourcesView = true;
+                    return getSources(llEnv);
+                }
+
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return "";
+    }
+
+    private Object getInfoData( Object[] arguments ) {
+        double lon = getDouble(arguments[0]);
+        double lat = getDouble(arguments[1]);
+        String msg = "";
+
+        try {
+            MathTransform ll2CRSTransform = CRS.findMathTransform(leafletCRS, databaseCrs);
+            Coordinate llCord = new Coordinate(lon, lat);
+            Coordinate crsCoord = JTS.transform(llCord, null, ll2CRSTransform);
+            Envelope env = new Envelope(llCord);
+            env.expandBy(0.000001);
+            Polygon searchPolygonLL = GeometryUtilities.createPolygonFromEnvelope(env);
+            Geometry searchPolygonLLCRS = JTS.transform(searchPolygonLL, ll2CRSTransform);
+            List<LasCell> lasCells = LasCellsTable.getLasCells(currentConnectedDatabase, searchPolygonLLCRS, true, true, true,
+                    true, true);
+            if (lasCells.size() == 0) {
+                msg = "<p>No data found here.</p>";
+            } else if (isSourcesView == true) {
+                List<LasSource> sources = LasSourcesTable.getLasSources(currentConnectedDatabase);
+                for( LasSource lasSource : sources ) {
+                    if (lasSource.polygon.intersects(GeometryUtilities.gf().createPoint(crsCoord))) {
+                        msg = "<p>source: " + lasSource.name;
+                        msg += "<br/>min elevation: " + lasSource.minElev;
+                        msg += "<br/>max elevation: " + lasSource.maxElev;
+                        msg += "<br/>cell resolution: " + lasSource.resolution;
+                        msg += "</p>";
+                        return msg;
+                    }
+                }
+            } else {
+                LasCell lasCell = lasCells.get(0);
+                double[][] cellPositions = LasCellsTable.getCellPositions(lasCell);
+                short[][] cellIntens = LasCellsTable.getCellIntensityClass(lasCell);
+                double minDist = Double.POSITIVE_INFINITY;
+                double z = 0;
+                short intens = 0;
+                short classif = 0;
+                for( int i = 0; i < cellPositions.length; i++ ) {
+                    double[] xyz = cellPositions[i];
+
+                    Coordinate c = new Coordinate(xyz[0], xyz[1]);
+                    double dist = c.distance(crsCoord);
+                    if (dist < minDist) {
+                        minDist = dist;
+                        z = xyz[2];
+                        intens = cellIntens[i][0];
+                        classif = cellIntens[i][1];
+                    }
+                }
+                msg = "<p>elevation: " + z;
+                msg += "<br/>intensity: " + intens;
+                msg += "<br/>classification: " + classif;
+                msg += "</p>";
+                return msg;
+            }
+        } catch (Exception e) {
+            StageLogger.logError(this, e);
+            msg = "<p>An error occurred while retrieving the data.</p>";
+        }
+        return msg;
+    }
+
+    private Object getProfileChart( Object[] arguments ) {
+        try {
+            Object[] object = (Object[]) arguments[0];
+
+            Coordinate[] coordsLL = new Coordinate[object.length / 2];
+            int index = 0;
+            for( int i = 0; i < object.length; i = i + 2 ) {
+                Coordinate c = new Coordinate((double) object[i + 1], (double) object[i]);
+                coordsLL[index++] = c;
+            }
+
+            MathTransform ll2CRSTransform = CRS.findMathTransform(leafletCRS, databaseCrs);
+
+            List<double[]> progressiveElevList = new ArrayList<>();
+            GeometryFactory gf = GeometryUtilities.gf();
+            List<LineString> profileLinesListLL = new ArrayList<>();
+            BufferParameters bp = new BufferParameters();
+            bp.setEndCapStyle(BufferParameters.CAP_FLAT);
+            bp.setJoinStyle(BufferParameters.JOIN_BEVEL);
+            double startProgressive = 0;
+            for( int j = 0; j < coordsLL.length - 1; j++ ) {
+                Coordinate[] coords = {coordsLL[j], coordsLL[j + 1]};
+                LineString profileLineLL = gf.createLineString(coords);
+                LineString profileLineCrs = (LineString) JTS.transform(profileLineLL, ll2CRSTransform);
+                Geometry lineBuffer = BufferOp.bufferOp(profileLineCrs, 0.2, bp);
+
+                PreparedGeometry preparedLineBuffer = PreparedGeometryFactory.prepare(lineBuffer);
+
+                Coordinate startC = profileLineCrs.getStartPoint().getCoordinate();
+
+                List<LasCell> lasCells = LasCellsTable.getLasCells(currentConnectedDatabase, profileLineCrs, true, false, false,
+                        false, false);
+                for( LasCell lasCell : lasCells ) {
+                    double[][] cellPositions = LasCellsTable.getCellPositions(lasCell);
+                    for( int i = 0; i < cellPositions.length; i++ ) {
+                        Coordinate c = new Coordinate(cellPositions[i][0], cellPositions[i][1]);
+                        Point p = gf.createPoint(c);
+                        if (!preparedLineBuffer.intersects(p)) {
+                            continue;
+                        }
+                        progressiveElevList.add(new double[]{startProgressive + startC.distance(c), cellPositions[i][2]});
+                    }
+                }
+                startProgressive += profileLineCrs.getLength();
+            }
+
+            Object[] data = new Object[progressiveElevList.size() * 2];
+            index = 0;
+            for( int i = 0; i < progressiveElevList.size(); i++ ) {
+                double[] ds = progressiveElevList.get(i);
+                data[index++] = ds[0];
+                data[index++] = ds[1];
+            }
+            return data;
+        } catch (Exception e) {
+            StageLogger.logError(this, e);
+        }
+        return null;
     }
 
     private double r( double num ) {
