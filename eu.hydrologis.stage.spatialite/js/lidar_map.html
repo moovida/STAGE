@@ -64,12 +64,14 @@
             var psize = 2;
             var doInfoTool = false;
             var drawnItems;
-            
+            var mapSvg;
+            var chartDiv;
+            var body;
 
 //            loadScript();
             function loadScript() {
 
-                var body = d3.select("body");
+                body = d3.select("body");
                 body.select("#map").style("width", width + "px").style("height", height + "px");
                 leafletMap = L.map('map');
                 mapnik = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -93,6 +95,9 @@
                     checkData(false, lastC);
                 });
                 leafletMap.on('movestart', function () {
+        			drawnItems.eachLayer(function (layer) {
+        			    drawnItems.removeLayer(layer);
+        			});
                     clearChart();
                 });
                 leafletMap.on('mousedown', function (event) {
@@ -102,9 +107,10 @@
 
                 enableDrawTools();
                 
-                var mapSvg = d3.select("#map").select("svg");
+                mapSvg = d3.select("#map").select("svg");
                 dataG = mapSvg.append("g").attr("class", "lidardata");
-                chartG = mapSvg.append("g").attr("class", "lidarchart");
+                
+                
 
 //                d3.json("geoms.json", function (data) {
 
@@ -169,11 +175,28 @@
             }
             
             function clearChart(){
-                chartG.selectAll("*").remove();
+                body.selectAll("div.chartdiv").remove();
             }
             
             function doChart(data){
                 clearChart();
+                
+                chartDiv = body.append("div").attr("class", "chartdiv");
+                var chartWidth = width*0.95;
+                var chartHeigt = 300;
+                chartDiv
+	                .style("width", chartWidth + "px").style("height", chartHeigt + "px")
+    	            .style("position", "absolute")
+    	            .style("left","3%")
+    	            .style("top","3%");
+                var chartSvg = chartDiv.append("svg").style("width", chartWidth + "px").style("height", chartHeigt + "px");
+                chartG = chartSvg.append("g").attr("class", "lidarchart");
+                
+      //          var currentx = d3.transform(mapSvg.style("transform")).translate[0];
+       //         var currenty = d3.transform(mapSvg.style("transform")).translate[1];
+        //        chartG.attr("transform", "translate("
+         //              + currentx + ","
+          //             + currenty + ")")
                 
                 var size = data.length;
                 var chartData = [];
@@ -211,11 +234,11 @@
                       .style("fill-opacity", 0.3)
                       ;
                     
-                chart.width(width);
-                chart.height(300);
+                chart.width(chartWidth);
+                chart.height(chartHeigt);
                 var margins = {
                     top: 10,
-                    left: 20,
+                    left: 40,
                     right: 10,
                     bottom: 20
                 };
@@ -223,7 +246,9 @@
                 //chart.color("");
                 chart.dotsize(2);
                 chart.setData(chartData);
-                chart.render(chartG);
+                
+
+                chart.render(chartG, 0, 0);
                 
             }
             

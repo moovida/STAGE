@@ -12,7 +12,10 @@ function profileScatterChart() {
             _color = "red",
             _dotsize = 2,
             _svg,
-            _bodyG;
+            _bodyG,
+            _xoffset,
+            _yoffset
+            ;
     
     var axisColor = "#505050";
     var axisWidth = "1";
@@ -24,8 +27,10 @@ function profileScatterChart() {
     var axisThickFill = "none";
     var axisThickShpRendering = "crispEdges";
 
-    _chart.render = function (svg) {
+    _chart.render = function (svg, xoffset, yoffset) {
         _svg = svg;
+        _xoffset= xoffset;
+        _yoffset= yoffset;
             renderAxes(_svg);
             defineBodyClip(_svg);
         renderBody(_svg);
@@ -168,10 +173,10 @@ function profileScatterChart() {
     }
 
     function xStart() {
-    	return _margins.left;
+    	return _margins.left - _xoffset;
     }
     function yStart() {
-        return _height - _margins.bottom;
+        return _height - _margins.bottom - _yoffset;
     }
     function xEnd() {
         return _width - _margins.right;
