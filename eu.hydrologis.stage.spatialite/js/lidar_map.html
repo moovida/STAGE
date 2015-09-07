@@ -125,6 +125,9 @@
         		drawnItems = new L.FeatureGroup();
         		leafletMap.addLayer(drawnItems);
 
+        		L.drawLocal.draw.toolbar.buttons.polyline = 'Trace a profile';
+        		L.drawLocal.edit.toolbar.buttons.edit = 'Edit the profile line';
+        		L.drawLocal.edit.toolbar.buttons.editDisabled = 'No profile to edit';
         		var drawControl = new L.Control.Draw({
         			draw: {
         				polygon: false,
