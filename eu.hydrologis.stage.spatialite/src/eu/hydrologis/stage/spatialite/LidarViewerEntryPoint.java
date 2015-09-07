@@ -924,7 +924,6 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
 
             List<double[]> progressiveElevList = new ArrayList<>();
             GeometryFactory gf = GeometryUtilities.gf();
-            List<LineString> profileLinesListLL = new ArrayList<>();
             BufferParameters bp = new BufferParameters();
             bp.setEndCapStyle(BufferParameters.CAP_FLAT);
             bp.setJoinStyle(BufferParameters.JOIN_BEVEL);

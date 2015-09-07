@@ -151,26 +151,29 @@
         			    drawnItems.removeLayer(layer);
         			});
         			layer = e.layer;
-        			
         			var latLngs = [];
         			layer.getLatLngs().forEach(function(ll){
-        				//console.log(ll.lat + " " + ll.lng);
         				latLngs.push(ll.lat, ll.lng);
         			});
         			drawnItems.addLayer(layer);
         			
         			var chartData = getProfileChart(latLngs);
-        			//console.log(chartData);
         			doChart(chartData);
         		});
 
         		leafletMap.on('draw:edited', function (e) {
         			var layers = e.layers;
-        			var countOfEditedLayers = 0;
         			layers.eachLayer(function(layer) {
-        				countOfEditedLayers++;
+        				var lls = layer.getLatLngs();
+        			    if(lls){
+                			var latLngs = [];
+                			lls.forEach(function(ll){
+                				latLngs.push(ll.lat, ll.lng);
+                			});
+                			var chartData = getProfileChart(latLngs);
+                			doChart(chartData);
+            			}
         			});
-        			console.log("Edited " + countOfEditedLayers + " layers");
         		});
             }
             
