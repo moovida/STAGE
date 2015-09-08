@@ -16,12 +16,14 @@ public class JsResources {
     {"libs/jquery.min.js", "jquery.min.js"}, //
             {"libs/d3.min.js", "d3.min.js"}, //
             {"profile_scatterchart.js", "profile_scatterchart.js"}, //
+            {"three/OrbitControls.js", "three/OrbitControls.js"}, //
     };
 
     private static List<String> toRequireList = new ArrayList<String>();
     private static String toRequireGraphMap;
     private static String toRequireQuickMap;
     private static String toRequireLidarMap;
+    private static String toRequireThreePointsMap;
 
     private static final ResourceLoader resourceLoader = new ResourceLoader(){
         public InputStream getResourceAsStream( String resourceName ) throws IOException {
@@ -120,6 +122,29 @@ public class JsResources {
             loader.require(toRequireLidarMap);
         }
         return toRequireLidarMap;
+    }
+
+    public static String ensureThreejsPointsHtmlResource() {
+        ResourceManager resourceManager = RWT.getApplicationContext().getResourceManager();
+        try {
+            String fileName = "threejs_points.html";
+            if (!resourceManager.isRegistered(fileName)) {
+                InputStream resourceAsStream = resourceLoader.getResourceAsStream(fileName);
+                if (resourceAsStream == null) {
+                    throw new NullPointerException();
+                }
+                String registered = register(resourceManager, fileName, resourceAsStream);
+                if (toRequireThreePointsMap == null)
+                    toRequireThreePointsMap = registered;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        if (toRequireThreePointsMap != null) {
+            JavaScriptLoader loader = RWT.getClient().getService(JavaScriptLoader.class);
+            loader.require(toRequireThreePointsMap);
+        }
+        return toRequireThreePointsMap;
     }
 
     public static String registerIfMissing( String resource ) {

@@ -502,6 +502,12 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
                     return getProfileChart(arguments);
                 }
             };
+            new BrowserFunction(mapBrowser, "open3DViewOnPoint"){
+                @Override
+                public Object function( Object[] arguments ) {
+                    return open3DViewOnPoint(arguments);
+                }
+            };
             mapBrowser.evaluate("loadScript();");
         }
         public void changed( ProgressEvent event ) {
@@ -962,6 +968,49 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
                 data[index++] = ds[1];
             }
             return data;
+        } catch (Exception e) {
+            StageLogger.logError(this, e);
+        }
+        return null;
+    }
+
+    private Object open3DViewOnPoint( Object[] arguments ) {
+        try {
+            Object[] object = (Object[]) arguments[0];
+
+            Coordinate[] coordsLL = new Coordinate[object.length / 2 + 1];
+            int index = 0;
+            for( int i = 0; i < object.length; i = i + 2 ) {
+                Coordinate c = new Coordinate((double) object[i + 1], (double) object[i]);
+                coordsLL[index++] = c;
+            }
+            coordsLL[coordsLL.length - 1] = coordsLL[0];
+
+            MathTransform ll2CRSTransform = CRS.findMathTransform(leafletCRS, databaseCrs);
+            GeometryFactory gf = GeometryUtilities.gf();
+            Polygon polygonLL = gf.createPolygon(coordsLL);
+            Geometry polygonCrs = JTS.transform(polygonLL, ll2CRSTransform);
+
+            List<LasCell> lasCells = LasCellsTable.getLasCells(currentConnectedDatabase, polygonCrs, true, false, false, false,
+                    false);
+            int count = 0;
+            for( LasCell lasCell : lasCells ) {
+                count += lasCell.pointsCount;
+            }
+            Object[] xyzArray = new Object[count * 3];
+            int i = 0;
+            for( LasCell lasCell : lasCells ) {
+                double[][] cellPositions = LasCellsTable.getCellPositions(lasCell);
+                for( double[] pos : cellPositions ) {
+                    xyzArray[i++] = pos[0];
+                    xyzArray[i++] = pos[1];
+                    xyzArray[i++] = pos[2];
+                }
+            }
+            
+            LidarPoints3DViewDialog lidarPoints3dView = new LidarPoints3DViewDialog(parentShell, "LiDAR Points 3D View", xyzArray);
+            lidarPoints3dView.open();
+            
         } catch (Exception e) {
             StageLogger.logError(this, e);
         }

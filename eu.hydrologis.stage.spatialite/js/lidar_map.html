@@ -126,11 +126,18 @@
                 leafletMap.addLayer(drawnItems);
 
                 L.drawLocal.draw.toolbar.buttons.polyline = 'Trace a profile';
+                L.drawLocal.draw.toolbar.buttons.polygon = 'View the points of a region in 3D';
                 L.drawLocal.edit.toolbar.buttons.edit = 'Edit the profile line';
                 L.drawLocal.edit.toolbar.buttons.editDisabled = 'No profile to edit';
                 var drawControl = new L.Control.Draw({
                     draw: {
-                        polygon: false,
+                        polygon: {
+                            metric: true,
+                            shapeOptions: {
+                                color: '#004a80',
+                                opacity: 1
+                            }
+                        },
                         polyline: {
                             metric: true,
                             shapeOptions: {
@@ -154,14 +161,25 @@
                         drawnItems.removeLayer(layer);
                     });
                     layer = e.layer;
-                    var latLngs = [];
-                    layer.getLatLngs().forEach(function (ll) {
-                        latLngs.push(ll.lat, ll.lng);
-                    });
-                    drawnItems.addLayer(layer);
+                    if (e.layerType === "polyline") {
+                        var latLngs = [];
+                        layer.getLatLngs().forEach(function (ll) {
+                            latLngs.push(ll.lat, ll.lng);
+                        });
+                        drawnItems.addLayer(layer);
 
-                    var chartData = getProfileChart(latLngs);
-                    doChart(chartData);
+                        var chartData = getProfileChart(latLngs);
+                        doChart(chartData);
+                    }
+                    if (e.layerType === "polygon") {
+                        var latLngs = [];
+                        layer.getLatLngs().forEach(function (ll) {
+                            latLngs.push(ll.lat, ll.lng);
+                        });
+                        drawnItems.addLayer(layer);
+
+                        open3DViewOnPoint(latLngs);
+                    }
                 });
 
                 leafletMap.on('draw:edited', function (e) {

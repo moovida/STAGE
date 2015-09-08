@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <title>three.js webgl - interactive - raycasting - pointcloud</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+        <style>
+            body {
+                color: #ffffff;
+                background-color: #000000;
+                margin: 0px;
+                overflow: hidden;
+            }
+            #info {
+                position: absolute;
+                top: 0px;
+                width: 100%;
+                padding: 5px;
+                font-family: Monospace;
+                font-size: 13px;
+                text-align: center;
+                font-weight: bold;
+            }
+            a {
+                color: #fff;
+            }
+        </style>
+    </head>
+
+    <body>
+        <div id="container"></div>
+        <div id="info"><a href="http://threejs.org" target="_blank">three.js</a> webgl - interactive - raycasting - pointcloud </div>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r71/three.min.js"></script>
+        <script src="three/OrbitControls.js"></script>
+        <script type="text/javascript" src="libs/d3.min.js"></script>
+
+        <!-- 
+         <script src="js/Detector.js"></script>
+        <script src="js/libs/stats.min.js"></script>
+        -->
+
+        <script>
+
+            // if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+
+            var renderer, scene, camera, controls;//, stats;
+            var intersects;
+            var mouse = new THREE.Vector2();
+            var intersection = null;
+            var spheresIndex = 0;
+            var clock;
+
+            var threshold = 0.1;
+            var pointSize = 8;
+            var width = 150;
+            var length = 150;
+            var xmin = 99999999, ymin = 99999999, xmax = -99999999, ymax = -99999999, zmin = 99999999, zmax = -99999999;
+            var _data;
+            var xscale;
+            var yscale;
+            var zscale;
+
+            // d3.json("wegl.json", function (json) {
+            //     jsonD = json;
+            function loadScript() {
+                _data = getData();
+                init();
+                animate();
+            }
+            // });
+
+            function generatePointCloudGeometry(color, width, length) {
+
+                var geometry = new THREE.BufferGeometry();
+                var size = _data.length;
+                var numPoints = size / 3;
+
+                var positions = new Float32Array(numPoints * 3);
+                var colors = new Float32Array(numPoints * 3);
+
+                for (i = 0; i < size; i = i + 3) {
+                    var x = _data[i];
+                    var y = _data[i + 1];
+                    var z = _data[i + 2];
+                    xmin = Math.min(xmin, x);
+                    xmax = Math.max(xmax, x);
+                    ymin = Math.min(ymin, y);
+                    ymax = Math.max(ymax, y);
+                    zmin = Math.min(zmin, z);
+                    zmax = Math.max(zmax, z);
+                }
+                var dx = ymax - ymin;
+                xscale = d3.scale.linear().range([0, window.innerWidth]).domain([xmin, xmin + dx])
+                yscale = d3.scale.linear().range([0, window.innerHeight]).domain([ymin, ymax])
+                zscale = d3.scale.linear().range([0, 1000]).domain([zmin, zmax])
+
+                var delta = (zmax - zmin) / 4;
+                var colorScale = d3.scale.linear() // <-A
+                        .domain(
+                                [
+                                    zmin,
+                                    zmin + delta,
+                                    zmin + 2 * delta,
+                                    zmin + 3 * delta,
+                                    zmax
+                                ]
+                                )
+                        .range(
+                                [
+                                    d3.rgb(0, 191, 191),
+                                    d3.rgb(255, 255, 0),
+                                    d3.rgb(255, 127, 0),
+                                    d3.rgb(191, 127, 63),
+                                    d3.rgb(20, 21, 20)
+                                ]
+                                );
+
+                for (i = 0; i < size; i = i + 3) {
+                    var x = _data[i];
+                    var y = _data[i + 1];
+                    var z = _data[i + 2];
+                    positions[ i ] = xscale(x);
+                    positions[ i + 1 ] = yscale(y);
+                    positions[ i + 2 ] = zscale(z);
+
+                    var color = d3.rgb(colorScale(z));
+                    colors[ i ] = color.r / 255;
+                    colors[ i + 1 ] = color.g / 255;
+                    colors[ i + 2 ] = color.b / 255;
+                }
+
+                geometry.addAttribute('position', new THREE.BufferAttribute(positions, 3));
+                geometry.addAttribute('color', new THREE.BufferAttribute(colors, 3));
+                geometry.computeBoundingBox();
+
+                return geometry;
+
+            }
+
+            function generatePointcloud(color, width, length) {
+
+                var geometry = generatePointCloudGeometry(color, width, length);
+
+                var material = new THREE.PointCloudMaterial({size: pointSize, vertexColors: THREE.VertexColors});
+                var pointcloud = new THREE.PointCloud(geometry, material);
+
+                return pointcloud;
+
+            }
+
+            function init() {
+
+                container = document.getElementById('container');
+
+                scene = new THREE.Scene();
+
+
+                camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 10000);
+//                camera.applyMatrix(new THREE.Matrix4().makeTranslation(0, 0, 20));
+//                camera.applyMatrix(new THREE.Matrix4().makeRotationX(-0.5));
+
+
+                pcBuffer = generatePointcloud();//new THREE.Color(1, 0, 0), width, length);
+
+                var xminSc = xscale(xmin);
+                var xmaxSc = xscale(xmax);
+                var yminSc = yscale(ymin);
+                var ymaxSc = yscale(ymax);
+                var zmaxSc = zscale(zmax);
+
+                var centerX = xminSc + (xmaxSc - xminSc) / 2;
+                var centerY = yminSc + (ymaxSc - yminSc) / 2;
+
+                camera.position.z = zmaxSc + 5000;
+//                camera.applyMatrix(new THREE.Matrix4().makeTranslation(centerX, centerY, zmax + 10));
+//                camera.applyMatrix(new THREE.Matrix4().makeRotationX(-0.5));
+
+                pcBuffer.scale.set(1, 1, 1);
+                pcBuffer.position.set(-centerX, -centerY, zmaxSc);
+
+                scene.add(pcBuffer);
+
+                renderer = new THREE.WebGLRenderer();
+                renderer.setPixelRatio(window.devicePixelRatio);
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.setClearColor( 0xffffff, 1);
+                container.appendChild(renderer.domElement);
+
+//                controls = new THREE.OrbitControls(camera, renderer.domElement);
+                controls = new THREE.OrbitControls(camera);
+                controls.damping = 0.2;
+                controls.addEventListener('change', render);
+
+                window.addEventListener('resize', onWindowResize, false);
+
+            }
+
+            function onWindowResize() {
+
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                render();
+            }
+
+            function animate() {
+                requestAnimationFrame(animate);
+                controls.update();
+                render();
+            }
+
+
+            function render() {
+                renderer.render(scene, camera);
+            }
+
+        </script>
+
+    </body>
+
+</html>
