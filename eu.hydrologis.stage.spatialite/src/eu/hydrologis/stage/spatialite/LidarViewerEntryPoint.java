@@ -1007,10 +1007,14 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
                     xyzArray[i++] = pos[2];
                 }
             }
-            
-            LidarPoints3DViewDialog lidarPoints3dView = new LidarPoints3DViewDialog(parentShell, "LiDAR Points 3D View", xyzArray);
+
+            if (StageLogger.LOG_INFO)
+                StageLogger.logInfo(this, "Loading points in 3d view: " + count);
+
+            LidarPoints3DViewDialog lidarPoints3dView = new LidarPoints3DViewDialog(parentShell, "LiDAR Points 3D View",
+                    xyzArray);
             lidarPoints3dView.open();
-            
+
         } catch (Exception e) {
             StageLogger.logError(this, e);
         }
