@@ -127,8 +127,8 @@
 
                 L.drawLocal.draw.toolbar.buttons.polyline = 'Trace a profile';
                 L.drawLocal.draw.toolbar.buttons.polygon = 'View the points of a region in 3D';
-                L.drawLocal.edit.toolbar.buttons.edit = 'Edit the profile line';
-                L.drawLocal.edit.toolbar.buttons.editDisabled = 'No profile to edit';
+                L.drawLocal.edit.toolbar.buttons.edit = 'Edit a shape';
+                L.drawLocal.edit.toolbar.buttons.editDisabled = 'No shape to edit';
                 var drawControl = new L.Control.Draw({
                     draw: {
                         polygon: {
@@ -191,8 +191,15 @@
                             lls.forEach(function (ll) {
                                 latLngs.push(ll.lat, ll.lng);
                             });
-                            var chartData = getProfileChart(latLngs);
-                            doChart(chartData);
+
+                            if ((layer instanceof L.Polyline) && !(layer instanceof L.Polygon)) {
+                                var chartData = getProfileChart(latLngs);
+                                doChart(chartData);
+                            }
+
+                            if ((layer instanceof L.Polygon) && !(layer instanceof L.Rectangle)) {
+                                open3DViewOnPoint(latLngs);
+                            }
                         }
                     });
                 });
