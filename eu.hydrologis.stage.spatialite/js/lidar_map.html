@@ -6,18 +6,18 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <script type="text/javascript" src="libs/d3.min.js"></script>
         <script type="text/javascript" src="profile_scatterchart.js"></script>
-        
+
         <!-- 
         <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.js"></script>
         <link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.css" />
-         -->
-        
+        -->
+
         <script type='text/javascript' src="http://leaflet.github.com/Leaflet.draw/lib/leaflet/leaflet.js"></script>
         <link rel="stylesheet" type="text/css" href="http://leaflet.github.com/Leaflet.draw/lib/leaflet/leaflet.css">
-        
+
         <link rel="stylesheet" type="text/css" href="http://leaflet.github.com/Leaflet.draw/leaflet.draw.css">
         <script type='text/javascript' src="http://leaflet.github.com/Leaflet.draw/leaflet.draw.js"></script>
-        
+
         <script type='text/javascript' src='libs/jquery.min.js'></script>
         <style>
             .map {
@@ -95,22 +95,22 @@
                     checkData(false, lastC);
                 });
                 leafletMap.on('movestart', function () {
-        			drawnItems.eachLayer(function (layer) {
-        			    drawnItems.removeLayer(layer);
-        			});
+                    drawnItems.eachLayer(function (layer) {
+                        drawnItems.removeLayer(layer);
+                    });
                     clearChart();
                 });
                 leafletMap.on('mousedown', function (event) {
-                    if(doInfoTool)
-                       info(event)
+                    if (doInfoTool)
+                        info(event)
                 });
 
                 enableDrawTools();
-                
+
                 mapSvg = d3.select("#map").select("svg");
                 dataG = mapSvg.append("g").attr("class", "lidardata");
-                
-                
+
+
 
 //                d3.json("geoms.json", function (data) {
 
@@ -118,128 +118,128 @@
                 mapnik.addTo(leafletMap);
 //                });
             }
-            
-            
-            function enableDrawTools(){
 
-        		drawnItems = new L.FeatureGroup();
-        		leafletMap.addLayer(drawnItems);
 
-        		L.drawLocal.draw.toolbar.buttons.polyline = 'Trace a profile';
-        		L.drawLocal.edit.toolbar.buttons.edit = 'Edit the profile line';
-        		L.drawLocal.edit.toolbar.buttons.editDisabled = 'No profile to edit';
-        		var drawControl = new L.Control.Draw({
-        			draw: {
-        				polygon: false,
-        				polyline: {
-        					metric: true,
-        					shapeOptions: { 
-        						color: '#004a80',
-        						opacity: 1
-        					} 
-        				},
-        				circle: false,
-        				rectangle: false,
-        				marker: false
-        			},
-        			edit: {
-        				featureGroup: drawnItems,
-        				remove: false
-        			}
-        		});
-        		leafletMap.addControl(drawControl);
+            function enableDrawTools() {
 
-        		leafletMap.on('draw:created', function (e) {
-        			drawnItems.eachLayer(function (layer) {
-        			    drawnItems.removeLayer(layer);
-        			});
-        			layer = e.layer;
-        			var latLngs = [];
-        			layer.getLatLngs().forEach(function(ll){
-        				latLngs.push(ll.lat, ll.lng);
-        			});
-        			drawnItems.addLayer(layer);
-        			
-        			var chartData = getProfileChart(latLngs);
-        			doChart(chartData);
-        		});
+                drawnItems = new L.FeatureGroup();
+                leafletMap.addLayer(drawnItems);
 
-        		leafletMap.on('draw:edited', function (e) {
-        			var layers = e.layers;
-        			layers.eachLayer(function(layer) {
-        				var lls = layer.getLatLngs();
-        			    if(lls){
-                			var latLngs = [];
-                			lls.forEach(function(ll){
-                				latLngs.push(ll.lat, ll.lng);
-                			});
-                			var chartData = getProfileChart(latLngs);
-                			doChart(chartData);
-            			}
-        			});
-        		});
+                L.drawLocal.draw.toolbar.buttons.polyline = 'Trace a profile';
+                L.drawLocal.edit.toolbar.buttons.edit = 'Edit the profile line';
+                L.drawLocal.edit.toolbar.buttons.editDisabled = 'No profile to edit';
+                var drawControl = new L.Control.Draw({
+                    draw: {
+                        polygon: false,
+                        polyline: {
+                            metric: true,
+                            shapeOptions: {
+                                color: '#004a80',
+                                opacity: 1
+                            }
+                        },
+                        circle: false,
+                        rectangle: false,
+                        marker: false
+                    },
+                    edit: {
+                        featureGroup: drawnItems,
+                        remove: false
+                    }
+                });
+                leafletMap.addControl(drawControl);
+
+                leafletMap.on('draw:created', function (e) {
+                    drawnItems.eachLayer(function (layer) {
+                        drawnItems.removeLayer(layer);
+                    });
+                    layer = e.layer;
+                    var latLngs = [];
+                    layer.getLatLngs().forEach(function (ll) {
+                        latLngs.push(ll.lat, ll.lng);
+                    });
+                    drawnItems.addLayer(layer);
+
+                    var chartData = getProfileChart(latLngs);
+                    doChart(chartData);
+                });
+
+                leafletMap.on('draw:edited', function (e) {
+                    var layers = e.layers;
+                    layers.eachLayer(function (layer) {
+                        var lls = layer.getLatLngs();
+                        if (lls) {
+                            var latLngs = [];
+                            lls.forEach(function (ll) {
+                                latLngs.push(ll.lat, ll.lng);
+                            });
+                            var chartData = getProfileChart(latLngs);
+                            doChart(chartData);
+                        }
+                    });
+                });
             }
-            
-            function clearChart(){
+
+            function clearChart() {
                 body.selectAll("div.chartdiv").remove();
             }
-            
-            function doChart(data){
+
+            function doChart(data) {
                 clearChart();
-                
+
                 chartDiv = body.append("div").attr("class", "chartdiv");
-                var chartWidth = width*0.95;
+                var chartWidth = width * 0.95;
                 var chartHeigt = 300;
                 chartDiv
-	                .style("width", chartWidth + "px").style("height", chartHeigt + "px")
-    	            .style("position", "absolute")
-    	            .style("left","3%")
-    	            .style("top","3%");
+                        .style("width", chartWidth + "px").style("height", chartHeigt + "px")
+                        .style("position", "absolute")
+                        .style("left", "3%")
+                        .style("top", "3%");
                 var chartSvg = chartDiv.append("svg").style("width", chartWidth + "px").style("height", chartHeigt + "px");
                 chartG = chartSvg.append("g").attr("class", "lidarchart");
-                
-      //          var currentx = d3.transform(mapSvg.style("transform")).translate[0];
-       //         var currenty = d3.transform(mapSvg.style("transform")).translate[1];
-        //        chartG.attr("transform", "translate("
-         //              + currentx + ","
-          //             + currenty + ")")
-                
+
+                //          var currentx = d3.transform(mapSvg.style("transform")).translate[0];
+                //         var currenty = d3.transform(mapSvg.style("transform")).translate[1];
+                //        chartG.attr("transform", "translate("
+                //              + currentx + ","
+                //             + currenty + ")")
+
                 var size = data.length;
                 var chartData = [];
                 var minP = 999999;
-                var maxP=-1000;
+                var maxP = -1000;
                 var minH = 99999;
-                var maxH=-1000;
-                for (i = 0; i < size; i=i+2) {
+                var maxH = -1000;
+                for (i = 0; i < size; i = i + 2) {
                     var p = data[i];
-                    var h = data[i+1];
+                    var h = data[i + 1];
                     minH = Math.min(minH, h);
                     minP = Math.min(minP, p);
                     maxH = Math.max(maxH, h);
                     maxP = Math.max(maxP, p);
                     chartData.push([p, h]);
                 }
-                
+
                 chart = profileScatterChart()
-                .x(
-                        d3.scale.linear().domain([minP, maxP])
-                        )
-                .y(
-                        d3.scale.linear().domain([minH, maxH])
-                        );
-                    //chart.centerMatchedTreeProg(treeData.progressive, treeData.height);
-                
-                    chartG.append("rect")
-                      .attr("rx", 6)
-                      .attr("ry", 6)
-                      .attr("x", 0)
-                      .attr("y", 0)
-                      .attr("width", width)
-                      .attr("height", 300)
-                      .style("fill", "white")
-                      .style("fill-opacity", 0.3)
-                      ;
-                    
+                        .x(
+                                d3.scale.linear().domain([minP, maxP])
+                                )
+                        .y(
+                                d3.scale.linear().domain([minH, maxH])
+                                );
+                //chart.centerMatchedTreeProg(treeData.progressive, treeData.height);
+
+                chartG.append("rect")
+                        .attr("rx", 6)
+                        .attr("ry", 6)
+                        .attr("x", 0)
+                        .attr("y", 0)
+                        .attr("width", width)
+                        .attr("height", 300)
+                        .style("fill", "white")
+                        .style("fill-opacity", 0.3)
+                        ;
+
                 chart.width(chartWidth);
                 chart.height(chartHeigt);
                 var margins = {
@@ -252,24 +252,24 @@
                 //chart.color("");
                 chart.dotsize(2);
                 chart.setData(chartData);
-                
+
 
                 chart.render(chartG, 0, 0);
-                
+
             }
-            
-            function enableInfo(doInfo){
-                doInfoTool = doInfo; 
-                if(doInfo){
+
+            function enableInfo(doInfo) {
+                doInfoTool = doInfo;
+                if (doInfo) {
                     document.getElementById('map').style.cursor = 'crosshair';
-                }else{
+                } else {
                     document.getElementById('map').style.cursor = '';
                 }
             }
-            
-            function info(event){
+
+            function info(event) {
                 var msg = getInfoData(event.latlng.lng, event.latlng.lat);
-                var infoPopup = L.popup().setLatLng(L.latLng(event.latlng.lat,event.latlng.lng)).setContent(msg);
+                var infoPopup = L.popup().setLatLng(L.latLng(event.latlng.lat, event.latlng.lng)).setContent(msg);
                 leafletMap.openPopup(infoPopup);
             }
 
@@ -277,12 +277,12 @@
                 var point = leafletMap.latLngToLayerPoint(new L.LatLng(y, x));
                 return point;
             }
-            
-            function zoomToData(){
+
+            function zoomToData() {
                 leafletMap.setZoom(1);
                 checkData(true, 1);
             }
-            
+
             function checkData(fitData, colortab) {
                 lastC = colortab;
                 var zoom = leafletMap.getZoom();
@@ -388,27 +388,27 @@
                         .style("stroke", function (d) {
                             if (d.l) {
                                 return colorScale(d.v);
-                           }
+                            }
                         })
                         .style("stroke-width", function (d) {
                             if (d.l) {
                                 return 2;
-                           }
+                            }
                         })
                         .style("fill", function (d) {
                             return colorScale(d.v);
                         })
                         .style("fill-opacity", function (d) {
-                           if (d.l) {
+                            if (d.l) {
                                 return 0;
                             }
                             return 0.7;
                         });
 
-            //    rects.select("title").text(function (d) {
-             //       if (d.l)
-              //          return d.l;
-               //     return d.v
+                //    rects.select("title").text(function (d) {
+                //       if (d.l)
+                //          return d.l;
+                //     return d.v
                 //});
 
 
@@ -456,11 +456,11 @@
                             return 0.7;
                         });
 //                        .append("svg:title")
- //                       .text(function (d) {
-  //                          if (d.l)
-   //                             return d.l;
-    //                        return d.v;
-     //                   });
+                //                       .text(function (d) {
+                //                          if (d.l)
+                //                             return d.l;
+                //                        return d.v;
+                //                   });
 
                 rects.exit().remove();
 
