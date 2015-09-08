@@ -29,7 +29,6 @@
 
     <body>
         <div id="container"></div>
-        <div id="info"><a href="http://threejs.org" target="_blank">three.js</a> webgl - interactive - raycasting - pointcloud </div>
 
         <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r71/three.min.js"></script>
         <script src="three/OrbitControls.js"></script>
@@ -93,7 +92,7 @@
                 var dx = ymax - ymin;
                 xscale = d3.scale.linear().range([0, window.innerWidth]).domain([xmin, xmin + dx])
                 yscale = d3.scale.linear().range([0, window.innerHeight]).domain([ymin, ymax])
-                zscale = d3.scale.linear().range([0, 1000]).domain([zmin, zmax])
+                zscale = d3.scale.linear().range([0, 1000]).domain([zmin, zmin + dx])
 
                 var delta = (zmax - zmin) / 4;
                 var colorScale = d3.scale.linear() // <-A
