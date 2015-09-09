@@ -130,6 +130,7 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
     private boolean isInfoToolOn;
     private boolean isSourcesView = false;
     private double profileBuffer = 0.2;
+    private boolean useDataPointColors = false;
 
     private Text profileLinBufferLabelText;
 
@@ -336,6 +337,19 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
                 } catch (NumberFormatException e) {
                     profileBuffer = 0.2;
                 }
+            }
+        });
+
+        final Button usePointsColorCheck = new Button(leftComposite, SWT.CHECK);
+        GridData usePointsColorCheckGD = new GridData(SWT.BEGINNING, SWT.CENTER, false, false);
+        usePointsColorCheckGD.horizontalSpan = 3;
+        usePointsColorCheck.setLayoutData(usePointsColorCheckGD);
+        usePointsColorCheck.setText("Use points data color in 3D view");
+        usePointsColorCheck.setSelection(useDataPointColors);
+        usePointsColorCheck.addSelectionListener(new SelectionAdapter(){
+            @Override
+            public void widgetSelected( SelectionEvent e ) {
+                useDataPointColors = usePointsColorCheck.getSelection();
             }
         });
 
@@ -1020,19 +1034,33 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
             Geometry polygonCrs = JTS.transform(polygonLL, ll2CRSTransform);
 
             List<LasCell> lasCells = LasCellsTable.getLasCells(currentConnectedDatabase, polygonCrs, true, false, false, false,
-                    false);
+                    useDataPointColors);
             int count = 0;
             for( LasCell lasCell : lasCells ) {
                 count += lasCell.pointsCount;
             }
-            Object[] xyzArray = new Object[count * 3];
+
+            int coordSize = 3;
+            if (useDataPointColors) {
+                coordSize = 6;
+            }
+            Object[] xyzArray = new Object[count * coordSize];
             int i = 0;
             for( LasCell lasCell : lasCells ) {
                 double[][] cellPositions = LasCellsTable.getCellPositions(lasCell);
-                for( double[] pos : cellPositions ) {
-                    xyzArray[i++] = pos[0];
-                    xyzArray[i++] = pos[1];
-                    xyzArray[i++] = pos[2];
+
+                short[][] cellcolors = null;
+                if (useDataPointColors)
+                    cellcolors = LasCellsTable.getCellColors(lasCell);
+                for( int j = 0; j < cellPositions.length; j++ ) {
+                    xyzArray[i++] = cellPositions[j][0];
+                    xyzArray[i++] = cellPositions[j][1];
+                    xyzArray[i++] = cellPositions[j][2];
+                    if (useDataPointColors) {
+                        xyzArray[i++] = cellcolors[j][0];
+                        xyzArray[i++] = cellcolors[j][1];
+                        xyzArray[i++] = cellcolors[j][2];
+                    }
                 }
             }
 
@@ -1045,7 +1073,7 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
                         + "points. The selection contains " + count + " points.");
             } else {
                 LidarPoints3DViewDialog lidarPoints3dView = new LidarPoints3DViewDialog(parentShell, "LiDAR Points 3D View",
-                        xyzArray);
+                        xyzArray, useDataPointColors);
                 lidarPoints3dView.open();
             }
         } catch (Exception e) {

@@ -59,10 +59,12 @@
             var xscale;
             var yscale;
             var zscale;
+            var _withColor = false;
 
             // d3.json("wegl.json", function (json) {
             //     jsonD = json;
-            function loadScript() {
+            function loadScript(withColor) {
+                _withColor = withColor;
                 _data = getData();
                 init();
                 animate();
@@ -70,15 +72,19 @@
             // });
 
             function generatePointCloudGeometry(color, width, length) {
-
                 var geometry = new THREE.BufferGeometry();
                 var size = _data.length;
-                var numPoints = size / 3;
+                
+                var coordSize = 3;
+                if(_withColor){
+                    coordSize = 6;
+                }
+                var numPoints = size / coordSize;
 
                 var positions = new Float32Array(numPoints * 3);
                 var colors = new Float32Array(numPoints * 3);
 
-                for (i = 0; i < size; i = i + 3) {
+                for (i = 0; i < size; i = i + coordSize) {
                     var x = _data[i];
                     var y = _data[i + 1];
                     var z = _data[i + 2];
@@ -115,18 +121,26 @@
                                 ]
                                 );
 
-                for (i = 0; i < size; i = i + 3) {
+                var count = 0;
+                for (i = 0; i < size; i = i + coordSize) {
                     var x = _data[i];
                     var y = _data[i + 1];
                     var z = _data[i + 2];
-                    positions[ i ] = xscale(x);
-                    positions[ i + 1 ] = yscale(y);
-                    positions[ i + 2 ] = zscale(z);
+                    positions[ count ] = xscale(x);
+                    positions[ count + 1 ] = yscale(y);
+                    positions[ count + 2 ] = zscale(z);
 
-                    var color = d3.rgb(colorScale(z));
-                    colors[ i ] = color.r / 255;
-                    colors[ i + 1 ] = color.g / 255;
-                    colors[ i + 2 ] = color.b / 255;
+                    if(_withColor){
+                       colors[ count ] = _data[i + 3] / 255;
+                       colors[ count + 1 ] = _data[i + 4] / 255;
+                       colors[ count + 2 ] = _data[i + 5] / 255;
+                    } else {
+                       var color = d3.rgb(colorScale(z));
+                       colors[ count ] = color.r / 255;
+                       colors[ count + 1 ] = color.g / 255;
+                       colors[ count + 2 ] = color.b / 255;
+                    }
+                    count += 3;
                 }
 
                 geometry.addAttribute('position', new THREE.BufferAttribute(positions, 3));

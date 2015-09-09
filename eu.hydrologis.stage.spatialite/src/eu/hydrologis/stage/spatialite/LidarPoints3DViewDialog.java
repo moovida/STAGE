@@ -27,10 +27,13 @@ public class LidarPoints3DViewDialog extends Dialog {
 
     private Object[] xyzArray;
 
-    public LidarPoints3DViewDialog( Shell parent, String title, Object[] xyzArray ) {
+    private boolean useColors;
+
+    public LidarPoints3DViewDialog( Shell parent, String title, Object[] xyzArray, boolean useColors ) {
         super(parent);
         this.title = title;
         this.xyzArray = xyzArray;
+        this.useColors = useColors;
     }
 
     @Override
@@ -40,7 +43,7 @@ public class LidarPoints3DViewDialog extends Dialog {
             shell.setText(title);
         }
 
-//        shell.setMaximized(true);
+        // shell.setMaximized(true);
     }
 
     @SuppressWarnings("serial")
@@ -53,7 +56,7 @@ public class LidarPoints3DViewDialog extends Dialog {
             threejsPointBrowser = new Browser(composite, SWT.NONE);
             GridData tablesGraphBrowserGD = new GridData(SWT.FILL, SWT.FILL, true, true);
             threejsPointBrowser.setLayoutData(tablesGraphBrowserGD);
-            
+
             JsResources.ensureJavaScriptResources();
             threejsPointUrl = JsResources.ensureThreejsPointsHtmlResource();
             threejsPointBrowser.setUrl(threejsPointUrl);
@@ -65,7 +68,7 @@ public class LidarPoints3DViewDialog extends Dialog {
                             return xyzArray;
                         }
                     };
-                    threejsPointBrowser.evaluate("loadScript();");
+                    threejsPointBrowser.evaluate("loadScript(" + useColors + ");");
                 }
                 public void changed( ProgressEvent event ) {
                 }
