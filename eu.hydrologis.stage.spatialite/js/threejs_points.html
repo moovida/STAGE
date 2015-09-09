@@ -166,17 +166,19 @@
                 var xmaxSc = xscale(xmax);
                 var yminSc = yscale(ymin);
                 var ymaxSc = yscale(ymax);
+                var zminSc = zscale(zmin);
                 var zmaxSc = zscale(zmax);
 
                 var centerX = xminSc + (xmaxSc - xminSc) / 2;
                 var centerY = yminSc + (ymaxSc - yminSc) / 2;
+                var centerZ = zminSc + (zmaxSc - zminSc) / 2;
 
                 camera.position.z = zmaxSc + 5000;
 //                camera.applyMatrix(new THREE.Matrix4().makeTranslation(centerX, centerY, zmax + 10));
 //                camera.applyMatrix(new THREE.Matrix4().makeRotationX(-0.5));
 
                 pcBuffer.scale.set(1, 1, 1);
-                pcBuffer.position.set(-centerX, -centerY, zmaxSc);
+                pcBuffer.position.set(-centerX, -centerY, centerZ);
 
                 scene.add(pcBuffer);
 

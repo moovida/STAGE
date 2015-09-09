@@ -129,6 +129,9 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
 
     private boolean isInfoToolOn;
     private boolean isSourcesView = false;
+    private double profileBuffer = 0.2;
+
+    private Text profileLinBufferLabelText;
 
     @Override
     protected void createContents( final Composite parent ) {
@@ -315,6 +318,26 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
         spacerLabelGD.horizontalSpan = 3;
         spacerLabel.setLayoutData(spacerLabelGD);
         spacerLabel.setText("");
+
+        Label profileLinBufferLabel = new Label(leftComposite, SWT.NONE);
+        profileLinBufferLabel.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
+        profileLinBufferLabel.setText("Profile buffer: ");
+        profileLinBufferLabelText = new Text(leftComposite, SWT.SINGLE | SWT.LEAD | SWT.BORDER);
+        GridData profileLinBufferLabelGD = new GridData(SWT.FILL, SWT.CENTER, false, false);
+        profileLinBufferLabelGD.horizontalSpan = 2;
+        profileLinBufferLabelText.setLayoutData(profileLinBufferLabelGD);
+        profileLinBufferLabelText.setText("" + profileBuffer);
+        profileLinBufferLabelText.addModifyListener(new ModifyListener(){
+            @Override
+            public void modifyText( ModifyEvent event ) {
+                String bufferText = profileLinBufferLabelText.getText();
+                try {
+                    profileBuffer = Double.parseDouble(bufferText);
+                } catch (NumberFormatException e) {
+                    profileBuffer = 0.2;
+                }
+            }
+        });
 
         createButtonsComposite(leftComposite);
 
@@ -926,6 +949,11 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
                 coordsLL[index++] = c;
             }
 
+            if (profileBuffer <= 0.0) {
+                profileBuffer = 0.2;
+                profileLinBufferLabelText.setText("" + profileBuffer);
+            }
+
             MathTransform ll2CRSTransform = CRS.findMathTransform(leafletCRS, databaseCrs);
 
             List<double[]> progressiveElevList = new ArrayList<>();
@@ -938,7 +966,7 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
                 Coordinate[] coords = {coordsLL[j], coordsLL[j + 1]};
                 LineString profileLineLL = gf.createLineString(coords);
                 LineString profileLineCrs = (LineString) JTS.transform(profileLineLL, ll2CRSTransform);
-                Geometry lineBuffer = BufferOp.bufferOp(profileLineCrs, 0.2, bp);
+                Geometry lineBuffer = BufferOp.bufferOp(profileLineCrs, profileBuffer, bp);
 
                 PreparedGeometry preparedLineBuffer = PreparedGeometryFactory.prepare(lineBuffer);
 
@@ -1011,10 +1039,15 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
             if (StageLogger.LOG_INFO)
                 StageLogger.logInfo(this, "Loading points in 3d view: " + count);
 
-            LidarPoints3DViewDialog lidarPoints3dView = new LidarPoints3DViewDialog(parentShell, "LiDAR Points 3D View",
-                    xyzArray);
-            lidarPoints3dView.open();
-
+            int view3dPointsLimit = 1500000;
+            if (count > view3dPointsLimit) {
+                MessageDialog.openWarning(parentShell, "WARNING", "The 3D view is limted to render " + view3dPointsLimit
+                        + "points. The selection contains " + count + " points.");
+            } else {
+                LidarPoints3DViewDialog lidarPoints3dView = new LidarPoints3DViewDialog(parentShell, "LiDAR Points 3D View",
+                        xyzArray);
+                lidarPoints3dView.open();
+            }
         } catch (Exception e) {
             StageLogger.logError(this, e);
         }
