@@ -1,5 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?eclipse version="3.4"?>
 <plugin>
-
+   <extension
+         point="eu.hydrologis.stage.entrypoint">
+      <entrypoint
+            class="eu.hydrologis.stage.spatialite.SpatialiteViewerEntryPoint"
+            id="eu.hydrologis.stage.spatialite.SpatialiteViewerEntryPoint"
+            path="/spatialiteviewer"
+            title="Spatialite Viewer">
+      </entrypoint>
+      <entrypoint
+            class="eu.hydrologis.stage.spatialite.LidarViewerEntryPoint"
+            id="eu.hydrologis.stage.spatialite.LidarViewerEntryPoint"
+            path="/lidarviewer"
+            title="LiDAR Viewer">
+      </entrypoint>
+   </extension>
 </plugin>

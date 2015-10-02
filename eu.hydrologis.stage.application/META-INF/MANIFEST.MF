@@ -4,15 +4,12 @@ Bundle-Name: S.T.A.G.E.
 Bundle-SymbolicName: eu.hydrologis.stage.application;singleton:=true
 Bundle-Version: 1.0.0
 Bundle-Vendor: HydroloGIS S.r.l.
+Eclipse-BuddyPolicy: global
 Require-Bundle: org.eclipse.rap.rwt,
  org.eclipse.rap.jface,
  org.eclipse.rap.ui,
  org.eclipse.equinox.http.registry;resolution:=optional,
- eu.hydrologis.stage.libs,
- eu.hydrologis.stage.modules;bundle-version="1.0.0",
- eu.hydrologis.stage.geopaparazzi;bundle-version="1.0.0",
- eu.hydrologis.stage.treeslicesviewer;bundle-version="1.0.0",
- eu.hydrologis.stage.spatialite;bundle-version="1.0.0"
+ eu.hydrologis.stage.libs
 Service-Component: OSGI-INF/contribution.xml
 Import-Package: javax.imageio,
  javax.imageio.event,

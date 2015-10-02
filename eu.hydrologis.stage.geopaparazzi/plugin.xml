@@ -1,6 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?eclipse version="3.4"?>
 <plugin>
+      <extension
+         point="eu.hydrologis.stage.entrypoint">
+      <entrypoint
+            class="eu.hydrologis.stage.geopaparazzi.geopapbrowser.GeopapBrowserEntryPoint"
+            id="eu.hydrologis.stage.geopaparazzi.geopapbrowser.GeopapBrowserEntryPoint"
+            path="/geopapbrowser"
+            title="Geopaparazzi Browser">
+      </entrypoint>
+   </extension>
    <extension
          point="org.eclipse.equinox.http.registry.servlets">
       <servlet

@@ -14,13 +14,17 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.TreeMap;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
+import org.eclipse.core.runtime.IExtension;
 import org.eclipse.core.runtime.IExtensionPoint;
 import org.eclipse.core.runtime.IExtensionRegistry;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.rap.rwt.RWT;
+import org.eclipse.rap.rwt.application.AbstractEntryPoint;
 import org.eclipse.rap.rwt.application.Application;
 import org.eclipse.rap.rwt.application.Application.OperationMode;
 import org.eclipse.rap.rwt.application.ApplicationConfiguration;
@@ -28,11 +32,7 @@ import org.eclipse.rap.rwt.client.WebClient;
 import org.eclipse.rap.rwt.service.ResourceLoader;
 import org.eclipse.rap.rwt.service.ServiceHandler;
 
-import eu.hydrologis.stage.geopaparazzi.geopapbrowser.GeopapBrowserEntryPoint;
-import eu.hydrologis.stage.modules.SpatialToolboxEntryPoint;
-import eu.hydrologis.stage.spatialite.LidarViewerEntryPoint;
-import eu.hydrologis.stage.spatialite.SpatialiteViewerEntryPoint;
-import eu.hydrologis.stage.treeslicesviewer.TreeSlicesViewerEntryPoint;
+import eu.hydrologis.stage.libs.log.StageLogger;
 
 public class StageApplication implements ApplicationConfiguration {
 
@@ -40,6 +40,7 @@ public class StageApplication implements ApplicationConfiguration {
 
     private static final String ID_SERVICE_HANDLER = "org.eclipse.rap.ui.serviceHandler";
 
+    @SuppressWarnings("unchecked")
     public void configure( Application application ) {
 
         Map<String, String> stageProperties = new HashMap<String, String>();
@@ -49,40 +50,52 @@ public class StageApplication implements ApplicationConfiguration {
         stageProperties.put(WebClient.FAVICON, "resources/favicon.png");
         application.addEntryPoint("/", StageEntryPoint.class, stageProperties);
 
-        Map<String, String> jgrasstoolsProperties = new HashMap<String, String>();
-        jgrasstoolsProperties.put(WebClient.PAGE_TITLE, "Spatial Toolbox");
-        jgrasstoolsProperties.put(WebClient.BODY_HTML, readTextFromResource("resources/body_loading.html", "UTF-8"));
-        jgrasstoolsProperties.put(WebClient.HEAD_HTML, readTextFromResource("resources/head.html", "UTF-8"));
-        jgrasstoolsProperties.put(WebClient.FAVICON, "resources/favicon.png");
-        application.addEntryPoint("/spatialtoolbox", SpatialToolboxEntryPoint.class, jgrasstoolsProperties);
+        IExtensionRegistry registry = Platform.getExtensionRegistry();
+        IExtensionPoint point = registry.getExtensionPoint("eu.hydrologis.stage.entrypoint");
 
-        Map<String, String> geopapBrowserProperties = new HashMap<String, String>();
-        geopapBrowserProperties.put(WebClient.PAGE_TITLE, "Geopaparazzi Browser");
-        geopapBrowserProperties.put(WebClient.BODY_HTML, readTextFromResource("resources/body_loading.html", "UTF-8"));
-        geopapBrowserProperties.put(WebClient.HEAD_HTML, readTextFromResource("resources/head.html", "UTF-8"));
-        geopapBrowserProperties.put(WebClient.FAVICON, "resources/favicon.png");
-        application.addEntryPoint("/geopapbrowser", GeopapBrowserEntryPoint.class, geopapBrowserProperties);
+        if (point != null) {
+            IExtension[] extensions = point.getExtensions();
+            TreeMap<String, IConfigurationElement> elementsToKeep = new TreeMap<>();
+            for( IExtension extension : extensions ) {
+                IConfigurationElement[] configurationElements = extension.getConfigurationElements();
+                for( IConfigurationElement element : configurationElements ) {
+                    try {
+                        String title = element.getAttribute("title");
+                        elementsToKeep.put(title, element);
+                    } catch (Exception e) {
+                        StageLogger.logError(this, e);
+                    }
+                }
+            }
+            for( Entry<String, IConfigurationElement> entry : elementsToKeep.entrySet() ) {
+                String title = entry.getKey();
+                IConfigurationElement element = entry.getValue();
+                String clazz = element.getAttribute("class");
+                // String id = element.getAttribute("id");
+                String path = element.getAttribute("path");
 
-        Map<String, String> treeSlicesProperties = new HashMap<String, String>();
-        treeSlicesProperties.put(WebClient.PAGE_TITLE, "Tree Slices Viewer");
-        treeSlicesProperties.put(WebClient.BODY_HTML, readTextFromResource("resources/body_loading.html", "UTF-8"));
-        treeSlicesProperties.put(WebClient.HEAD_HTML, readTextFromResource("resources/head.html", "UTF-8"));
-        treeSlicesProperties.put(WebClient.FAVICON, "resources/favicon.png");
-        application.addEntryPoint("/treeslicesviewer", TreeSlicesViewerEntryPoint.class, treeSlicesProperties);
+                if (clazz != null && title != null && path != null && clazz.length() > 0 && title.length() > 0
+                        && path.length() > 0) {
+                    try {
+                        Class< ? extends AbstractEntryPoint> entryPointClass = (Class< ? extends AbstractEntryPoint>) Class
+                                .forName(clazz);
 
-        Map<String, String> spatialiteProperties = new HashMap<String, String>();
-        spatialiteProperties.put(WebClient.PAGE_TITLE, "Spatialite Viewer");
-        spatialiteProperties.put(WebClient.BODY_HTML, readTextFromResource("resources/body_loading.html", "UTF-8"));
-        spatialiteProperties.put(WebClient.HEAD_HTML, readTextFromResource("resources/head.html", "UTF-8"));
-        spatialiteProperties.put(WebClient.FAVICON, "resources/favicon.png");
-        application.addEntryPoint("/spatialiteviewer", SpatialiteViewerEntryPoint.class, spatialiteProperties);
+                        Map<String, String> jgrasstoolsProperties = new HashMap<String, String>();
+                        jgrasstoolsProperties.put(WebClient.PAGE_TITLE, title);
 
-        Map<String, String> lidarViewerProperties = new HashMap<String, String>();
-        lidarViewerProperties.put(WebClient.PAGE_TITLE, "LiDAR Viewer");
-        lidarViewerProperties.put(WebClient.BODY_HTML, readTextFromResource("resources/body_loading.html", "UTF-8"));
-        lidarViewerProperties.put(WebClient.HEAD_HTML, readTextFromResource("resources/head.html", "UTF-8"));
-        lidarViewerProperties.put(WebClient.FAVICON, "resources/favicon.png");
-        application.addEntryPoint("/lidarviewer", LidarViewerEntryPoint.class, lidarViewerProperties);
+                        // TODO add custom html and icon part
+                        jgrasstoolsProperties.put(WebClient.BODY_HTML,
+                                readTextFromResource("resources/body_loading.html", "UTF-8"));
+                        jgrasstoolsProperties.put(WebClient.HEAD_HTML, readTextFromResource("resources/head.html", "UTF-8"));
+                        jgrasstoolsProperties.put(WebClient.FAVICON, "resources/favicon.png");
+
+                        application.addEntryPoint(path, entryPointClass, jgrasstoolsProperties);
+                    } catch (Exception e) {
+                        StageLogger.logError(this, e);
+                    }
+                }
+            }
+        }
 
         application.setOperationMode(OperationMode.SWT_COMPATIBILITY);
         application.addStyleSheet(RWT.DEFAULT_THEME_ID, "theme/theme.css");

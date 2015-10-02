@@ -1,0 +1,146 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Schema file written by PDE -->
+<schema targetNamespace="eu.hydrologis.stage.libs" xmlns="http://www.w3.org/2001/XMLSchema">
+<annotation>
+      <appinfo>
+         <meta.schema plugin="eu.hydrologis.stage.libs" id="eu.hydrologis.stage.entrypoint" name="StageEntryPoint"/>
+      </appinfo>
+      <documentation>
+         The entry point for the stage application compatible plugin.
+      </documentation>
+   </annotation>
+
+   <element name="extension">
+      <annotation>
+         <appinfo>
+            <meta.element />
+         </appinfo>
+      </annotation>
+      <complexType>
+         <sequence>
+            <element ref="entrypoint" minOccurs="1" maxOccurs="unbounded"/>
+         </sequence>
+         <attribute name="point" type="string" use="required">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="id" type="string">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="name" type="string">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+               <appinfo>
+                  <meta.attribute translatable="true"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+<element name="entrypoint">
+      <annotation>
+         <appInfo>
+            <meta.element labelAttribute="parameter"/>
+         </appInfo>
+      </annotation>
+      <complexType>
+         <attribute name="id" type="string" use="required">
+            <annotation>
+               <documentation>
+                  The identifier of this entrypoint.
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="title" type="string" use="required">
+            <annotation>
+               <documentation>
+                  The title of this entrypoint.
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="path" type="string" use="required">
+            <annotation>
+               <documentation>
+                  The URL path to register the entry point at. Must start with a slash.
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="class" type="string" use="required">
+            <annotation>
+               <documentation>
+                  An implementation of the RAP abstract entrypoint.
+               </documentation>
+               <appInfo>
+                  <meta.attribute kind="java" basedOn=":org.eclipse.rap.rwt.application.EntryPoint"/>
+               </appInfo>
+            </annotation>
+         </attribute>
+         <attribute name="bodyHtml" type="string">
+            <annotation>
+               <documentation>
+                  An optional path to the body html to use.
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="headHtml" type="string">
+            <annotation>
+               <documentation>
+                  An optional path to the head html to use.
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="favicon" type="string">
+            <annotation>
+               <documentation>
+                  An optional path to the favicon to use.
+               </documentation>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <annotation>
+      <appinfo>
+         <meta.section type="since"/>
+      </appinfo>
+      <documentation>
+         S.T.A.G.E. 1.0.0
+      </documentation>
+   </annotation>
+
+   <annotation>
+      <appinfo>
+         <meta.section type="examples"/>
+      </appinfo>
+      <documentation>
+      </documentation>
+   </annotation>
+
+   <annotation>
+      <appinfo>
+         <meta.section type="apiinfo"/>
+      </appinfo>
+      <documentation>
+      </documentation>
+   </annotation>
+
+   <annotation>
+      <appinfo>
+         <meta.section type="implementation"/>
+      </appinfo>
+      <documentation>
+      </documentation>
+   </annotation>
+
+
+</schema>

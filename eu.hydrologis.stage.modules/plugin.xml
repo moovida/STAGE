@@ -1,5 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?eclipse version="3.4"?>
 <plugin>
+   <extension
+         point="eu.hydrologis.stage.entrypoint">
+      <entrypoint
+            class="eu.hydrologis.stage.modules.SpatialToolboxEntryPoint"
+            id="eu.hydrologis.stage.modules.SpatialToolboxEntryPoint"
+            path="/spatialtoolbox"
+            title="Spatial Toolbox">
+      </entrypoint>
+   </extension>
 
 </plugin>

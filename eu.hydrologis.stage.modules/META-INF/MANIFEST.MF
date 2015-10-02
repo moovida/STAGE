@@ -9,7 +9,8 @@ Require-Bundle: org.eclipse.rap.rwt,
  eu.hydrologis.stage.libs,
  org.eclipse.equinox.http.registry;resolution:=optional,
  org.eclipse.rap.filedialog,
- org.eclipse.rap.fileupload
+ org.eclipse.rap.fileupload,
+ org.eclipse.rap.ui
 Import-Package: javax.imageio,
  javax.imageio.event,
  javax.imageio.metadata,

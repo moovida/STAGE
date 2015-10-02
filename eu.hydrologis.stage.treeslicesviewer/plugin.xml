@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?eclipse version="3.4"?>
 <plugin>
-
+   <extension
+         point="eu.hydrologis.stage.entrypoint">
+      <entrypoint
+            class="eu.hydrologis.stage.treeslicesviewer.TreeSlicesViewerEntryPoint"
+            id="eu.hydrologis.stage.treeslicesviewer.TreeSlicesViewerEntryPoint"
+            path="/treeslicesviewer"
+            title="Tree Slices Viewer">
+      </entrypoint>
+   </extension>
 </plugin>

@@ -8,8 +8,21 @@
  */
 package eu.hydrologis.stage.application;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.Map.Entry;
+
+import org.eclipse.core.runtime.IConfigurationElement;
+import org.eclipse.core.runtime.IExtension;
+import org.eclipse.core.runtime.IExtensionPoint;
+import org.eclipse.core.runtime.IExtensionRegistry;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.rap.rwt.RWT;
 import org.eclipse.rap.rwt.application.AbstractEntryPoint;
+import org.eclipse.rap.rwt.client.WebClient;
 import org.eclipse.rap.rwt.client.service.JavaScriptExecutor;
 import org.eclipse.rap.rwt.client.service.UrlLauncher;
 import org.eclipse.swt.SWT;
@@ -22,6 +35,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 
+import eu.hydrologis.stage.libs.log.StageLogger;
 import eu.hydrologis.stage.libs.utils.StageUtils;
 import eu.hydrologis.stage.libs.utilsrap.LoginDialog;
 
@@ -70,13 +84,33 @@ public class StageEntryPoint extends AbstractEntryPoint {
         appsLayout.marginRight = 80;
         appsGroup.setText("Available modules");
 
-        String[][] apps = new String[][]{//
-        {"Spatial Toolbox", "/spatialtoolbox"}, //
-                {"Geopaparazzi Browser", "/geopapbrowser"},//
-                {"Tree Slices Viewer", "/treeslicesviewer"},//
-                {"Spatialite Viewer", "/spatialiteviewer"},//
-                {"LiDAR Viewer", "/lidarviewer"}//
-        };
+        IExtensionRegistry registry = Platform.getExtensionRegistry();
+        IExtensionPoint point = registry.getExtensionPoint("eu.hydrologis.stage.entrypoint");
+
+        List<String[] > apps = new ArrayList<>();
+        if (point != null) {
+            IExtension[] extensions = point.getExtensions();
+            TreeMap<String, IConfigurationElement> elementsToKeep = new TreeMap<>();
+            for( IExtension extension : extensions ) {
+                IConfigurationElement[] configurationElements = extension.getConfigurationElements();
+                for( IConfigurationElement element : configurationElements ) {
+                    try {
+                        String title = element.getAttribute("title");
+                        elementsToKeep.put(title, element);
+                    } catch (Exception e) {
+                        StageLogger.logError(this, e);
+                    }
+                }
+            }
+            for( Entry<String, IConfigurationElement> entry : elementsToKeep.entrySet() ) {
+                String title = entry.getKey();
+                IConfigurationElement element = entry.getValue();
+                String path = element.getAttribute("path");
+                if (title != null && path != null && title.length() > 0 && path.length() > 0) {
+                    apps.add(new String[]{title, path});
+                }
+            }
+        }
 
         for( String[] app : apps ) {
             final Button appButton = new Button(appsGroup, SWT.PUSH);
