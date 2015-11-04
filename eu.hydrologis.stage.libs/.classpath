@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
+	<classpathentry exported="true" kind="lib" path="spatialtoolbox/jgt-hortonmachine-0.8.0-SNAPSHOT.jar"/>
+	<classpathentry exported="true" kind="lib" path="spatialtoolbox/jgt-jgrassgears-0.8.0-SNAPSHOT.jar"/>
+	<classpathentry exported="true" kind="lib" path="spatialtoolbox/jgt-lesto-0.8.0-SNAPSHOT.jar"/>
+	<classpathentry exported="true" kind="lib" path="spatialtoolbox/jgt-modules-0.8.0-SNAPSHOT.jar"/>
+	<classpathentry exported="true" kind="lib" path="spatialtoolbox/jgt-oms3-0.8.0-SNAPSHOT.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs-geotools/json-20140107.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/miglayout-3.7.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs-geotools/antlr-2.7.7.jar"/>
@@ -97,10 +102,5 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry exported="true" kind="lib" path="spatialtoolbox/jgt-hortonmachine-0.7.9-SNAPSHOT.jar"/>
-	<classpathentry exported="true" kind="lib" path="spatialtoolbox/jgt-jgrassgears-0.7.9-SNAPSHOT.jar" sourcepath="/jgt-jgrassgears"/>
-	<classpathentry exported="true" kind="lib" path="spatialtoolbox/jgt-lesto-0.7.9-SNAPSHOT.jar"/>
-	<classpathentry exported="true" kind="lib" path="spatialtoolbox/jgt-modules-0.7.9-SNAPSHOT.jar"/>
-	<classpathentry exported="true" kind="lib" path="spatialtoolbox/jgt-oms3-0.7.9-SNAPSHOT.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
