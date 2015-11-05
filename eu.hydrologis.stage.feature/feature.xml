@@ -2,7 +2,7 @@
 <feature
       id="eu.hydrologis.stage.feature"
       label="S.T.A.G.E. Feature"
-      version="1.0.0">
+      version="1.0.1">
 
    <description>
       Stage - Spatial Toolbox And Geoscript Environment
