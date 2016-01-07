@@ -1124,7 +1124,13 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                 } catch (Exception e) {
                 }
                 tableLevel.isGeo = geometryColumns != null;
-                List<String[]> tableInfo = db.getTableColumns(tableName);
+                List<String[]> tableInfo;
+                try {
+                    tableInfo = db.getTableColumns(tableName);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    continue;
+                }
                 for( String[] columnInfo : tableInfo ) {
                     ColumnLevel columnLevel = new ColumnLevel();
                     columnLevel.parent = tableLevel;
