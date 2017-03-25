@@ -24,6 +24,8 @@ import org.geotools.referencing.GeodeticCalculator;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.jgrasstools.gears.io.geopaparazzi.geopap4.DaoGpsLog.GpsLog;
 import org.jgrasstools.gears.io.geopaparazzi.geopap4.DaoGpsLog.GpsPoint;
+import org.jgrasstools.dbs.compat.IJGTConnection;
+import org.jgrasstools.dbs.spatialite.jgt.SqliteDb;
 import org.jgrasstools.gears.io.geopaparazzi.geopap4.DaoGpsLog;
 import org.jgrasstools.gears.io.geopaparazzi.geopap4.DaoImages;
 import org.jgrasstools.gears.utils.chart.Scatter;
@@ -51,7 +53,9 @@ public class GeopaparazziUtilities {
      */
     public static void setImageInBrowser( Browser browser, long imageId, String imageName, File dbFile, String IMAGE_KEY,
             String SERVICE_HANDLER ) throws Exception {
-        try (Connection connection = DriverManager.getConnection("jdbc:sqlite:" + dbFile.getAbsolutePath())) {
+        try (SqliteDb db = new SqliteDb()) {
+            db.open(dbFile.getAbsolutePath());
+            IJGTConnection connection = db.getConnection();
             byte[] imageData = DaoImages.getImageData(connection, imageId);
             InputStream imageStream = null;
             try {
@@ -118,7 +122,9 @@ public class GeopaparazziUtilities {
 
     public static void setLogChartInBrowser( Browser browser, GpsLog log, File dbFile, String IMAGE_KEY, String SERVICE_HANDLER )
             throws Exception {
-        try (Connection connection = DriverManager.getConnection("jdbc:sqlite:" + dbFile.getAbsolutePath())) {
+        try (SqliteDb db = new SqliteDb()) {
+            db.open(dbFile.getAbsolutePath());
+            IJGTConnection connection = db.getConnection();
             DaoGpsLog.collectDataForLog(connection, log);
 
             String logName = log.text;

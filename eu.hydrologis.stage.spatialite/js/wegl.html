@@ -72,7 +72,9 @@
 
 
         <script>
-            var numPoints;
+            var numVertexes;
+            var doCircles = true;
+
             var pi_180 = Math.PI / 180.0;
             var pi_4 = Math.PI * 4;
             var tileSize = 256;
@@ -131,8 +133,8 @@
             var colorLoc = gl.getAttribLocation(program, "a_color");
             var vertLoc = gl.getAttribLocation(program, "a_vertex");
             gl.aPointSize = gl.getAttribLocation(program, "a_pointSize");
-            // Set the matrix to some that makes 1 unit 1 pixel.
 
+            // Set the matrix to some that makes 1 unit 1 pixel.
             pixelsToWebGLMatrix.set([2 / canvas.width, 0, 0, 0, 0, -2 / canvas.height, 0, 0, 0, 0, 0, 0, -1, 1, 0, 1]);
             gl.viewport(0, 0, canvas.width, canvas.height);
 
@@ -141,23 +143,48 @@
 
             d3.json("wegl.json", function (json) {
                 jsonD = json;
-                // -- data
                 redrawMap();
             });
 
             function redrawMap() {
                 var zoom = leafletMap.getZoom();
                 var verts = [];
+                var colors = [];
                 var json = jsonD;
+
+                var b = leafletMap.getBounds();
+                var dxy = 10;
                 json.data.map(function (d, i) {
-                    pixel = LatLongToPixelXY3(d.y1, d.x1, zoom);
+//                    pixel = ll2p(d.y1, d.x1, canvas.width, canvas.height, b.getSouth(), b.getNorth(), b.getWest(), b.getEast());
+
+//                    pixel = LatLongToPixelXY3(d.y1, d.x1, zoom);
+                    pixel = LatLongToPixelXY(d.y1, d.x1);
 
                     //-- 2 coord, 3 rgb colors interleaved buffer
                     var c = (d.v - json.vmin) / (json.vmax - json.vmin);
-                    verts.push(pixel.x, pixel.y, c, c, c);
+
+                    if (doCircles) {
+                        // circles
+                        verts.push(pixel.x, pixel.y);
+                        colors.push(c, c, c);
+                    } else {
+                        // squares
+                        verts.push(pixel.x - dxy, pixel.y - dxy,
+                                pixel.x - dxy, pixel.y + dxy,
+                                pixel.x + dxy, pixel.y + dxy,
+                                pixel.x + dxy, pixel.y - dxy);
+                        colors.push(c, c, c);
+                        colors.push(c, c, c);
+                        colors.push(c, c, c);
+                        colors.push(c, c, c);
+                    }
                 });
 
-                numPoints = json.data.length;
+                numVertexes = json.data.length;
+                if (!doCircles) {
+                    // square
+                    numVertexes = numVertexes * 4;
+                }
 
                 var vertBuffer = gl.createBuffer();
                 var vertArray = new Float32Array(verts);
@@ -165,10 +192,25 @@
 
                 gl.bindBuffer(gl.ARRAY_BUFFER, vertBuffer);
                 gl.bufferData(gl.ARRAY_BUFFER, vertArray, gl.STATIC_DRAW);
-                gl.vertexAttribPointer(vertLoc, 2, gl.FLOAT, false, fsize * 5, 0);
+
+                var vertexSize = 2;
+                var fstride = fsize * vertexSize;
+
+                gl.vertexAttribPointer(vertLoc, vertexSize, gl.FLOAT, false, fstride, 0);
                 gl.enableVertexAttribArray(vertLoc);
-                // -- offset for color buffer
-                gl.vertexAttribPointer(colorLoc, 3, gl.FLOAT, false, fsize * 5, fsize * 2);
+
+                var colorBuffer = gl.createBuffer();
+                var colorArray = new Float32Array(colors);
+                var csize = colorArray.BYTES_PER_ELEMENT;
+
+                gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+                gl.bufferData(gl.ARRAY_BUFFER, colorArray, gl.STATIC_DRAW);
+
+
+                var colorSize = 3;
+                var cstride = csize * colorSize;
+
+                gl.vertexAttribPointer(colorLoc, colorSize, gl.FLOAT, false, cstride, 0);
                 gl.enableVertexAttribArray(colorLoc);
 
                 glLayer.redraw();
@@ -180,24 +222,25 @@
 
                 gl.clear(gl.COLOR_BUFFER_BIT);
 
-
                 pixelsToWebGLMatrix.set([2 / canvas.width, 0, 0, 0, 0, -2 / canvas.height, 0, 0, 0, 0, 0, 0, -1, 1, 0, 1]);
                 gl.viewport(0, 0, canvas.width, canvas.height);
 
-
-
-                var pointSize = Math.max(leafletMap.getZoom() - 4.0, 1.0);
-                if (pointSize > 6) {
-                    pointSize = 6;
+                if (doCircles) {
+                    var pointSize = Math.max(leafletMap.getZoom() - 4.0, 1.0);
+                    if (pointSize > 6) {
+                        pointSize = 6;
+                    }
+                    gl.vertexAttrib1f(gl.aPointSize, pointSize);
                 }
-                gl.vertexAttrib1f(gl.aPointSize, pointSize);
 
                 // -- set base matrix to translate canvas pixel coordinates -> webgl coordinates
                 mapMatrix.set(pixelsToWebGLMatrix);
 
                 var bounds = leafletMap.getBounds();
                 var topLeft = new L.LatLng(bounds.getNorth(), bounds.getWest());
+                var zoom = leafletMap.getZoom();
                 var offset = LatLongToPixelXY(topLeft.lat, topLeft.lng);
+//                var offset = LatLongToPixelXY3(topLeft.lat, topLeft.lng, zoom);
 
                 // -- Scale to current zoom
                 var scale = Math.pow(2, leafletMap.getZoom());
@@ -207,13 +250,41 @@
 
                 // -- attach matrix value to 'mapMatrix' uniform in shader
                 gl.uniformMatrix4fv(u_matLoc, false, mapMatrix);
-                gl.drawArrays(gl.POINTS, 0, numPoints);
 
+                if (!doCircles) {
+                    // squares
+                    gl.drawArrays(gl.TRIANGLE_STRIP, 0, numVertexes);
+                } else {
+                    // circle
+                    gl.drawArrays(gl.POINTS, 0, numVertexes);
+                }
+
+                console.log("rendered");
+            }
+
+            function project(x, y) {
+                var point = leafletMap.latLngToLayerPoint(new L.LatLng(y, x));
+                return point;
+            }
+
+            function projectContainer(x, y) {
+                var point = leafletMap.latLngToContainerPoint(new L.LatLng(y, x));
+                return point;
             }
 
             // Returns a random integer from 0 to range - 1.
             function randomInt(range) {
                 return Math.floor(Math.random() * range);
+            }
+
+            function ll2p(latitude, longitude, wid, hei, s, n, w, e) {
+
+                var pixelY = hei / 2.0;
+                var pixelX = wid * (longitude - w) / (e - w);
+
+                var pixel = {x: pixelX, y: pixelY};
+
+                return pixel;
             }
 
             // -- converts latlon to pixels at zoom level 0 (for 256x256 tile size) , inverts y coord )
@@ -244,15 +315,38 @@
                 return pixel;
             }
 
-            function LatLongToPixelXY3(latitude, longitude, levelOfDetail) {
+            function LatLongToPixelXY3(latitude, longitude, _groundZoom) {
 
-                var sinLatitude = Math.sin(latitude * pi_180);
-                var pixelY = (0.5 - Math.log((1 + sinLatitude) / (1 - sinLatitude)) / (pi_4)) * 256 * Math.pow(2, levelOfDetail);
-                var pixelX = ((longitude + 180) / 360) * 256 * Math.pow(2, levelOfDetail);
+                //_groundZoom = 16; // — reference zoom level where pixel coordinates are calculated
+                var _tileSize = 256;
+                var _groundZoomScale = Math.pow(2, _groundZoom);
+                var _groundWorldSize = _tileSize * _groundZoomScale;
+                var GLMapMath = new Object();
+//                //– from transform.js in mapbox-gl-js lat/lon absolute pixel coords convertion
+                GLMapMath.lngX = function (lon, worldSize) {
+                    return (180 + lon) * (worldSize || this.worldSize) / 360;
+                };
+//                //– from transform.js in mapbox-gl-js latitude to absolute y coord
+                GLMapMath.latY = function (lat, worldSize) {
+                    var y = 180 / Math.PI * Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360));
+                    return (180 - y) * (worldSize || this.worldSize) / 360;
+                };
+//                // — to get point for ‘groundWorldSize…
+                var pixel = {
+                    x: GLMapMath.lngX(longitude, _groundWorldSize),
+                    y: GLMapMath.latY(latitude, _groundWorldSize)
+                };
 
-                var pixel = new Object();
-                pixel.x = (0.5 + pixelX) | 0;
-                pixel.y = (0.5 + pixelY) | 0;
+//                var yy = 180 / Math.PI * Math.log(Math.tan(Math.PI / 4 + latitude * Math.PI / 360));
+//                var yyy = (180 - yy) * _groundWorldSize / 360;
+//                var xx = (180 + longitude) * _groundWorldSize / 360;
+//                var pixel = {
+//                    x: xx,
+//                    y: yyy
+//                };
+//                var pixel = new Object();
+//                pixel.x = (0.5 + pixelX) | 0;
+//                pixel.y = (0.5 + pixelY) | 0;
 
                 return pixel;
             }

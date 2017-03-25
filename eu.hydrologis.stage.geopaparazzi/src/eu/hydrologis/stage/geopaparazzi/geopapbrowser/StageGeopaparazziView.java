@@ -67,14 +67,16 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
+import org.jgrasstools.dbs.compat.IJGTConnection;
+import org.jgrasstools.dbs.spatialite.jgt.SqliteDb;
 import org.jgrasstools.gears.io.geopaparazzi.geopap4.DaoGpsLog;
 import org.jgrasstools.gears.io.geopaparazzi.geopap4.DaoGpsLog.GpsLog;
 import org.jgrasstools.gears.io.geopaparazzi.geopap4.DaoImages;
+import org.jgrasstools.gears.io.geopaparazzi.geopap4.ETimeUtilities;
 import org.jgrasstools.gears.io.geopaparazzi.geopap4.TableDescriptions.GpsLogsDataTableFields;
 import org.jgrasstools.gears.io.geopaparazzi.geopap4.TableDescriptions.GpsLogsPropertiesTableFields;
 import org.jgrasstools.gears.io.geopaparazzi.geopap4.TableDescriptions.GpsLogsTableFields;
 import org.jgrasstools.gears.io.geopaparazzi.geopap4.TableDescriptions.NotesTableFields;
-import org.jgrasstools.gears.io.geopaparazzi.geopap4.TimeUtilities;
 
 import eu.hydrologis.stage.geopaparazzi.geopapbrowser.functions.OpenImageFunction;
 import eu.hydrologis.stage.geopaparazzi.geopapbrowser.utils.GeopaparazziUtilities;
@@ -256,7 +258,10 @@ public class StageGeopaparazziView {
     private List<ProjectInfo> readProjectInfos( File[] projectFiles ) throws Exception {
         List<ProjectInfo> infoList = new ArrayList<ProjectInfo>();
         for( File geopapDatabaseFile : projectFiles ) {
-            try (Connection connection = DriverManager.getConnection("jdbc:sqlite:" + geopapDatabaseFile.getAbsolutePath())) {
+            try (SqliteDb db = new SqliteDb()) {
+                db.open(geopapDatabaseFile.getAbsolutePath());
+                
+                IJGTConnection connection = db.getConnection();
                 String projectInfo = GeopaparazziWorkspaceUtilities.getProjectInfo(connection);
                 ProjectInfo info = new ProjectInfo();
                 info.databaseFile = geopapDatabaseFile;
@@ -290,7 +295,8 @@ public class StageGeopaparazziView {
         filterLabel.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
         filterLabel.setText("Filter");
 
-        final Text filterText = new Text(modulesComposite, SWT.SINGLE | SWT.LEAD | SWT.BORDER | SWT.ICON_SEARCH | SWT.ICON_CANCEL);
+        final Text filterText = new Text(modulesComposite,
+                SWT.SINGLE | SWT.LEAD | SWT.BORDER | SWT.ICON_SEARCH | SWT.ICON_CANCEL);
         filterText.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
         filterText.addModifyListener(new ModifyListener(){
             private static final long serialVersionUID = 1L;
@@ -561,24 +567,20 @@ public class StageGeopaparazziView {
                     long id = rs.getLong(1);
 
                     long startDateTime = rs.getLong(2);
-                    String startDateTimeString = TimeUtilities.INSTANCE.TIME_FORMATTER_LOCAL.format(new Date(startDateTime));
+                    String startDateTimeString = ETimeUtilities.INSTANCE.TIME_FORMATTER_LOCAL.format(new Date(startDateTime));
                     long endDateTime = rs.getLong(3);
-                    String endDateTimeString = TimeUtilities.INSTANCE.TIME_FORMATTER_LOCAL.format(new Date(endDateTime));
+                    String endDateTimeString = ETimeUtilities.INSTANCE.TIME_FORMATTER_LOCAL.format(new Date(endDateTime));
                     String text = rs.getString(4);
 
                     sbLogs.append("var polyline" + lineIndex + " = L.polyline([\n");
 
                     // points
                     String query = "select " //
-                            + GpsLogsDataTableFields.COLUMN_DATA_LAT.getFieldName()
-                            + ","
-                            + GpsLogsDataTableFields.COLUMN_DATA_LON.getFieldName()
-                            + ","
+                            + GpsLogsDataTableFields.COLUMN_DATA_LAT.getFieldName() + ","
+                            + GpsLogsDataTableFields.COLUMN_DATA_LON.getFieldName() + ","
                             + GpsLogsDataTableFields.COLUMN_DATA_TS.getFieldName()//
-                            + " from " + TABLE_GPSLOG_DATA + " where "
-                            + //
-                            GpsLogsDataTableFields.COLUMN_LOGID.getFieldName() + " = " + id
-                            + " order by "
+                            + " from " + TABLE_GPSLOG_DATA + " where " + //
+                            GpsLogsDataTableFields.COLUMN_LOGID.getFieldName() + " = " + id + " order by "
                             + GpsLogsDataTableFields.COLUMN_DATA_TS.getFieldName();
 
                     try (Statement newStatement = connection.createStatement()) {
@@ -595,8 +597,7 @@ public class StageGeopaparazziView {
                     sbLogs.append("], {color: '");
                     // color
                     String colorQuery = "select " //
-                            + GpsLogsPropertiesTableFields.COLUMN_PROPERTIES_COLOR.getFieldName()
-                            + " from "
+                            + GpsLogsPropertiesTableFields.COLUMN_PROPERTIES_COLOR.getFieldName() + " from "
                             + TABLE_GPSLOG_PROPERTIES + " where " + //
                             GpsLogsPropertiesTableFields.COLUMN_LOGID.getFieldName() + " = " + id;
 
@@ -677,8 +678,8 @@ public class StageGeopaparazziView {
      * @throws InterruptedException
      * @throws InvocationTargetException
      */
-    public void relayout( final boolean expandAll, final String filterText ) throws InvocationTargetException,
-            InterruptedException {
+    public void relayout( final boolean expandAll, final String filterText )
+            throws InvocationTargetException, InterruptedException {
         final List<ProjectInfo> filtered = new ArrayList<ProjectInfo>();
         if (filterText == null) {
             filtered.addAll(projectInfos);
@@ -745,7 +746,7 @@ public class StageGeopaparazziView {
                 double lon = rs.getDouble(lonFN);
                 double altim = rs.getDouble(altimFN);
                 long ts = rs.getLong(tsFN);
-                String dateTimeString = TimeUtilities.INSTANCE.TIME_FORMATTER_LOCAL.format(new Date(ts));
+                String dateTimeString = ETimeUtilities.INSTANCE.TIME_FORMATTER_LOCAL.format(new Date(ts));
                 String text = rs.getString(textFN);
                 String descr = rs.getString(descFN);
                 if (descr == null)
@@ -756,13 +757,13 @@ public class StageGeopaparazziView {
                 }
 
                 notesDescriptionList.add(new String[]{//
-                        String.valueOf(lon),//
-                                String.valueOf(lat),//
-                                String.valueOf(altim),//
-                                dateTimeString,//
-                                text,//
-                                descr//
-                        });
+                        String.valueOf(lon), //
+                        String.valueOf(lat), //
+                        String.valueOf(altim), //
+                        dateTimeString, //
+                        text, //
+                        descr//
+                });
 
             }
 
@@ -821,8 +822,8 @@ public class StageGeopaparazziView {
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
-                        MessageDialog.openInformation(gpFileNameLabel.getShell(), "INFORMATION", "Successfully uploaded: "
-                                + filesStr);
+                        MessageDialog.openInformation(gpFileNameLabel.getShell(), "INFORMATION",
+                                "Successfully uploaded: " + filesStr);
                     }
                 });
             }
@@ -917,7 +918,7 @@ public class StageGeopaparazziView {
         }
 
         try {
-            String dateTimeString = TimeUtilities.INSTANCE.TIME_FORMATTER_LOCAL.format(new Date(selectedImage.getTs()));
+            String dateTimeString = ETimeUtilities.INSTANCE.TIME_FORMATTER_LOCAL.format(new Date(selectedImage.getTs()));
             String picInfo = "<b>Image:</b> " + StageUtils.escapeHTML(selectedImage.getName()) + "<br/>" //
                     + "<b>Timestamp:</b> " + dateTimeString + "<br/>" //
                     + "<b>Azimuth:</b> " + (int) selectedImage.getAzim() + " deg<br/>" //
@@ -943,8 +944,8 @@ public class StageGeopaparazziView {
         }
 
         try {
-            String startDateTimeString = TimeUtilities.INSTANCE.TIME_FORMATTER_LOCAL.format(new Date(selectedLog.startTime));
-            String endDateTimeString = TimeUtilities.INSTANCE.TIME_FORMATTER_LOCAL.format(new Date(selectedLog.endTime));
+            String startDateTimeString = ETimeUtilities.INSTANCE.TIME_FORMATTER_LOCAL.format(new Date(selectedLog.startTime));
+            String endDateTimeString = ETimeUtilities.INSTANCE.TIME_FORMATTER_LOCAL.format(new Date(selectedLog.endTime));
             String picInfo = "<b>Gps log:</b> " + StageUtils.escapeHTML(selectedLog.text) + "<br/>" //
                     + "<b>Start time:</b> " + startDateTimeString + "<br/>" //
                     + "<b>End time:</b> " + endDateTimeString + "<br/>";

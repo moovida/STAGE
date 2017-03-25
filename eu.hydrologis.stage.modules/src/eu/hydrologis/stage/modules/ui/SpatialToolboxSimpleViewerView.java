@@ -166,7 +166,7 @@ public class SpatialToolboxSimpleViewerView {
     }
 
     private BufferedImage createImage( File[] imageFiles ) throws Exception {
-        final ImageGenerator imgGen = new ImageGenerator(null);
+        final ImageGenerator imgGen = new ImageGenerator(null, null);
         for( File imageFile : imageFiles ) {
             if (imageFile == null)
                 continue;

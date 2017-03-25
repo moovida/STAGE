@@ -12,7 +12,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -67,34 +66,34 @@ import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.ToolItem;
 import org.eclipse.swt.widgets.Tree;
 import org.geotools.data.store.ReprojectingFeatureCollection;
-import org.geotools.factory.Hints;
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.geojson.feature.FeatureJSON;
-import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.CRS;
-import org.geotools.referencing.ReferencingFactoryFinder;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
+import org.jgrasstools.dbs.spatialite.ESpatialiteGeometryType;
+import org.jgrasstools.dbs.spatialite.ForeignKey;
+import org.jgrasstools.dbs.spatialite.QueryResult;
+import org.jgrasstools.dbs.spatialite.SpatialiteGeometryColumns;
+import org.jgrasstools.dbs.spatialite.SpatialiteTableNames;
+import org.jgrasstools.dbs.spatialite.jgt.SpatialiteDb;
+import org.jgrasstools.dbs.spatialite.objects.ColumnLevel;
+import org.jgrasstools.dbs.spatialite.objects.DbLevel;
+import org.jgrasstools.dbs.spatialite.objects.TableLevel;
+import org.jgrasstools.dbs.spatialite.objects.TypeLevel;
+import org.jgrasstools.dbs.utils.CommonQueries;
 import org.jgrasstools.gears.io.vectorwriter.OmsVectorWriter;
-import org.jgrasstools.gears.spatialite.ForeignKey;
-import org.jgrasstools.gears.spatialite.QueryResult;
-import org.jgrasstools.gears.spatialite.SpatialiteDb;
-import org.jgrasstools.gears.spatialite.SpatialiteGeometryColumns;
-import org.jgrasstools.gears.spatialite.SpatialiteGeometryType;
+import org.jgrasstools.gears.libs.monitor.DummyProgressMonitor;
+import org.jgrasstools.gears.spatialite.GTSpatialiteThreadsafeDb;
 import org.jgrasstools.gears.spatialite.SpatialiteImportUtils;
-import org.jgrasstools.gears.spatialite.SpatialiteTableNames;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.referencing.crs.CRSAuthorityFactory;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
 
 import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.LineString;
-import com.vividsolutions.jts.geom.Polygon;
 
 import eu.hydrologis.stage.libs.log.StageLogger;
 import eu.hydrologis.stage.libs.utils.ImageCache;
@@ -104,11 +103,6 @@ import eu.hydrologis.stage.libs.utilsrap.FileSelectionDialog;
 import eu.hydrologis.stage.libs.utilsrap.LoginDialog;
 import eu.hydrologis.stage.libs.workspace.StageWorkspace;
 import eu.hydrologis.stage.libs.workspace.User;
-import eu.hydrologis.stage.spatialite.utils.ColumnLevel;
-import eu.hydrologis.stage.spatialite.utils.DbLevel;
-import eu.hydrologis.stage.spatialite.utils.SqlTemplates;
-import eu.hydrologis.stage.spatialite.utils.TableLevel;
-import eu.hydrologis.stage.spatialite.utils.TypeLevel;
 
 /**
  * @author Andrea Antonello (www.hydrologis.com)
@@ -141,7 +135,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
     private Display display;
     private TreeViewer databaseTreeViewer;
 
-    private SpatialiteDb currentConnectedDatabase;
+    private GTSpatialiteThreadsafeDb currentConnectedDatabase;
     private TableLevel currentSelectedTable;
     private ColumnLevel currentSelectedColumn;
 
@@ -459,7 +453,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                                     try {
                                         try {
                                             SpatialiteImportUtils.importShapefile(currentConnectedDatabase, selectedFile,
-                                                    currentSelectedTable.tableName, -1);
+                                                    currentSelectedTable.tableName, -1, new DummyProgressMonitor());
                                         } catch (Exception e1) {
                                             StageLogger.logError(this, e1);
                                             MessageDialog.openError(parentShell, "ERROR",
@@ -498,7 +492,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
         templatesCombo.setWidth(150);
         final Menu templatesMenu = new Menu(toolBar.getShell(), SWT.POP_UP);
 
-        for( String templateName : SqlTemplates.templatesMap.keySet() ) {
+        for( String templateName : CommonQueries.templatesMap.keySet() ) {
             final MenuItem menuItem = new MenuItem(templatesMenu, SWT.PUSH);
             menuItem.setText(templateName);
             menuItem.addSelectionListener(new SelectionAdapter(){
@@ -507,7 +501,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                 @Override
                 public void widgetSelected( SelectionEvent e ) {
                     String templateName = menuItem.getText();
-                    String query = SqlTemplates.templatesMap.get(templateName);
+                    String query = CommonQueries.templatesMap.get(templateName);
                     String text = sqlEditorText.getText();
                     if (text.trim().length() != 0) {
                         text += "\n";
@@ -667,7 +661,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                                         geojson);
                                 d.open();
                             } catch (Exception e) {
-                                e.printStackTrace();
+                                StageLogger.logError(this, e);
                             }
 
                         }
@@ -686,7 +680,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
         parent.layout();
     }
 
-    private String getGeometryFieldName() throws SQLException {
+    private String getGeometryFieldName() throws Exception {
         String geomFieldName = SpatialiteDb.defaultGeomFieldName;
         if (currentSelectedTable != null) {
             SpatialiteGeometryColumns geometryColumns = currentConnectedDatabase
@@ -790,7 +784,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                     } else if (columnLevel.references != null) {
                         return ImageCache.getInstance().getImage(display, ImageCache.TABLE_COLUMN_INDEX);
                     } else if (columnLevel.geomColumn != null) {
-                        SpatialiteGeometryType gType = SpatialiteGeometryType.forValue(columnLevel.geomColumn.geometry_type);
+                        ESpatialiteGeometryType gType = ESpatialiteGeometryType.forValue(columnLevel.geomColumn.geometry_type);
                         switch( gType ) {
                         case POINT_XY:
                         case POINT_XYM:
@@ -853,7 +847,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                         }
                         return col;
                     } else {
-                        String gType = SpatialiteGeometryType.forValue(gc.geometry_type).getDescription();
+                        String gType = ESpatialiteGeometryType.forValue(gc.geometry_type).getDescription();
                         boolean indexEnabled = gc.spatial_index_enabled == 1 ? true : false;
                         return columnLevel.columnName + "[" + gType + ",EPSG:" + gc.srid + ",idx:" + indexEnabled + "]";
                     }
@@ -879,7 +873,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
 
                     try {
                         QueryResult queryResult = currentConnectedDatabase.getTableRecordsMapIn(currentSelectedTable.tableName,
-                                null, true, 20);
+                                null, true, 20, -1);
                         createTableViewer(resultsetViewerGroup, queryResult);
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -1034,7 +1028,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                     shell.getDisplay().syncExec(new Runnable(){
                         public void run() {
                             try {
-                                currentConnectedDatabase = new SpatialiteDb();
+                                currentConnectedDatabase = new GTSpatialiteThreadsafeDb();
                                 currentConnectedDatabase.open(selectedFile.getAbsolutePath());
                                 currentConnectedDatabase.initSpatialMetadata(null);
 
@@ -1074,7 +1068,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                         shell.getDisplay().syncExec(new Runnable(){
                             public void run() {
                                 try {
-                                    currentConnectedDatabase = new SpatialiteDb();
+                                    currentConnectedDatabase = new GTSpatialiteThreadsafeDb();
                                     currentConnectedDatabase.open(selectedFile.getAbsolutePath());
 
                                     DbLevel dbLevel = gatherDatabaseLevels(currentConnectedDatabase);
@@ -1100,7 +1094,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
 
     }
 
-    private DbLevel gatherDatabaseLevels( SpatialiteDb db ) throws SQLException {
+    private DbLevel gatherDatabaseLevels( SpatialiteDb db ) throws Exception {
         currentDbLevel = new DbLevel();
         String databasePath = db.getDatabasePath();
         File dbFile = new File(databasePath);
@@ -1347,6 +1341,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                     return;
                 }
             } catch (Exception e1) {
+                StageLogger.logError(this, e1);
                 String localizedMessage = e1.getLocalizedMessage();
                 MessageDialog.openError(parentShell, "ERROR", "An error occurred: " + localizedMessage);
             }
@@ -1379,8 +1374,8 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                     String query = getSelectQuery(selectedTable, false);
                     addTextToQueryEditor(query);
 
-                } catch (SQLException e) {
-                    e.printStackTrace();
+                } catch (Exception e) {
+                    StageLogger.logError(this, e);
                 }
 
             }
@@ -1392,8 +1387,8 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                     String tableName = selectedTable.tableName;
                     long count = currentConnectedDatabase.getCount(tableName);
                     MessageDialog.openInformation(parentShell, "INFO", "Count: " + count);
-                } catch (SQLException e) {
-                    e.printStackTrace();
+                } catch (Exception e) {
+                    StageLogger.logError(this, e);
                 }
 
             }
@@ -1485,7 +1480,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                         TableGraphDialog d = new TableGraphDialog(parentShell, "Table Graph", json);
                         d.open();
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        StageLogger.logError(this, e);
                     }
 
                 }
@@ -1551,7 +1546,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                                 "Data Viewer: " + selectedTable.tableName, geojson);
                         d.open();
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        StageLogger.logError(this, e);
                     }
 
                 }
@@ -1560,7 +1555,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
         return actions;
     }
 
-    private String getSelectQuery( final TableLevel selectedTable, boolean geomFirst ) throws SQLException {
+    private String getSelectQuery( final TableLevel selectedTable, boolean geomFirst ) throws Exception {
         String tableName = selectedTable.tableName;
         String letter = tableName.substring(0, 1);
         List<String[]> tableColumns = currentConnectedDatabase.getTableColumns(tableName);
@@ -1674,7 +1669,7 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                             TableGraphDialog d = new TableGraphDialog(parentShell, "Table Graph", json);
                             d.open();
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            StageLogger.logError(this, e);
                         }
 
                     }
@@ -1706,10 +1701,10 @@ public class SpatialiteViewerEntryPoint extends AbstractEntryPoint {
                         try {
                             String[] tableColsFromFK = selectedColumn.tableColsFromFK();
                             String refTable = tableColsFromFK[0];
-                            QueryResult queryResult = currentConnectedDatabase.getTableRecordsMapIn(refTable, null, true, 20);
+                            QueryResult queryResult = currentConnectedDatabase.getTableRecordsMapIn(refTable, null, true, 20,-1);
                             createTableViewer(resultsetViewerGroup, queryResult);
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            StageLogger.logError(this, e);
                         }
 
                     }

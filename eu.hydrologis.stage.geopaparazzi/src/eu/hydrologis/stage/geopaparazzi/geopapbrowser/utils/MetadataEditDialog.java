@@ -28,6 +28,9 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
+import org.jgrasstools.dbs.compat.IJGTConnection;
+import org.jgrasstools.dbs.compat.IJGTStatement;
+import org.jgrasstools.dbs.spatialite.jgt.SqliteDb;
 import org.jgrasstools.gears.io.geopaparazzi.geopap4.TableDescriptions.MetadataTableFields;
 
 import eu.hydrologis.stage.geopaparazzi.geopapbrowser.ProjectInfo;
@@ -157,8 +160,10 @@ public class MetadataEditDialog extends Dialog {
         if (buttonId == IDialogConstants.OK_ID) {
             // save data
             try {
-                try (Connection connection = DriverManager.getConnection("jdbc:sqlite:" + dbFile.getAbsolutePath())) {
-                    try (Statement statement = connection.createStatement()) {
+                try (SqliteDb db = new SqliteDb()) {
+                    db.open(dbFile.getAbsolutePath());
+                    IJGTConnection connection = db.getConnection();
+                    try (IJGTStatement statement = connection.createStatement()) {
                         statement.setQueryTimeout(30); // set timeout to 30 sec.
 
                         for( Text text : textWidgets ) {

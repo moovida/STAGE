@@ -35,25 +35,20 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
-import org.geotools.feature.DefaultFeatureCollection;
-import org.geotools.feature.simple.SimpleFeatureBuilder;
-import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
+import org.jgrasstools.dbs.spatialite.SpatialiteGeometryColumns;
 import org.jgrasstools.gears.io.las.spatialite.LasCell;
 import org.jgrasstools.gears.io.las.spatialite.LasCellsTable;
 import org.jgrasstools.gears.io.las.spatialite.LasLevel;
 import org.jgrasstools.gears.io.las.spatialite.LasLevelsTable;
 import org.jgrasstools.gears.io.las.spatialite.LasSource;
 import org.jgrasstools.gears.io.las.spatialite.LasSourcesTable;
-import org.jgrasstools.gears.spatialite.SpatialiteDb;
-import org.jgrasstools.gears.spatialite.SpatialiteGeometryColumns;
+import org.jgrasstools.gears.spatialite.GTSpatialiteThreadsafeDb;
 import org.jgrasstools.gears.utils.geometry.GeometryUtilities;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.geometry.MismatchedDimensionException;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.NoSuchAuthorityCodeException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
@@ -89,7 +84,7 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
 
     private Display display;
 
-    private SpatialiteDb currentConnectedDatabase;
+    private GTSpatialiteThreadsafeDb currentConnectedDatabase;
 
     private Shell parentShell;
 
@@ -442,7 +437,7 @@ public class LidarViewerEntryPoint extends AbstractEntryPoint {
 
                                     closeCurrentDb();
 
-                                    currentConnectedDatabase = new SpatialiteDb();
+                                    currentConnectedDatabase = new GTSpatialiteThreadsafeDb();
                                     currentConnectedDatabase.open(selectedFile.getAbsolutePath());
 
                                     // TODO check lidar db
